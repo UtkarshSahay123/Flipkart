@@ -9,3 +9,8 @@ stats_out.txt
 **/dataset/
 **/runs/
 **/temp/
+/ml_models/**/data/
+/RoadDamageDetection-main/resource/
+/RoadDamageDetection-main/models/
+/RoadDamageDetection-main/training/*.pt
+/RoadDamageDetection-main/training/dataset/
