@@ -1,0 +1,11 @@
+.venv/
+.vscode/
+**/__pycache__/
+temp_potholes/
+stats_out.txt
+*.csv
+*.pt
+*.zip
+**/dataset/
+**/runs/
+**/temp/

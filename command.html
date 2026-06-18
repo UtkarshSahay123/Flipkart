@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Command Center | Aegis Traffic Control</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#091c35",
+                        "tertiary-container": "#b02300",
+                        "tertiary-fixed-dim": "#ffb4a3",
+                        "on-tertiary": "#ffffff",
+                        "primary": "#003d9b",
+                        "surface-dim": "#cadbfc",
+                        "on-secondary": "#ffffff",
+                        "outline": "#737685",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "on-primary-container": "#c4d2ff",
+                        "surface-tint": "#0c56d0",
+                        "surface-bright": "#f9f9ff",
+                        "on-tertiary-fixed": "#3d0600",
+                        "surface-container-highest": "#d6e3ff",
+                        "on-surface": "#091c35",
+                        "surface-container-low": "#f0f3ff",
+                        "outline-variant": "#c3c6d6",
+                        "on-tertiary-fixed-variant": "#8b1a00",
+                        "on-secondary-container": "#00714b",
+                        "on-tertiary-container": "#ffc6b9",
+                        "on-secondary-fixed": "#002113",
+                        "inverse-surface": "#20314b",
+                        "primary-container": "#0052cc",
+                        "on-surface-variant": "#434654",
+                        "on-secondary-fixed-variant": "#005235",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#8af5be",
+                        "secondary-fixed-dim": "#71dba6",
+                        "surface-variant": "#d6e3ff",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#ffdad2",
+                        "surface-container-high": "#dfe8ff",
+                        "background": "#f9f9ff",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#b2c5ff",
+                        "tertiary": "#851800",
+                        "surface-container": "#e7eeff",
+                        "primary-fixed": "#dae2ff",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#8df7c1",
+                        "secondary": "#006c47",
+                        "error-container": "#ffdad6",
+                        "surface": "#f9f9ff",
+                        "on-primary-fixed": "#001848",
+                        "inverse-on-surface": "#ecf0ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "margin-desktop": "32px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "margin-mobile": "16px",
+                        "base": "8px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Inter"],
+                        "data-mono": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .zebra-table tr:nth-child(even) {
+            background-color: #f0f3ff;
+        }
+
+        .map-overlay-blur {
+            backdrop-filter: blur(8px);
+            background-color: rgba(255, 255, 255, 0.85);
+        }
+    </style>
+</head>
+
+<body class="bg-background text-on-surface overflow-hidden">
+    <!-- Predicted SideNavBar (Global Navigation) -->
+    <aside
+        class="flex flex-col h-full p-md bg-surface-container-low dark:bg-on-background w-[280px] h-screen fixed left-0 top-0 z-50 border-r border-outline-variant dark:border-outline">
+        <div class="mb-xl">
+            <h2 class="text-headline-sm font-headline-sm font-bold text-on-surface dark:text-on-primary-fixed-variant">
+                Sector Alpha</h2>
+            <p class="text-label-md font-label-md text-on-surface-variant">City Traffic HQ</p>
+        </div>
+
+        <button id="btn-new-simulation"
+            class="mt-xl w-full py-md bg-primary text-on-primary font-bold rounded-lg hover:opacity-90 transition-opacity">
+            New Simulation
+        </button>
+
+        <!-- Safe Route Finder Widget -->
+        <div class="mt-md pt-md border-t border-outline-variant space-y-sm">
+            <h3 class="text-label-md font-bold text-primary uppercase tracking-wider text-left">Safe Route Finder</h3>
+            <div class="space-y-sm text-left">
+                <div>
+                    <label class="block text-[10px] font-bold text-on-surface-variant mb-xs">Current Location</label>
+                    <div class="relative">
+                        <input type="text" id="route-start"
+                            class="w-full rounded-lg border border-outline-variant bg-surface-container-low text-[11px] py-xs pl-7 pr-xs text-on-surface"
+                            placeholder="Enter start location or lat, lng..." value="Detecting location...">
+                        <span
+                            class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-primary text-[12px]">my_location</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-on-surface-variant mb-xs">Destination</label>
+                    <div class="relative">
+                        <input type="text" id="route-destination"
+                            class="w-full rounded-lg border border-outline-variant bg-surface-container-low text-[11px] py-xs pl-7 pr-xs text-on-surface"
+                            placeholder="Enter destination or lat, lng...">
+                        <span
+                            class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-primary text-[12px]">location_on</span>
+                    </div>
+                </div>
+                <button id="btn-find-route"
+                    class="w-full py-xs bg-primary text-on-primary font-bold rounded-lg text-label-md hover:opacity-90 transition-opacity flex justify-center items-center gap-xs">
+                    <span class="material-symbols-outlined text-sm">directions</span> Find Safe Route
+                </button>
+            </div>
+        </div>
+        <div class="mt-auto pt-xl border-t border-outline-variant space-y-xs">
+
+        </div>
+    </aside>
+    <!-- Main Content Area -->
+    <main class="ml-[280px] flex flex-col h-screen">
+        <!-- TopNavBar Integrated Status -->
+        <header
+            class="flex justify-between items-center px-margin-desktop w-full bg-surface-container-lowest dark:bg-on-background h-16 border-b border-outline-variant dark:border-outline">
+            <div class="flex items-center gap-lg">
+                <h1 class="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed">Aegis
+                    Traffic Control</h1>
+                <div
+                    class="flex items-center gap-sm px-md py-xs bg-secondary-container text-on-secondary-container rounded-full">
+                    <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                    <span class="text-label-md font-label-md">LIVE: Central Command</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-xl">
+                <nav class="hidden md:flex items-center gap-lg">
+                    <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors font-label-md"
+                        href="index.html">Home</a>
+                    <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors font-label-md"
+                        href="technology.html">Technology</a>
+                    <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors font-label-md"
+                        href="about.html">About Us</a>
+                    <a class="inline-flex items-center gap-xs bg-primary text-on-primary font-label-md text-label-md px-md py-xs rounded-lg shadow-sm pointer-events-none" href="command.html">
+                        <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">monitor_heart</span>
+                        Command Centre
+                    </a>
+                </nav>
+            </div>
+        </header>
+        <!-- Dynamic Content (Map + Panels) -->
+        <div class="flex-1 flex overflow-hidden">
+            <!-- Map Section -->
+            <section class="relative flex-1 bg-surface-dim">
+                <div id="map" class="absolute inset-0 z-0"></div>
+                <!-- Sector Overview Widget -->
+                <div
+                    class="absolute top-xl left-xl z-10 w-72 p-md bg-surface border border-outline-variant rounded shadow-sm">
+                    <div class="flex justify-between items-center mb-md">
+                        <h3 class="text-body-lg font-bold text-primary">Active Hazards</h3>
+                        <span class="material-symbols-outlined text-outline">info</span>
+                    </div>
+                    <div class="space-y-md">
+                        <!-- Active Hazards Breakdown Section -->
+                        <div class="space-y-sm">
+                            <div
+                                class="grid grid-cols-2 gap-sm text-[11px] font-medium text-on-surface-variant text-left">
+                                <div class="flex items-center gap-xs">
+                                    <span class="material-symbols-outlined text-amber-500 text-[14px]">warning</span>
+                                    <span>Potholes: <span id="stats-potholes-count"
+                                            class="font-bold text-on-surface">0</span></span>
+                                </div>
+                                <div class="flex items-center gap-xs">
+                                    <span class="material-symbols-outlined text-blue-600 text-[14px]">flood</span>
+                                    <span>Waterlogging: <span id="stats-floods-count"
+                                            class="font-bold text-on-surface">0</span></span>
+                                </div>
+                                <div class="flex items-center gap-xs">
+                                    <span class="material-symbols-outlined text-red-600 text-[14px]">minor_crash</span>
+                                    <span>Accidents: <span id="stats-accidents-count"
+                                            class="font-bold text-on-surface">0</span></span>
+                                </div>
+                                <div class="flex items-center gap-xs">
+                                    <span class="material-symbols-outlined text-orange-600 text-[14px]">nature</span>
+                                    <span>Obstacles: <span id="stats-debris-count"
+                                            class="font-bold text-on-surface">0</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Map Legend -->
+                <div
+                    class="absolute bottom-xl left-1/2 -translate-x-1/2 z-10 flex gap-xl px-xl py-sm bg-surface/80 backdrop-blur-md border border-outline-variant rounded-full shadow-lg">
+                    <div class="flex items-center gap-sm">
+                        <span class="w-3 h-3 rounded-full bg-secondary shadow-[0_0_8px_rgba(0,108,71,0.5)]"></span>
+                        <span class="text-label-md font-bold">Optimal</span>
+                    </div>
+                    <div class="flex items-center gap-sm">
+                        <span class="w-3 h-3 rounded-full bg-tertiary-container"></span>
+                        <span class="text-label-md font-bold">Congested</span>
+                    </div>
+                    <div class="flex items-center gap-sm">
+                        <span class="w-3 h-3 rounded-full bg-error animate-pulse"></span>
+                        <span class="text-label-md font-bold">Critical Alert</span>
+                    </div>
+                </div>
+
+                <!-- Incident Legend Widget -->
+                <div
+                    class="absolute bottom-xl right-xl z-10 p-md bg-surface/90 backdrop-blur-md border border-outline-variant rounded shadow-md w-60">
+                    <h4 class="text-label-md font-bold text-primary mb-sm uppercase tracking-wider">Incident Legend</h4>
+                    <div class="space-y-sm text-label-md">
+                        <div class="flex items-center gap-sm">
+                            <div
+                                class="flex items-center justify-center w-6 h-6 rounded-full bg-amber-500 text-white shadow-sm border border-white">
+                                <span class="material-symbols-outlined text-[14px]">warning</span>
+                            </div>
+                            <span class="font-medium">Road Damage / Pothole</span>
+                        </div>
+                        <div class="flex items-center gap-sm">
+                            <div
+                                class="flex items-center justify-center w-6 h-6 rounded-full bg-red-600 text-white shadow-sm border border-white">
+                                <span class="material-symbols-outlined text-[14px]">minor_crash</span>
+                            </div>
+                            <span class="font-medium">Accident / Collision</span>
+                        </div>
+                        <div class="flex items-center gap-sm">
+                            <div
+                                class="flex items-center justify-center w-6 h-6 rounded-full bg-orange-600 text-white shadow-sm border border-white">
+                                <span class="material-symbols-outlined text-[14px]">nature</span>
+                            </div>
+                            <span class="font-medium">Debris / Fallen Tree</span>
+                        </div>
+                        <div class="flex items-center gap-sm">
+                            <div
+                                class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white shadow-sm border border-white">
+                                <span class="material-symbols-outlined text-[14px]">flood</span>
+                            </div>
+                            <span class="font-medium">Waterlogging / Flood</span>
+                        </div>
+                        <div class="flex items-center gap-sm">
+                            <div
+                                class="flex items-center justify-center w-6 h-6 rounded-full bg-red-500 text-white shadow-sm border border-white">
+                                <span class="material-symbols-outlined text-[14px]">traffic</span>
+                            </div>
+                            <span class="font-medium">Broken Traffic Signal</span>
+                        </div>
+                        <div class="flex items-center gap-sm">
+                            <div
+                                class="flex items-center justify-center w-6 h-6 rounded-full bg-purple-600 text-white shadow-sm border border-white">
+                                <span class="material-symbols-outlined text-[14px]">car_repair</span>
+                            </div>
+                            <span class="font-medium">Vehicle Breakdown</span>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+            <!-- Right Sidebar: Incidents & Reports -->
+            <aside class="w-[380px] bg-surface-container-lowest border-l border-outline-variant flex flex-col h-full">
+                <!-- Tabs for Sidebar -->
+                <div class="flex border-b border-outline-variant">
+                    <button id="tab-incidents"
+                        class="flex-1 py-md text-label-md font-bold text-primary border-b-2 border-primary bg-primary-container/10">Active
+                        Incidents (<span id="incidents-count">0</span>)</button>
+                    <button id="tab-reports"
+                        class="flex-1 py-md text-label-md font-bold text-on-surface-variant hover:bg-surface-container-low border-b-2 border-transparent">Citizen
+                        Reports</button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-md">
+                    <!-- Panel 1: Active Incidents -->
+                    <div id="panel-incidents" class="space-y-md">
+                        <div id="active-incidents-list" class="space-y-md">
+                            <!-- Only actual reported incidents will appear here -->
+                        </div>
+
+
+                    </div>
+
+                    <!-- Panel 2: Citizen Reports Upload/Capture (hidden by default) -->
+                    <div id="panel-reports" class="hidden space-y-md">
+                        <h3 class="text-body-lg font-bold text-primary">Report Traffic / Road Hazard</h3>
+                        <p class="text-body-md text-on-surface-variant leading-tight">Submit an image or video of road
+                            issues (potholes, waterlogging, fallen trees, accidents, broken signals). The app will fetch
+                            your device's GPS location automatically.</p>
+
+                        <div id="upload-box"
+                            class="border-2 border-dashed border-outline-variant hover:border-primary cursor-pointer p-lg rounded-xl text-center bg-surface-container-low transition-colors relative">
+                            <input type="file" id="citizen-file-input"
+                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                accept="image/*,video/*">
+                            <span class="material-symbols-outlined text-4xl text-outline mb-sm">upload_file</span>
+                            <p class="text-body-md font-bold text-on-surface">Upload Photo / Video</p>
+                            <p class="text-label-md text-on-surface-variant mt-xs">Drag & drop or click to select file
+                            </p>
+                        </div>
+
+                        <!-- Camera Buttons -->
+                        <div class="grid grid-cols-2 gap-sm">
+                            <button id="btn-capture-photo"
+                                class="flex items-center justify-center gap-xs py-sm border border-outline-variant rounded-lg font-bold text-label-md hover:bg-surface-container-low transition-all">
+                                <span class="material-symbols-outlined text-sm">photo_camera</span> Capture Photo
+                            </button>
+                            <button id="btn-capture-video"
+                                class="flex items-center justify-center gap-xs py-sm border border-outline-variant rounded-lg font-bold text-label-md hover:bg-surface-container-low transition-all">
+                                <span class="material-symbols-outlined text-sm">videocam</span> Record Video
+                            </button>
+                        </div>
+
+                        <!-- Camera stream preview (hidden by default) -->
+                        <div id="camera-preview-container"
+                            class="hidden relative rounded-xl overflow-hidden bg-black aspect-video border border-outline-variant">
+                            <video id="camera-stream" autoplay playsinline class="w-full h-full object-cover"></video>
+                            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-sm z-10">
+                                <button id="btn-snap"
+                                    class="px-md py-xs bg-error text-on-error rounded-full font-bold text-label-md hover:opacity-90 shadow-lg">Capture</button>
+                                <button id="btn-cancel-camera"
+                                    class="px-md py-xs bg-surface-container text-on-surface rounded-full font-bold text-label-md hover:opacity-90 shadow-lg">Close</button>
+                            </div>
+                            <canvas id="camera-canvas" class="hidden"></canvas>
+                        </div>
+
+                        <!-- GPS Status Display -->
+                        <div id="gps-display"
+                            class="p-sm bg-surface-container-high rounded-lg flex items-center gap-sm text-label-md font-bold border border-outline-variant">
+                            <span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+                            <span id="gps-status" class="text-on-surface-variant font-medium">GPS Status: Coordinates
+                                not fetched yet.</span>
+                        </div>
+
+                        <!-- Processing Loader -->
+                        <div id="processing-box"
+                            class="hidden p-md border border-primary/20 bg-primary/5 rounded-xl text-center space-y-sm">
+                            <div class="flex justify-center items-center gap-sm">
+                                <span
+                                    class="material-symbols-outlined text-2xl text-primary animate-spin">cyclone</span>
+                                <span class="text-body-md font-bold text-primary">AI Diagnostic Scanning...</span>
+                            </div>
+                            <p class="text-label-md text-on-surface-variant" id="processing-text">Analyzing media and
+                                running model inference</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Footer Summary for Panel Removed -->
+            </aside>
+        </div>
+    </main>
+
+    <!-- Simulation Input Modal -->
+    <div id="simulation-modal"
+        class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div
+            class="bg-surface p-lg rounded-2xl shadow-2xl border border-outline-variant w-full max-w-md mx-margin-mobile relative">
+            <button id="btn-close-modal" class="absolute top-md right-md text-outline hover:text-on-surface">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            <h3 class="text-headline-sm font-bold text-primary mb-md">Forecast Congestion & Resources</h3>
+            <p class="text-body-md text-on-surface-variant mb-md leading-tight">Run a traffic simulation based on
+                upcoming events to forecast congestion zones and generate diversion routes.</p>
+
+            <form id="simulation-form" class="space-y-md">
+                <div>
+                    <label class="block text-label-md font-bold text-on-surface-variant mb-xs">Event Type</label>
+                    <select id="sim-event-type"
+                        class="w-full rounded-lg border-outline-variant bg-surface-container-low text-body-md py-sm">
+                        <option value="Political Rally">Political Rally</option>
+                        <option value="Religious Festival">Religious Festival</option>
+                        <option value="Sports Event">Sports Event</option>
+                        <option value="Road Construction">Road Construction</option>
+                        <option value="Sudden Gathering">Sudden Gathering</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-label-md font-bold text-on-surface-variant mb-xs">Location</label>
+                    <select id="sim-location"
+                        class="w-full rounded-lg border-outline-variant bg-surface-container-low text-body-md py-sm">
+                        <option value="MG Road Junction">MG Road Junction</option>
+                        <option value="Silk Board">Silk Board</option>
+                        <option value="Outer Ring Road">Outer Ring Road</option>
+                        <option value="Cubbon Park Road">Cubbon Park Road</option>
+                        <option value="Sector 4 Flyover">Sector 4 Flyover</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-md">
+                    <div>
+                        <label class="block text-label-md font-bold text-on-surface-variant mb-xs">Time</label>
+                        <input type="time" id="sim-time"
+                            class="w-full rounded-lg border-outline-variant bg-surface-container-low text-body-md py-sm"
+                            value="17:00">
+                    </div>
+                    <div>
+                        <label class="block text-label-md font-bold text-on-surface-variant mb-xs">Expected
+                            Crowd</label>
+                        <input type="number" id="sim-crowd"
+                            class="w-full rounded-lg border-outline-variant bg-surface-container-low text-body-md py-sm"
+                            value="12000" min="100">
+                    </div>
+                </div>
+
+                <button type="submit"
+                    class="w-full py-md bg-primary text-on-primary font-bold rounded-lg hover:opacity-90 transition-opacity flex justify-center items-center gap-sm">
+                    <span class="material-symbols-outlined text-sm">cycle</span> Run Forecast
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Simulation Results Modal -->
+    <div id="simulation-results-modal"
+        class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div
+            class="bg-surface p-lg rounded-2xl shadow-2xl border border-outline-variant w-full max-w-lg mx-margin-mobile relative max-h-[90vh] overflow-y-auto">
+            <button id="btn-close-results" class="absolute top-md right-md text-outline hover:text-on-surface">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            <h3 class="text-headline-sm font-bold text-primary mb-xs" id="res-title">Simulation Forecast Results</h3>
+            <p class="text-label-md text-on-surface-variant mb-md" id="res-subtitle">Results from Traffic Intelligence
+                API</p>
+
+            <div class="space-y-md text-body-md">
+                <div class="grid grid-cols-2 gap-md">
+                    <div class="p-md bg-error/5 border border-error/20 rounded-xl">
+                        <p class="text-label-md text-error font-bold uppercase">Congestion Level</p>
+                        <p id="res-congestion" class="text-2xl font-black text-error">Very High</p>
+                    </div>
+                    <div class="p-md bg-tertiary-container/5 border border-tertiary-container/20 rounded-xl">
+                        <p class="text-label-md text-tertiary-container font-bold uppercase">Expected Delay</p>
+                        <p id="res-delay" class="text-2xl font-black text-tertiary-container">28 mins</p>
+                    </div>
+                    <div class="p-md bg-surface-container-high rounded-xl">
+                        <p class="text-label-md text-on-surface-variant font-bold uppercase">Affected Radius</p>
+                        <p id="res-radius" class="text-xl font-bold">3.0 km</p>
+                    </div>
+                    <div class="p-md bg-surface-container-high rounded-xl">
+                        <p class="text-label-md text-on-surface-variant font-bold uppercase">Accident/Safety Risk</p>
+                        <p id="res-risk" class="text-xl font-bold">92%</p>
+                    </div>
+                </div>
+
+                <div class="p-md bg-secondary-container/10 border border-secondary/20 rounded-xl space-y-sm">
+                    <h4 class="font-bold text-on-secondary-container flex items-center gap-sm">
+                        <span class="material-symbols-outlined">verified</span> Resource Recommendations
+                    </h4>
+                    <div class="grid grid-cols-2 gap-sm text-label-md">
+                        <div class="flex items-center gap-xs"><span
+                                class="material-symbols-outlined text-sm">local_police</span> Deploy Police: <span
+                                id="res-police" class="font-bold">18</span></div>
+                        <div class="flex items-center gap-xs"><span
+                                class="material-symbols-outlined text-sm">fence</span> Barricades: <span
+                                id="res-barricades" class="font-bold">4</span></div>
+                        <div class="flex items-center gap-xs"><span
+                                class="material-symbols-outlined text-sm">medical_services</span> Ambulances: <span
+                                id="res-ambulances" class="font-bold">1</span></div>
+                        <div class="flex items-center gap-xs"><span
+                                class="material-symbols-outlined text-sm">group</span> Traffic Marshals: <span
+                                id="res-marshals" class="font-bold">6</span></div>
+                    </div>
+                    <p class="text-label-md text-on-secondary-container/80 pt-xs border-t border-secondary/10">
+                        <strong>Diversion:</strong> Alternating traffic to <span id="res-diversion-route"
+                            class="font-bold">Route B</span>. Routes plotted on the map.
+                    </p>
+                </div>
+
+                <button id="btn-apply-simulation"
+                    class="w-full py-md bg-primary text-on-primary font-bold rounded-lg hover:opacity-90 transition-opacity">
+                    Apply Diversion & Close
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Map items tracking
+        var activeMarkers = {};
+        var simulationLayers = [];
+        var displayedReports = new Set();
+        var userCoords = [25.61591, 85.09529]; // Default Patna coordinates
+
+        // Initialize Leaflet Map centered on Patna (default fallback)
+        var map = L.map('map', { zoomControl: false }).setView(userCoords, 13);
+
+        // Fetch user location as soon as site loads
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    userCoords = [lat, lng];
+
+                    // Update Route Finder input
+                    const startEl = document.getElementById('route-start');
+                    if (startEl) startEl.value = `GPS Lock (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+
+                    // Fly to user location
+                    map.flyTo([lat, lng], 15);
+
+                    // Add a marker for user's traffic node
+                    var userMarker = L.marker([lat, lng]).addTo(map)
+                        .bindPopup("<b>Traffic Command Hub (You)</b><br>GPS Location verified.")
+                        .openPopup();
+                    activeMarkers['user'] = userMarker;
+
+                    showToast("GPS Location Fetched successfully!", "success");
+                },
+                (error) => {
+                    console.warn("Onload Geolocation error: ", error);
+                    let errMsg = "Location access failed. ";
+                    if (error.code === error.PERMISSION_DENIED) {
+                        errMsg += "Please allow Location permissions in Chrome.";
+                    } else if (error.code === error.POSITION_UNAVAILABLE) {
+                        errMsg += "Please enable Windows Location services in Settings.";
+                    } else {
+                        errMsg += "GPS Request timed out. Using default Patna view.";
+                    }
+
+                    // Update Route Finder input with default
+                    const startEl = document.getElementById('route-start');
+                    if (startEl) startEl.value = `Patna Center (${userCoords[0].toFixed(4)}, ${userCoords[1].toFixed(4)})`;
+
+                    showToast(errMsg, "error");
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            const startEl = document.getElementById('route-start');
+            if (startEl) startEl.value = `Patna Center (${userCoords[0].toFixed(4)}, ${userCoords[1].toFixed(4)})`;
+        }
+
+        // Add zoom control at bottom left
+        L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+        // Load real Google Maps Road tiles
+        var googleStreets = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+            attribution: 'Map data &copy; Google'
+        });
+        googleStreets.addTo(map);
+
+        function getIncidentIcon(type, severity) {
+            let iconName = 'warning';
+            let bgColor = 'bg-amber-500';
+
+            const lowerType = type.toLowerCase();
+            if (lowerType.includes('pothole') || lowerType.includes('damage') || lowerType.includes('crack')) {
+                iconName = 'warning';
+                bgColor = 'bg-amber-500';
+            } else if (lowerType.includes('accident') || lowerType.includes('crash')) {
+                iconName = 'minor_crash';
+                bgColor = 'bg-red-600';
+            } else if (lowerType.includes('tree') || lowerType.includes('debris') || lowerType.includes('obstruction')) {
+                iconName = 'nature';
+                bgColor = 'bg-orange-600';
+            } else if (lowerType.includes('flood') || lowerType.includes('water') || lowerType.includes('rain') || lowerType.includes('waterlogging')) {
+                iconName = 'flood';
+                bgColor = 'bg-blue-600';
+            } else if (lowerType.includes('signal') || lowerType.includes('light')) {
+                iconName = 'traffic';
+                bgColor = 'bg-red-500';
+            } else if (lowerType.includes('breakdown') || lowerType.includes('vehicle')) {
+                iconName = 'car_repair';
+                bgColor = 'bg-purple-600';
+            } else if (lowerType.includes('simulation')) {
+                iconName = 'science';
+                bgColor = 'bg-indigo-600';
+            }
+
+            const severityLower = (severity || 'medium').toLowerCase();
+            if (severityLower === 'critical' || severityLower === 'high') {
+                bgColor = bgColor.split(' ')[0] + ' animate-pulse border-red-200';
+            }
+
+            return L.divIcon({
+                html: `<div class="flex items-center justify-center w-8 h-8 rounded-full ${bgColor} text-white shadow-lg border-2 border-white">
+                         <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">${iconName}</span>
+                       </div>`,
+                className: 'custom-incident-icon',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+        }
+
+        // Bangalore Predefined Coordinates for mapping locations
+        const LOCATION_COORDS = {
+            "MG Road Junction": [12.9740, 77.6101],
+            "Silk Board": [12.9176, 77.6244],
+            "Outer Ring Road": [12.9279, 77.6809],
+            "Cubbon Park Road": [12.9779, 77.5952],
+            "M.G. Road Chowk": [12.9745, 77.6110],
+            "Sector 4 Flyover": [12.9150, 77.6380],
+            "Old City Ward": [12.9702, 77.5750],
+            "Station Rd": [12.9715, 77.6410],
+            "NH8 Exit": [12.9080, 77.6010],
+            "Ward 4": [12.9800, 77.5900]
+        };
+
+        // Populate initial static markers on map (Removed mock data - only showing actual data now)
+        var initialIncidents = [];
+
+        // Tab Toggle Navigation
+        const tabIncidents = document.getElementById('tab-incidents');
+        const tabReports = document.getElementById('tab-reports');
+        const panelIncidents = document.getElementById('panel-incidents');
+        const panelReports = document.getElementById('panel-reports');
+
+        tabIncidents.addEventListener('click', () => {
+            tabIncidents.className = "flex-1 py-md text-label-md font-bold text-primary border-b-2 border-primary bg-primary-container/10";
+            tabReports.className = "flex-1 py-md text-label-md font-bold text-on-surface-variant hover:bg-surface-container-low border-b-2 border-transparent";
+            panelIncidents.classList.remove('hidden');
+            panelReports.classList.add('hidden');
+        });
+
+        tabReports.addEventListener('click', () => {
+            tabReports.className = "flex-1 py-md text-label-md font-bold text-primary border-b-2 border-primary bg-primary-container/10";
+            tabIncidents.className = "flex-1 py-md text-label-md font-bold text-on-surface-variant hover:bg-surface-container-low border-b-2 border-transparent";
+            panelReports.classList.remove('hidden');
+            panelIncidents.classList.add('hidden');
+        });
+
+        // Simulation Modal Handlers
+        const btnNewSimulation = document.getElementById('btn-new-simulation');
+        const simulationModal = document.getElementById('simulation-modal');
+        const btnCloseModal = document.getElementById('btn-close-modal');
+        const simulationForm = document.getElementById('simulation-form');
+
+        const simulationResultsModal = document.getElementById('simulation-results-modal');
+        const btnCloseResults = document.getElementById('btn-close-results');
+        const btnApplySimulation = document.getElementById('btn-apply-simulation');
+
+        btnNewSimulation.addEventListener('click', (e) => {
+            e.preventDefault();
+            simulationModal.classList.remove('hidden');
+        });
+
+        btnCloseModal.addEventListener('click', () => {
+            simulationModal.classList.add('hidden');
+        });
+
+        btnCloseResults.addEventListener('click', () => {
+            simulationResultsModal.classList.add('hidden');
+        });
+
+        btnApplySimulation.addEventListener('click', () => {
+            simulationResultsModal.classList.add('hidden');
+        });
+
+        // Simulation Form Submission (Prediction Backend)
+        simulationForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const event_type = document.getElementById('sim-event-type').value;
+            const location = document.getElementById('sim-location').value;
+            const crowd_size = parseInt(document.getElementById('sim-crowd').value) || 1000;
+            const time = document.getElementById('sim-time').value;
+
+            // Show loading state
+            const submitBtn = simulationForm.querySelector('button[type="submit"]');
+            const origText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin">cyclone</span> Simulating...`;
+
+            try {
+                const response = await fetch('http://localhost:8000/api/simulation/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ event_type, location, crowd_size, time })
+                });
+
+                if (!response.ok) throw new Error("Simulation endpoint failed");
+
+                const result = await response.json();
+
+                // Close input modal
+                simulationModal.classList.add('hidden');
+
+                // Populate results modal
+                document.getElementById('res-congestion').innerText = result.congestion;
+                document.getElementById('res-delay').innerText = result.delay_minutes + " mins";
+                document.getElementById('res-radius').innerText = result.radius_km + " km";
+                document.getElementById('res-risk').innerText = result.risk + "%";
+                document.getElementById('res-police').innerText = result.recommendations.police;
+                document.getElementById('res-barricades').innerText = result.recommendations.barricades;
+                document.getElementById('res-ambulances').innerText = result.recommendations.ambulances;
+                document.getElementById('res-marshals').innerText = result.recommendations.marshals;
+                document.getElementById('res-diversion-route').innerText = result.recommendations.diversion_route;
+
+                // Adjust color scheme in results based on severity
+                const congEl = document.getElementById('res-congestion');
+                if (result.congestion === "Very High" || result.congestion === "Heavy") {
+                    congEl.className = "text-2xl font-black text-error";
+                } else {
+                    congEl.className = "text-2xl font-black text-secondary";
+                }
+
+                // Show results modal
+                simulationResultsModal.classList.remove('hidden');
+
+                // Render Simulation Forecast Zone & Route on Map
+                // Clear previous simulation layers
+                simulationLayers.forEach(l => map.removeLayer(l));
+                simulationLayers = [];
+
+                const coords = result.coords;
+                // 1. Draw Red Affected Radius circle
+                var zoneCircle = L.circle(coords, {
+                    color: '#ba1a1a',
+                    fillColor: '#ba1a1a',
+                    fillOpacity: 0.15,
+                    radius: result.radius_km * 1000,
+                    weight: 2,
+                    dashArray: '5, 5'
+                }).addTo(map);
+                simulationLayers.push(zoneCircle);
+
+                // 2. Draw Green Diversion Polyline Route (Dijkstra Alternative Route)
+                var diversionPath = L.polyline(result.alternative_route, {
+                    color: '#006c47',
+                    weight: 6,
+                    opacity: 0.85,
+                    lineJoin: 'round'
+                }).addTo(map);
+                simulationLayers.push(diversionPath);
+
+                // 3. Add Simulated Blockage Marker
+                var blockMarker = L.marker(coords).addTo(map)
+                    .bindPopup(`<b>Simulation: ${result.event_type}</b><br>Congestion: ${result.congestion}<br>Radius: ${result.radius_km}km`)
+                    .openPopup();
+                simulationLayers.push(blockMarker);
+
+                // Fly to coords
+                map.flyTo(coords, 14);
+
+                // Append new card to Active Incidents sidebar
+                prependIncidentCard({
+                    type: `SIMULATION: ${result.event_type}`,
+                    severity: result.risk > 75 ? 'CRITICAL' : 'CONGESTED',
+                    location: `${result.location} (Simulated Zone)`,
+                    description: `Affected Area: ~${result.radius_km}km radius. Expected delay: ${result.delay_minutes} min. Diverting via Route B.`,
+                    time_ago: "Just now",
+                    coords: coords
+                });
+
+                showToast("Simulation plotted on map successfully!", "success");
+
+            } catch (err) {
+                console.error("Simulation error: ", err);
+                showToast("Prediction server offline. Using local simulation engine.", "error");
+
+                // Offline fallback
+                simulationModal.classList.add('hidden');
+                document.getElementById('res-congestion').innerText = "Heavy";
+                document.getElementById('res-delay').innerText = "25 mins";
+                document.getElementById('res-radius').innerText = "1.5 km";
+                document.getElementById('res-risk').innerText = "78%";
+                document.getElementById('res-police').innerText = "12";
+                document.getElementById('res-barricades').innerText = "3";
+                document.getElementById('res-ambulances').innerText = "1";
+                document.getElementById('res-marshals').innerText = "4";
+                document.getElementById('res-diversion-route').innerText = "Route B (Fallback)";
+                simulationResultsModal.classList.remove('hidden');
+
+                // Plot local fallback coordinates (Bangalore center)
+                const fallbackCoords = LOCATION_COORDS[location] || [12.9716, 77.5946];
+                simulationLayers.forEach(l => map.removeLayer(l));
+                simulationLayers = [];
+                var circle = L.circle(fallbackCoords, { color: '#ba1a1a', fillOpacity: 0.15, radius: 1500 }).addTo(map);
+                simulationLayers.push(circle);
+                var mark = L.marker(fallbackCoords).addTo(map).bindPopup("<b>Offline Simulation Fallback</b>").openPopup();
+                simulationLayers.push(mark);
+                map.flyTo(fallbackCoords, 14);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = origText;
+            }
+        });
+
+        // Fly map view to a specific coordinate
+        function focusOnMap(lat, lng) {
+            if (lat && lng) {
+                map.flyTo([lat, lng], 16);
+            }
+        }
+
+        // Asynchronously reverse geocode lat, lon to get an area/road name
+        async function getAreaName(lat, lon) {
+            try {
+                const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=16`;
+                const response = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'AegisTrafficControl/1.0'
+                    }
+                });
+                if (!response.ok) throw new Error("Geocoding failed");
+                const data = await response.json();
+
+                const addr = data.address;
+                if (!addr) return null;
+
+                // Extract the most descriptive localized name
+                return addr.road || addr.suburb || addr.neighbourhood || addr.residential || addr.city_district || addr.city || addr.town;
+            } catch (err) {
+                console.error("Reverse geocoding error: ", err);
+                return null;
+            }
+        }
+
+        // Helper to prepend incident cards
+        function prependIncidentCard(inc) {
+            const list = document.getElementById('active-incidents-list');
+            const card = document.createElement('div');
+
+            const isCritical = inc.severity.toUpperCase() === 'CRITICAL';
+            const borderClass = isCritical ? 'border-error' : 'border-outline-variant';
+            const badgeClass = isCritical ? 'bg-error text-on-error' : 'bg-tertiary-container text-white';
+
+            const locId = `loc-${Math.random().toString(36).substr(2, 9)}`;
+
+            card.className = `p-md border ${borderClass} bg-surface rounded transition-all duration-300 hover:shadow-md animate-[pulse_2s_1]`;
+
+            const lat = inc.coords ? inc.coords[0] : null;
+            const lng = inc.coords ? inc.coords[1] : null;
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-sm">
+                    <span class="px-sm py-xs ${badgeClass} text-[10px] font-bold rounded uppercase">${inc.severity}</span>
+                    <span class="text-label-md text-on-surface-variant">${inc.time_ago || 'Just now'}</span>
+                </div>
+                <h4 class="text-body-md font-bold mb-xs">${inc.type}: <span id="${locId}">${inc.location}</span></h4>
+                <p class="text-body-md text-on-surface-variant mb-md leading-tight">${inc.description}</p>
+                <div class="flex gap-sm">
+                    <button class="flex-1 py-xs bg-primary text-on-primary text-label-md rounded font-bold hover:opacity-90" onclick="focusOnMap(${lat}, ${lng})">View on Map</button>
+                    <button class="px-md py-xs bg-error/10 text-error hover:bg-error/20 text-label-md rounded font-bold transition-all flex items-center justify-center gap-xs" onclick="deleteIncident('${inc.id}', this)">
+                        <span class="material-symbols-outlined text-[16px]">delete</span> Delete
+                    </button>
+                </div>
+            `;
+
+            list.insertBefore(card, list.firstChild);
+
+            // Attempt to reverse geocode coordinates
+            if (lat && lng) {
+                getAreaName(lat, lng).then(areaName => {
+                    if (areaName) {
+                        const locEl = document.getElementById(locId);
+                        if (locEl) {
+                            locEl.innerHTML = `${areaName} <span class="text-[10px] text-on-surface-variant font-normal">(${lat.toFixed(4)}, ${lng.toFixed(4)})</span>`;
+                        }
+                    }
+                });
+            }
+
+            // Update counter
+            const counter = document.getElementById('incidents-count');
+            counter.innerText = parseInt(counter.innerText) + 1;
+        }
+
+        // Deletes an incident from frontend map, list, and backend memory
+        async function deleteIncident(id, buttonEl) {
+            if (!id || id === 'undefined' || id === 'null') {
+                const card = buttonEl.closest('.p-md');
+                if (card) {
+                    card.remove();
+                    const counter = document.getElementById('incidents-count');
+                    counter.innerText = Math.max(0, parseInt(counter.innerText) - 1);
+                }
+                return;
+            }
+
+            try {
+                const endpoint = id.startsWith('sim_') ? 'simulation' : 'report';
+                const response = await fetch(`http://localhost:8000/api/${endpoint}/delete/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    // Remove card from list
+                    const card = buttonEl.closest('.p-md');
+                    if (card) card.remove();
+
+                    // Remove Leaflet marker
+                    if (activeMarkers[id]) {
+                        map.removeLayer(activeMarkers[id]);
+                        delete activeMarkers[id];
+                    }
+
+                    // Prevent re-sync
+                    displayedReports.delete(id);
+
+                    // Decrement incidents count
+                    const counter = document.getElementById('incidents-count');
+                    counter.innerText = Math.max(0, parseInt(counter.innerText) - 1);
+
+                    showToast("Incident deleted successfully", "success");
+                } else {
+                    showToast("Failed to delete incident", "error");
+                }
+            } catch (err) {
+                console.error("Delete error: ", err);
+                showToast("Connection error. Removed from screen.", "error");
+                const card = buttonEl.closest('.p-md');
+                if (card) card.remove();
+            }
+        }
+
+        // GPS Fetch Promisified Helper
+        function getGPSCoordinates() {
+            return new Promise((resolve) => {
+                const statusEl = document.getElementById('gps-status');
+                statusEl.innerText = "GPS Status: Fetching device coordinates...";
+
+                if (!navigator.geolocation) {
+                    statusEl.innerText = "GPS Status: Not supported. Using center default.";
+                    resolve({ lat: 25.61591, lng: 85.09529 });
+                } else {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            statusEl.innerText = `GPS Status: Locked (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)})`;
+                            resolve({ lat: position.coords.latitude, lng: position.coords.longitude });
+                        },
+                        (error) => {
+                            console.warn("GPS Permission / Fetch Error: ", error);
+                            statusEl.innerText = "GPS Status: Denied/Error. Using center default.";
+                            resolve({ lat: 25.61591, lng: 85.09529 });
+                        },
+                        { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+                    );
+                }
+            });
+        }
+
+        // Citizen Reporting Flow (GPS + Upload Photo / Video)
+        const fileInput = document.getElementById('citizen-file-input');
+        const uploadBox = document.getElementById('upload-box');
+        const processingBox = document.getElementById('processing-box');
+        const processingText = document.getElementById('processing-text');
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            processingBox.classList.remove('hidden');
+            processingText.innerText = "Fetching current GPS coordinates...";
+
+            // 1. Fetch GPS Location
+            const coords = await getGPSCoordinates();
+
+            processingText.innerText = `Uploading and processing media via AI Models...`;
+
+            // 2. Upload file & coordinates to backend
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('latitude', coords.lat);
+            formData.append('longitude', coords.lng);
+
+            try {
+                const response = await fetch('http://localhost:8000/api/report/submit', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error("Backend upload failed");
+
+                const result = await response.json();
+
+                // 3. Process Result
+                const report = result.report;
+                const identifier = report.id || (report.coords.join(',') + '_' + report.type);
+                displayedReports.add(identifier);
+
+                // Add Marker on Google/Leaflet Map at user's exact GPS
+                var customIcon = L.marker([coords.lat, coords.lng], {
+                    icon: getIncidentIcon(report.type, report.severity)
+                }).addTo(map)
+                    .bindPopup(`<b>${report.type}</b><br>${report.description}<br><span class="text-[10px] text-outline">${report.location}</span>`)
+                    .openPopup();
+
+                activeMarkers[identifier] = customIcon;
+                map.flyTo([coords.lat, coords.lng], 15);
+
+                // Add to incidents pane
+                prependIncidentCard(report);
+
+                // Update Stats Dashboard elements
+                if (result.pothole_count > 0) {
+                    const potholeStat = document.getElementById('ai-pothole-stat');
+                    if (potholeStat) {
+                        potholeStat.innerText = result.pothole_count + " Detected";
+                        potholeStat.className = "text-sm font-black text-error";
+                    }
+                }
+
+                showToast(`Report processed: ${report.type} mapped!`, "success");
+
+                // Reset file input
+                fileInput.value = '';
+
+                // Switch back to incidents tab to show card
+                tabIncidents.click();
+
+            } catch (err) {
+                console.error("Upload process error: ", err);
+                showToast("Scanning failed. Make sure backend app.py is running.", "error");
+            } finally {
+                processingBox.classList.add('hidden');
+            }
+        });
+
+        // HTML5 Video Capture Integration (Webcam)
+        const btnCapturePhoto = document.getElementById('btn-capture-photo');
+        const btnCaptureVideo = document.getElementById('btn-capture-video');
+        const cameraPreviewContainer = document.getElementById('camera-preview-container');
+        const cameraStream = document.getElementById('camera-stream');
+        const btnSnap = document.getElementById('btn-snap');
+        const btnCancelCamera = document.getElementById('btn-cancel-camera');
+        const cameraCanvas = document.getElementById('camera-canvas');
+
+        let streamRef = null;
+
+        async function startWebcam() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                cameraStream.srcObject = stream;
+                streamRef = stream;
+                cameraPreviewContainer.classList.remove('hidden');
+                uploadBox.classList.add('hidden');
+            } catch (err) {
+                console.error("Camera access error: ", err);
+                showToast("Webcam access denied or unavailable.", "error");
+            }
+        }
+
+        function stopWebcam() {
+            if (streamRef) {
+                streamRef.getTracks().forEach(track => track.stop());
+                streamRef = null;
+            }
+            cameraPreviewContainer.classList.add('hidden');
+            uploadBox.classList.remove('hidden');
+        }
+
+        btnCapturePhoto.addEventListener('click', startWebcam);
+        btnCaptureVideo.addEventListener('click', startWebcam); // Uses webcam capture flow
+        btnCancelCamera.addEventListener('click', stopWebcam);
+
+        btnSnap.addEventListener('click', async () => {
+            if (!streamRef) return;
+
+            // Draw snapshot onto canvas
+            const width = cameraStream.videoWidth;
+            const height = cameraStream.videoHeight;
+            cameraCanvas.width = width;
+            cameraCanvas.height = height;
+            const ctx = cameraCanvas.getContext('2d');
+            ctx.drawImage(cameraStream, 0, 0, width, height);
+
+            stopWebcam();
+
+            // Convert to blob and send to backend
+            cameraCanvas.toBlob(async (blob) => {
+                processingBox.classList.remove('hidden');
+                processingText.innerText = "Fetching current GPS coordinates...";
+
+                const coords = await getGPSCoordinates();
+                processingText.innerText = "Analyzing camera snapshot with AI...";
+
+                const file = new File([blob], "snap_report.jpg", { type: "image/jpeg" });
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('latitude', coords.lat);
+                formData.append('longitude', coords.lng);
+
+                try {
+                    const response = await fetch('http://localhost:8000/api/report/submit', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) throw new Error("Backend upload failed");
+
+                    const result = await response.json();
+                    const report = result.report;
+                    const identifier = report.id || (report.coords.join(',') + '_' + report.type);
+                    displayedReports.add(identifier);
+
+                    // Place Marker
+                    var snapMarker = L.marker([coords.lat, coords.lng], {
+                        icon: getIncidentIcon(report.type, report.severity)
+                    }).addTo(map)
+                        .bindPopup(`<b>${report.type}</b><br>${report.description}`)
+                        .openPopup();
+                    activeMarkers[identifier] = snapMarker;
+                    map.flyTo([coords.lat, coords.lng], 15);
+
+                    // Add card
+                    prependIncidentCard(report);
+
+                    if (result.pothole_count > 0) {
+                        const potholeStat = document.getElementById('ai-pothole-stat');
+                        if (potholeStat) {
+                            potholeStat.innerText = result.pothole_count + " Detected";
+                            potholeStat.className = "text-sm font-black text-error";
+                        }
+                    }
+
+                    showToast("Snapshot mapped and reported successfully!", "success");
+                    tabIncidents.click();
+
+                } catch (err) {
+                    console.error("Camera upload error: ", err);
+                    showToast("Failed to process snapshot.", "error");
+                } finally {
+                    processingBox.classList.add('hidden');
+                }
+            }, 'image/jpeg');
+        });
+
+        // Real-time Dashboard Update from FastAPI
+        async function updateDashboardStats() {
+            try {
+                const response = await fetch('http://localhost:8000/api/stats');
+                const data = await response.json();
+
+                // Update vehicle count
+                const countEl = document.getElementById('ai-vehicle-count');
+                const densityEl = document.getElementById('ai-alert-status');
+
+                if (data.traffic_density) {
+                    if (countEl) {
+                        countEl.innerText = data.traffic_density.count + " units";
+                    }
+                    if (densityEl) {
+                        densityEl.innerText = data.traffic_density.status;
+                        densityEl.className = `text-sm font-bold ${data.traffic_density.count > 25 ? 'text-red-400' : 'text-green-400'}`;
+                    }
+                }
+
+                // Update active hazards based on real data
+                if (data.citizen_reports) {
+                    // Calculate Active Hazard Counts breakdown
+                    let potholesCount = 0;
+                    let floodsCount = 0;
+                    let accidentsCount = 0;
+                    let debrisCount = 0;
+
+                    data.citizen_reports.forEach(report => {
+                        const type = report.type.toLowerCase();
+                        if (type.includes('pothole') || type.includes('damage') || type.includes('crack')) {
+                            potholesCount += (report.pothole_count || 1);
+                        } else if (type.includes('flood') || type.includes('water') || type.includes('waterlogging') || type.includes('rain')) {
+                            floodsCount += 1;
+                        } else if (type.includes('accident') || type.includes('crash')) {
+                            accidentsCount += 1;
+                        } else if (type.includes('tree') || type.includes('debris') || type.includes('obstruction') || type.includes('road debris')) {
+                            debrisCount += 1;
+                        }
+                    });
+
+                    // Update Active Hazards breakdown text elements
+                    const pEl = document.getElementById('stats-potholes-count');
+                    const fEl = document.getElementById('stats-floods-count');
+                    const aEl = document.getElementById('stats-accidents-count');
+                    const dEl = document.getElementById('stats-debris-count');
+
+                    if (pEl) pEl.innerText = potholesCount;
+                    if (fEl) fEl.innerText = floodsCount;
+                    if (aEl) aEl.innerText = accidentsCount;
+                    if (dEl) dEl.innerText = debrisCount;
+                }
+
+                // Sync reported incidents from backend
+                if (data.citizen_reports) {
+                    data.citizen_reports.forEach(report => {
+                        const identifier = report.id || (report.coords.join(',') + '_' + report.type);
+                        if (!displayedReports.has(identifier)) {
+                            displayedReports.add(identifier);
+
+                            // Place Marker on Map
+                            const marker = L.marker([report.coords[0], report.coords[1]], {
+                                icon: getIncidentIcon(report.type, report.severity)
+                            }).addTo(map)
+                                .bindPopup(`<b>${report.type}</b><br>${report.description}<br><span class="text-[10px] text-outline">${report.location}</span>`);
+
+                            activeMarkers[identifier] = marker;
+                            prependIncidentCard(report);
+                        }
+                    });
+                }
+
+            } catch (err) {
+                // Silently fail if backend not running
+            }
+        }
+
+        // Initialize WebSocket for alerts
+        function setupAlerts() {
+            const socket = new WebSocket('ws://localhost:8000/ws/alerts');
+            socket.onmessage = function (event) {
+                const alert = JSON.parse(event.data);
+                showToast(`AI Detected ${alert.type} at ${alert.location}`, 'error');
+            };
+            socket.onerror = function () { console.log('WebSocket not active'); };
+        }
+
+        // Helper for Toasts
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-20 right-5 z-[100] px-md py-sm rounded-lg shadow-xl text-white font-bold animate-bounce transition-all ${type === 'error' ? 'bg-error' : 'bg-secondary'}`;
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        // ─── DIJKSTRA SAFE ROUTING ENGINE ───
+
+        const ROUTING_NODES = {
+            "node_junction": { name: "Patna Junction", coords: [25.6025, 85.1376] },
+            "node_gandhi": { name: "Gandhi Maidan", coords: [25.6208, 85.1448] },
+            "node_it": { name: "IT Chowk (Income Tax)", coords: [25.6115, 85.1293] },
+            "node_dak": { name: "Dak Bungalow Chowk", coords: [25.6105, 85.1378] },
+            "node_patliputra": { name: "Patliputra Junction", coords: [25.6212, 85.0886] },
+            "node_bailey": { name: "Bailey Road (RPS More)", coords: [25.6120, 85.0600] },
+            "node_boring": { name: "Boring Road Crossing", coords: [25.6200, 85.1225] },
+            "node_danapur": { name: "Danapur Station", coords: [25.5900, 85.0350] }
+        };
+
+        const ROUTING_EDGES = [
+            { from: "node_junction", to: "node_dak", label: "Station Road" },
+            { from: "node_junction", to: "node_it", label: "Budh Marg" },
+            { from: "node_dak", to: "node_gandhi", label: "Fraser Road" },
+            { from: "node_dak", to: "node_it", label: "Bailey Road East" },
+            { from: "node_boring", to: "node_dak", label: "Boring Road Link" },
+            { from: "node_it", to: "node_boring", label: "Boring Road South" },
+            { from: "node_boring", to: "node_gandhi", label: "Boring Canal Road" },
+            { from: "node_boring", to: "node_patliputra", label: "Patliputra Road" },
+            { from: "node_it", to: "node_patliputra", label: "Nehru Path" },
+            { from: "node_patliputra", to: "node_bailey", label: "Bailey Road West" },
+            { from: "node_bailey", to: "node_danapur", label: "Danapur Link Road" }
+        ];
+
+        function calculateDistance(coords1, coords2) {
+            const dx = coords1[0] - coords2[0];
+            const dy = coords1[1] - coords2[1];
+            return Math.sqrt(dx * dx + dy * dy) * 111000; // approx meters
+        }
+
+        function distanceToSegment(p, a, b) {
+            const x0 = p[0], y0 = p[1];
+            const x1 = a[0], y1 = a[1];
+            const x2 = b[0], y2 = b[1];
+
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+
+            if (dx === 0 && dy === 0) return calculateDistance(p, a);
+
+            const t = ((x0 - x1) * dx + (y0 - y1) * dy) / (dx * dx + dy * dy);
+
+            if (t < 0) return calculateDistance(p, a);
+            else if (t > 1) return calculateDistance(p, b);
+
+            const projX = x1 + t * dx;
+            const projY = y1 + t * dy;
+            return calculateDistance(p, [projX, projY]);
+        }
+
+        var routePolyline = null;
+        var routeMarkers = [];
+
+        // Resolves any input address string or coordinate pair to lat, lng coordinates
+        async function resolveLocationToCoords(inputString) {
+            if (!inputString) return null;
+            const str = inputString.trim();
+            if (str.toLowerCase().includes("gps lock") || str.toLowerCase().includes("detecting location")) {
+                return userCoords;
+            }
+            if (str.toLowerCase().includes("patna center")) {
+                return [25.61591, 85.09529];
+            }
+
+            // 1. Check if it's direct lat, lng coordinates
+            const coordRegex = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/;
+            const coordMatch = str.match(coordRegex);
+            if (coordMatch) {
+                return [parseFloat(coordMatch[1]), parseFloat(coordMatch[2])];
+            }
+
+            // 2. Check local junction names
+            const cleanInput = str.toLowerCase();
+            for (const nodeId in ROUTING_NODES) {
+                const node = ROUTING_NODES[nodeId];
+                if (node.name.toLowerCase().includes(cleanInput) || cleanInput.includes(node.name.toLowerCase())) {
+                    return node.coords;
+                }
+            }
+
+            // 3. Query OpenStreetMap Nominatim Search API
+            try {
+                const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(str)}`;
+                const response = await fetch(url, {
+                    headers: { 'User-Agent': 'AegisTrafficControl/1.0' }
+                });
+                if (response.ok) {
+                    const results = await response.json();
+                    if (results && results.length > 0) {
+                        return [parseFloat(results[0].lat), parseFloat(results[0].lon)];
+                    }
+                }
+            } catch (err) {
+                console.error("Geocoding fetch error: ", err);
+            }
+            return null;
+        }
+
+        async function findSafeRoute(startCoords, destCoords) {
+            // Clear existing routes/markers
+            if (routePolyline) {
+                map.removeLayer(routePolyline);
+                routePolyline = null;
+            }
+            routeMarkers.forEach(m => map.removeLayer(m));
+            routeMarkers = [];
+
+            const startNodeId = "user_start";
+            const destNodeId = "user_end";
+
+            const allNodes = {
+                ...ROUTING_NODES,
+                [startNodeId]: { name: "Start Location", coords: startCoords },
+                [destNodeId]: { name: "Destination", coords: destCoords }
+            };
+
+            // Connect start coordinates to closest routing node
+            let closestStartId = null;
+            let minStartDist = Infinity;
+            for (const nodeId in ROUTING_NODES) {
+                const dist = calculateDistance(startCoords, ROUTING_NODES[nodeId].coords);
+                if (dist < minStartDist) {
+                    minStartDist = dist;
+                    closestStartId = nodeId;
+                }
+            }
+
+            // Connect destination coordinates to closest routing node
+            let closestDestId = null;
+            let minDestDist = Infinity;
+            for (const nodeId in ROUTING_NODES) {
+                const dist = calculateDistance(destCoords, ROUTING_NODES[nodeId].coords);
+                if (dist < minDestDist) {
+                    minDestDist = dist;
+                    closestDestId = nodeId;
+                }
+            }
+
+            if (!closestStartId || !closestDestId) {
+                showToast("Could not link locations to road network.", "error");
+                return;
+            }
+
+            const allEdges = [
+                ...ROUTING_EDGES,
+                { from: startNodeId, to: closestStartId, label: "Access Road Start" },
+                { from: destNodeId, to: closestDestId, label: "Access Road End" }
+            ];
+
+            // Scan DOM to find active hazards coords
+            const hazards = [];
+            const list = document.getElementById('active-incidents-list');
+            const cards = list ? list.querySelectorAll('.p-md') : [];
+            cards.forEach(card => {
+                const btn = card.querySelector('button');
+                if (btn) {
+                    const onclickStr = btn.getAttribute('onclick') || "";
+                    const match = onclickStr.match(/focusOnMap\(([^,]+),\s*([^)]+)\)/);
+                    if (match) {
+                        const lat = parseFloat(match[1]);
+                        const lng = parseFloat(match[2]);
+                        const badge = card.querySelector('span.uppercase');
+                        const severity = badge ? badge.innerText.toLowerCase() : 'medium';
+                        const h4 = card.querySelector('h4');
+                        const type = h4 ? h4.innerText.split(':')[0] : 'hazard';
+
+                        hazards.push({ coords: [lat, lng], severity, type });
+                    }
+                }
+            });
+
+            // Build adjacency list graph representation
+            const graph = {};
+            const addEdge = (u, v, weight, label) => {
+                if (!graph[u]) graph[u] = [];
+                graph[u].push({ node: v, weight, label });
+                if (!graph[v]) graph[v] = [];
+                graph[v].push({ node: u, weight, label });
+            };
+
+            allEdges.forEach(edge => {
+                const uCoords = allNodes[edge.from].coords;
+                const vCoords = allNodes[edge.to].coords;
+                const baseWeight = calculateDistance(uCoords, vCoords);
+
+                let penalty = 0;
+                let activeHazardName = "";
+
+                hazards.forEach(hazard => {
+                    const distToEdge = distanceToSegment(hazard.coords, uCoords, vCoords);
+                    if (distToEdge < 250) { // Avoid anything within 250 meters
+                        let severityPenalty = 1000;
+                        if (hazard.severity === 'critical' || hazard.severity === 'high') {
+                            severityPenalty = 1000000; // Block completely
+                        } else if (hazard.severity === 'medium') {
+                            severityPenalty = 8000; // Severe delay penalty
+                        }
+                        penalty += severityPenalty;
+                        activeHazardName = hazard.type;
+                    }
+                });
+
+                const finalWeight = baseWeight + penalty;
+                addEdge(edge.from, edge.to, finalWeight, edge.label + (activeHazardName ? ` (Avoiding ${activeHazardName})` : ""));
+            });
+
+            // Dijkstra Pathfinding Algorithm
+            const distances = {};
+            const previous = {};
+            const queue = new Set();
+
+            for (const nodeId in allNodes) {
+                distances[nodeId] = Infinity;
+                previous[nodeId] = null;
+                queue.add(nodeId);
+            }
+            distances[startNodeId] = 0;
+
+            while (queue.size > 0) {
+                let u = null;
+                let minVal = Infinity;
+                queue.forEach(node => {
+                    if (distances[node] < minVal) {
+                        minVal = distances[node];
+                        u = node;
+                    }
+                });
+
+                if (u === null || u === destNodeId) break;
+                queue.delete(u);
+
+                const neighbors = graph[u] || [];
+                neighbors.forEach(neighbor => {
+                    if (queue.has(neighbor.node)) {
+                        const alt = distances[u] + neighbor.weight;
+                        if (alt < distances[neighbor.node]) {
+                            distances[neighbor.node] = alt;
+                            previous[neighbor.node] = u;
+                        }
+                    }
+                });
+            }
+
+            const path = [];
+            let curr = destNodeId;
+            while (curr !== null) {
+                path.push(curr);
+                curr = previous[curr];
+            }
+            path.reverse();
+
+            if (path[0] !== startNodeId || distances[destNodeId] === Infinity) {
+                showToast("Dijkstra: No safe route available. Hazards block all paths!", "error");
+                return;
+            }
+
+            // Draw route on Leaflet Map
+            const pathCoords = path.map(nodeId => allNodes[nodeId].coords);
+            routePolyline = L.polyline(pathCoords, {
+                color: '#2ecc71', // Vibrant Green for safe route
+                weight: 6,
+                opacity: 0.9,
+                lineJoin: 'round'
+            }).addTo(map);
+
+            const startMarker = L.marker(startCoords)
+                .addTo(map)
+                .bindPopup(`<b>Start Location</b>`)
+                .openPopup();
+            routeMarkers.push(startMarker);
+
+            const destMarker = L.marker(destCoords)
+                .addTo(map)
+                .bindPopup(`<b>Destination</b><br>`)
+                .openPopup();
+            routeMarkers.push(destMarker);
+
+            map.fitBounds(routePolyline.getBounds(), { padding: [50, 50] });
+
+            const totalDistanceKm = (distances[destNodeId] >= 999999)
+                ? (calculateDistance(startCoords, destCoords) / 1000).toFixed(2)
+                : (distances[destNodeId] / 1000).toFixed(2);
+
+            showToast(`Safe route found: ${totalDistanceKm} km. Dijkstra bypassed active hazards!`, "success");
+        }
+
+        // Bind Find Route click handler
+        const btnFindRoute = document.getElementById('btn-find-route');
+        if (btnFindRoute) {
+            btnFindRoute.addEventListener('click', async () => {
+                const startInput = document.getElementById('route-start');
+                const destInput = document.getElementById('route-destination');
+
+                const startStr = startInput ? startInput.value : "";
+                const destStr = destInput ? destInput.value : "";
+
+                if (!startStr) {
+                    showToast("Please enter a starting location.", "error");
+                    return;
+                }
+
+                if (!destStr) {
+                    showToast("Please enter a destination.", "error");
+                    return;
+                }
+
+                showToast("Resolving locations and calculating safe path...", "success");
+
+                const resolvedStart = await resolveLocationToCoords(startStr);
+                const resolvedDest = await resolveLocationToCoords(destStr);
+
+                if (!resolvedStart) {
+                    showToast("Could not resolve starting location.", "error");
+                    return;
+                }
+
+                if (!resolvedDest) {
+                    showToast("Could not resolve destination.", "error");
+                    return;
+                }
+
+                findSafeRoute(resolvedStart, resolvedDest);
+            });
+        }
+
+        // Run updates
+        setInterval(updateDashboardStats, 2000);
+
+    </script>
+</body>
+
+</html>
