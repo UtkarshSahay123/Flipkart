@@ -1,0 +1,298 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>About Us | Aegis Traffic Control</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#f9f9ff",
+                    "surface": "#f9f9ff",
+                    "on-error": "#ffffff",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#c3c6d6",
+                    "tertiary-fixed": "#ffdad2",
+                    "inverse-primary": "#b2c5ff",
+                    "surface-container-high": "#dfe8ff",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-fixed-variant": "#8b1a00",
+                    "surface-dim": "#cadbfc",
+                    "surface-container": "#e7eeff",
+                    "inverse-on-surface": "#ecf0ff",
+                    "on-primary-fixed-variant": "#0040a2",
+                    "on-primary-container": "#c4d2ff",
+                    "primary-fixed-dim": "#b2c5ff",
+                    "on-surface": "#091c35",
+                    "secondary-fixed-dim": "#71dba6",
+                    "inverse-surface": "#20314b",
+                    "surface-tint": "#0c56d0",
+                    "primary-container": "#0052cc",
+                    "on-tertiary-fixed": "#3d0600",
+                    "on-secondary-container": "#00714b",
+                    "on-primary-fixed": "#001848",
+                    "tertiary-fixed-dim": "#ffb4a3",
+                    "surface-container-highest": "#d6e3ff",
+                    "on-secondary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-container": "#8af5be",
+                    "secondary": "#006c47",
+                    "error-container": "#ffdad6",
+                    "on-secondary-fixed": "#002113",
+                    "secondary-fixed": "#8df7c1",
+                    "outline": "#737685"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xl": "32px",
+                    "margin-desktop": "32px",
+                    "base": "8px",
+                    "xs": "4px",
+                    "lg": "24px",
+                    "gutter": "16px",
+                    "md": "16px",
+                    "margin-mobile": "16px",
+                    "sm": "8px"
+            },
+            "fontFamily": {
+                    "label-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "data-mono": ["Inter"],
+                    "body-md": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+        }
+        .bento-item {
+            border: 1px solid #DFE1E6;
+            background: white;
+            padding: 24px;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-x-hidden">
+<!-- TopNavBar -->
+<header class="bg-surface-lowest dark:bg-inverse-surface border-b border-outline-variant dark:border-outline flex justify-between items-center w-full px-margin-desktop h-16 max-w-full sticky top-0 z-50">
+<div class="flex items-center gap-base">
+<span class="material-symbols-outlined text-primary text-headline-sm" data-icon="security">security</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">Aegis Traffic</span>
+</div>
+<nav class="hidden md:flex items-center gap-xl h-full">
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary font-body-md text-body-md transition-colors" href="index.html">Home</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary font-body-md text-body-md transition-colors" href="technology.html">Technology</a>
+<a class="text-primary dark:text-inverse-primary font-bold border-b-2 border-primary dark:border-inverse-primary pb-1 font-body-md text-body-md" href="about.html">About</a>
+</nav>
+<div class="flex items-center gap-md">
+<button class="px-lg py-sm rounded-lg bg-primary-container text-on-primary font-label-md text-label-md hover:bg-primary transition-colors cursor-pointer active:opacity-80">
+                Login
+            </button>
+</div>
+</header>
+<main class="w-full">
+<!-- Hero Section -->
+<section class="relative min-h-[70vh] flex items-center px-margin-desktop bg-surface-container-low overflow-hidden">
+<div class="max-w-4xl z-10">
+<h1 class="font-display-lg text-display-lg text-on-surface mb-lg max-w-2xl">Transforming Urban Mobility through Intelligent Governance</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-xl max-w-xl leading-relaxed">
+                    Our mission is to empower Indian municipal authorities with state-of-the-art AI-driven insights, ensuring a safer and more efficient commute for millions of citizens every day.
+                </p>
+<div class="flex gap-md">
+<button class="bg-primary text-on-primary px-xl py-md font-label-md text-label-md flex items-center gap-sm">
+                        OUR TECHNOLOGY <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Hero Visual -->
+<div class="absolute right-0 top-0 bottom-0 w-1/2 hidden md:block">
+<div class="w-full h-full bg-[url('https://images.unsplash.com/photo-1598327105666-5b89351aff97?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=1200&amp;q=80')] bg-cover bg-center" data-alt="A sophisticated top-down aerial view of a complex Indian city intersection during the golden hour, showing fluid traffic movement and high-contrast road markings. The scene is captured with professional architectural photography precision, emphasizing structural order and civic organization. The lighting is warm yet clear, highlighting the metallic surfaces of vehicles and the clean lines of the urban environment, reflecting a sense of institutional stability and modern technological oversight."></div>
+<div class="absolute inset-0 bg-gradient-to-r from-surface-container-low via-transparent to-transparent"></div>
+</div>
+</section>
+<!-- Our Vision Section -->
+<section class="py-xl px-margin-desktop bg-surface-container-lowest">
+<div class="grid md:grid-cols-2 gap-xl items-center">
+<div class="order-2 md:order-1">
+<div class="w-full aspect-video bg-surface-container overflow-hidden rounded-lg">
+<img alt="Urban Planning" class="w-full h-full object-cover" data-alt="A professional close-up shot of a modern digital traffic management console displaying complex real-time data visualizations of city grids. The screen shows heat maps and vector flow lines in shades of institutional blue and high-visibility amber. The background is a clean, dimly lit command center environment, suggesting 24/7 operational reliability and high-stakes municipal monitoring. The overall aesthetic is grounded, precise, and authoritative, using high-resolution textures to convey technological sophistication." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFLUp4PsXpwOqL6QweBjS3CNv_ymA1gWbnNAab3gJ_Y8HflTQceJLTcI3Zhni7re0jCwN45j4OlW_wzU9v596BdH5NwqYpbZa0g24srjQ3DZkDg5rydsYSOoFDLo6MHpQ0zATycmZ9Kp7z4j3W_eErvhgWALS0lwH4Cx5xha5W0S4bPq4yombylghUsusyREUtI7vb_J7XhsJnnyBjB0m47HVpMq0mWPSnAgBveUE0UYIckjJkxQPNndNsdacJvLP-7B07HLcFAf0">
+</div>
+</div>
+<div class="order-1 md:order-2">
+<span class="text-primary font-label-md text-label-md uppercase tracking-wider mb-sm block">Our Vision</span>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-md">Safer, Congestion-Free Cities</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                        Aegis envisions a future where urban congestion is a problem of the past. By leveraging predictive modeling and real-time sensor fusion, we enable authorities to anticipate bottlenecks before they occur, shifting the paradigm from reaction to prevention. We are building the nervous system for India's smartest wards.
+                    </p>
+</div>
+</div>
+</section>
+<!-- Key Pillars (Bento Grid) -->
+<section class="py-xl px-margin-desktop bg-surface-container-low">
+<div class="text-center mb-xl">
+<h2 class="font-headline-md text-headline-md text-on-surface">The Aegis Pillars</h2>
+<p class="text-on-surface-variant mt-sm">Foundation of our operational excellence</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-lg">
+<!-- Pillar 1 -->
+<div class="bento-item flex flex-col gap-md" style="border-color: rgb(223, 225, 230); transition: 0.3s;">
+<div class="w-12 h-12 bg-primary-container/10 flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined text-primary" data-icon="location_city">location_city</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Local Expertise</h3>
+<p class="text-on-surface-variant font-body-md">Architected specifically for the unique dynamics of Indian roads. From navigating complex chowks to managing a diverse vehicle mix of rickshaws, trucks, and commuters.</p>
+</div>
+</div>
+<!-- Pillar 2 -->
+<div class="bento-item flex flex-col gap-md">
+<div class="w-12 h-12 bg-secondary-container/20 flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined text-secondary" data-icon="health_and_safety">health_and_safety</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Proactive Safety</h3>
+<p class="text-on-surface-variant font-body-md">Moving beyond incident response. Our AI identifies high-risk patterns in real-time, allowing for preemptive safety interventions that save lives.</p>
+</div>
+</div>
+<!-- Pillar 3 -->
+<div class="bento-item flex flex-col gap-md">
+<div class="w-12 h-12 bg-tertiary-fixed flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined text-tertiary" data-icon="verified">verified</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Transparency</h3>
+<p class="text-on-surface-variant font-body-md">Building public trust through verifiable data and citizen-centric reporting. Every decision is backed by empirical evidence that is accessible to stakeholders.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Digital India Initiative -->
+<section class="py-xl px-margin-desktop bg-primary text-on-primary">
+<div class="max-w-5xl mx-auto text-center">
+<span class="font-label-md text-label-md text-primary-fixed uppercase mb-md block">A Digital India Initiative</span>
+<h2 class="font-display-lg text-display-lg mb-lg">Unified Municipal Collaboration</h2>
+<p class="font-body-lg text-body-lg text-on-primary-container max-w-3xl mx-auto mb-xl opacity-90 leading-relaxed">
+                    Aegis Traffic is a proud partner in India's digital transformation journey. We work hand-in-hand with municipal corporations and state police departments to integrate fractured data silos into a single, high-performance command layer.
+                </p>
+<div class="flex flex-wrap justify-center gap-xl grayscale brightness-200 opacity-60">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-[40px]" data-icon="account_balance">account_balance</span>
+<span class="font-bold text-headline-sm">MUNICIPAL</span>
+</div>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-[40px]" data-icon="local_police">local_police</span>
+<span class="font-bold text-headline-sm">POLICE</span>
+</div>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-[40px]" data-icon="router">router</span>
+<span class="font-bold text-headline-sm">SMART CITY</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Commitment Section -->
+<section class="py-xl px-margin-desktop">
+<div class="grid md:grid-cols-12 gap-lg items-center">
+<div class="md:col-span-5">
+<h2 class="font-headline-md text-headline-md mb-md">Our Commitment to Reliability</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-lg leading-relaxed">
+                        Traffic never stops, and neither does Aegis. Our team of engineers and urban planners is dedicated to building infrastructure that operates at 99.9% uptime. We provide the 24/7 support required for critical municipal operations, ensuring that the technology serving the public is as reliable as the roads themselves.
+                    </p>
+<ul class="space-y-md">
+<li class="flex items-start gap-md">
+<span class="material-symbols-outlined text-primary mt-1" data-icon="check_circle">check_circle</span>
+<div>
+<span class="font-bold block">Redundant Infrastructure</span>
+<span class="text-sm text-on-surface-variant">Fail-safe systems designed for critical uptime.</span>
+</div>
+</li>
+<li class="flex items-start gap-md">
+<span class="material-symbols-outlined text-primary mt-1" data-icon="check_circle">check_circle</span>
+<div>
+<span class="font-bold block">On-Ground Support</span>
+<span class="text-sm text-on-surface-variant">Dedicated field teams for immediate hardware assistance.</span>
+</div>
+</li>
+</ul>
+</div>
+<div class="md:col-span-7 h-[400px]">
+<div class="w-full h-full bg-surface-container rounded-xl overflow-hidden relative border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional portrait of a diverse team of software engineers and civil engineers collaborating in a modern, glass-walled office in an Indian metropolitan business district. They are looking at large screens showing real-time traffic flow models and urban schematics. The office is bright, clean, and minimalist, with institutional blue accents. The lighting is natural and crisp, conveying a sense of transparency, high productivity, and institutional commitment to public service." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXUPRQH6YkMfDbHe4B0q9qhRF3cdH6t1FUL9EbTtBAbloWg0tiEcVK8lvvK1HaIfXr3CrzmVcl-5inw672GoUxvXENMksDb9avYHC8OuTDx-Gn9Adm4dZCpRgtOnCzWXgJpfvAWAG1n7tbRhtBd55AdIPpzVpn3nO2Z6msVNMDbaSod-ho1JCM2nkbI3CCShQ6c3rJNPe3rPEH9GS7B0FXeJ_cTLPVEctsKxX_8eekI4exmJze0s7NbEJ6jvQpe8dIOyxDEytrRwA">
+<div class="absolute bottom-md right-md bg-surface p-md border border-outline-variant rounded-lg shadow-sm">
+<span class="font-data-mono text-data-mono text-primary">24/7 MONITORING ACTIVE</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant dark:border-outline flex flex-col md:flex-row justify-between items-center w-full px-margin-desktop py-lg max-w-full">
+<div class="mb-lg md:mb-0 text-center md:text-left">
+<span class="font-headline-sm text-headline-sm text-primary dark:text-inverse-primary block mb-xs">Aegis Traffic</span>
+<span class="font-label-md text-label-md text-on-surface-variant dark:text-surface-variant">© 2024 Aegis Municipal Traffic Solutions. All rights reserved.</span>
+</div>
+<div class="flex flex-wrap justify-center gap-xl">
+<a class="text-on-surface-variant dark:text-surface-variant font-label-md text-label-md hover:underline hover:text-primary dark:hover:text-inverse-primary transition-all duration-200" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-label-md text-label-md hover:underline hover:text-primary dark:hover:text-inverse-primary transition-all duration-200" href="#">Terms of Service</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-label-md text-label-md hover:underline hover:text-primary dark:hover:text-inverse-primary transition-all duration-200" href="#">Contact Support</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-label-md text-label-md hover:underline hover:text-primary dark:hover:text-inverse-primary transition-all duration-200" href="#">Ward Map</a>
+</div>
+</footer>
+<script>
+        // Simple scroll interaction for header
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 20) {
+                header.classList.add('shadow-sm');
+                header.classList.replace('bg-surface-lowest', 'bg-white');
+            } else {
+                header.classList.remove('shadow-sm');
+                header.classList.replace('bg-white', 'bg-surface-lowest');
+            }
+        });
+
+        // Add subtle hover animations to bento items
+        document.querySelectorAll('.bento-item').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                item.style.borderColor = '#0052cc';
+                item.style.transition = 'all 0.3s ease';
+            });
+            item.addEventListener('mouseleave', () => {
+                item.style.borderColor = '#DFE1E6';
+            });
+        });
+    </script>
+
+
+</body></html>

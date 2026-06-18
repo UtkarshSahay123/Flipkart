@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Technology Stack | Aegis Traffic Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .tech-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tech-card:hover {
+            transform: translateY(-8px);
+            border-color: #003d9b;
+            box-shadow: 0 10px 25px -5px rgba(0, 61, 155, 0.1);
+        }
+
+        .tech-card:hover .material-symbols-outlined {
+            animation: pulse-icon 1.5s infinite;
+        }
+
+        @keyframes pulse-icon {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .glass-header {
+            backdrop-filter: blur(8px);
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-background": "#091c35",
+                      "on-tertiary-fixed-variant": "#8b1a00",
+                      "tertiary-container": "#b02300",
+                      "surface-container-high": "#dfe8ff",
+                      "on-primary": "#ffffff",
+                      "secondary": "#006c47",
+                      "on-tertiary": "#ffffff",
+                      "tertiary-fixed-dim": "#ffb4a3",
+                      "on-error-container": "#93000a",
+                      "surface": "#f9f9ff",
+                      "surface-variant": "#d6e3ff",
+                      "surface-dim": "#cadbfc",
+                      "secondary-fixed-dim": "#71dba6",
+                      "secondary-container": "#8af5be",
+                      "error-container": "#ffdad6",
+                      "on-error": "#ffffff",
+                      "on-surface": "#091c35",
+                      "primary": "#003d9b",
+                      "on-secondary-container": "#00714b",
+                      "tertiary": "#851800",
+                      "on-secondary-fixed": "#002113",
+                      "on-primary-fixed-variant": "#0040a2",
+                      "on-primary-fixed": "#001848",
+                      "surface-container-low": "#f0f3ff",
+                      "on-tertiary-fixed": "#3d0600",
+                      "primary-fixed-dim": "#b2c5ff",
+                      "error": "#ba1a1a",
+                      "on-secondary": "#ffffff",
+                      "surface-tint": "#0c56d0",
+                      "inverse-primary": "#b2c5ff",
+                      "surface-container-lowest": "#ffffff",
+                      "primary-fixed": "#dae2ff",
+                      "inverse-on-surface": "#ecf0ff",
+                      "on-tertiary-container": "#ffc6b9",
+                      "secondary-fixed": "#8df7c1",
+                      "on-secondary-fixed-variant": "#005235",
+                      "outline-variant": "#c3c6d6",
+                      "primary-container": "#0052cc",
+                      "tertiary-fixed": "#ffdad2",
+                      "surface-container-highest": "#d6e3ff",
+                      "outline": "#737685",
+                      "on-primary-container": "#c4d2ff",
+                      "background": "#f9f9ff",
+                      "on-surface-variant": "#434654",
+                      "surface-bright": "#f9f9ff",
+                      "inverse-surface": "#20314b",
+                      "surface-container": "#e7eeff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "xl": "32px",
+                      "sm": "8px",
+                      "margin-mobile": "16px",
+                      "gutter": "16px",
+                      "base": "8px",
+                      "md": "16px",
+                      "margin-desktop": "32px",
+                      "xs": "4px",
+                      "lg": "24px"
+              },
+              "fontFamily": {
+                      "label-md": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "data-mono": ["Inter"],
+                      "body-md": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "headline-md": ["Inter"]
+              },
+              "fontSize": {
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+      </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md">
+<!-- TopNavBar -->
+<nav class="bg-surface dark:bg-on-background w-full top-0 sticky border-b border-outline-variant dark:border-outline z-50">
+<div class="flex justify-between items-center px-margin-desktop py-md max-w-full mx-auto">
+<div class="flex items-center gap-xl">
+<span class="text-headline-sm font-headline-sm text-primary dark:text-primary-fixed">Aegis Traffic Management</span>
+<div class="hidden md:flex gap-lg items-center">
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="index.html">Home</a>
+<a class="font-label-md text-label-md text-primary dark:text-primary-fixed font-bold border-b-2 border-primary" href="technology.html">Technology</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors" href="about.html">About</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors">account_balance</button>
+<button class="bg-primary text-on-primary px-lg py-xs rounded-lg font-label-md text-label-md hover:bg-primary-container active:opacity-80 transition-all">Command Center</button>
+</div>
+</div>
+</nav>
+<main class="min-h-screen">
+<!-- Hero Section -->
+<section class="relative overflow-hidden bg-primary-container px-margin-desktop py-xl md:py-32 flex flex-col items-center justify-center text-center">
+
+<div class="relative z-10 max-w-3xl space-y-md animate-fade-in-up">
+<span class="inline-block px-md py-xs bg-on-primary-container text-primary font-label-md text-label-md rounded-full">Institutional Tech Stack</span>
+<h1 class="font-display-lg text-display-lg md:text-5xl text-on-primary-container">Powering Smarter Cities</h1>
+<p class="font-body-lg text-body-lg text-on-primary-container opacity-90">
+                    Aegis leverages a high-concurrency, AI-driven infrastructure designed for 24/7 municipal operations. Our stack ensures sub-second latency for traffic monitoring and robust data integrity for long-term urban planning.
+                </p>
+</div>
+</section>
+<!-- Tech Grid Section -->
+<section class="px-margin-desktop py-xl max-w-7xl mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
+<!-- Frontend Stack -->
+<div class="tech-card bg-surface-container-lowest border border-outline-variant p-lg rounded-xl animate-fade-in-up" style="animation-delay: 0.1s;">
+<div class="flex items-center gap-md mb-lg">
+<div class="bg-primary-container/10 p-sm rounded-lg">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="code">code</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary">Frontend</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-xl">Highly responsive management consoles with low-latency GIS visualizations.</p>
+<div class="flex flex-wrap gap-sm">
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">React.js</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">Tailwind CSS</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">Leaflet.js</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">Chart.js</span>
+</div>
+</div>
+<!-- Backend Stack -->
+<div class="tech-card bg-surface-container-lowest border border-outline-variant p-lg rounded-xl animate-fade-in-up" style="animation-delay: 0.2s;">
+<div class="flex items-center gap-md mb-lg">
+<div class="bg-secondary-container/10 p-sm rounded-lg">
+<span class="material-symbols-outlined text-secondary text-3xl" data-icon="settings_ethernet">settings_ethernet</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-secondary">Backend</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-xl">High-performance asynchronous processing for real-time traffic data streams.</p>
+<div class="flex flex-wrap gap-sm">
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">FastAPI</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">WebSockets</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">Python</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">Redis</span>
+</div>
+</div>
+<!-- AI/ML Stack -->
+<div class="tech-card bg-surface-container-lowest border border-outline-variant p-lg rounded-xl animate-fade-in-up" style="animation-delay: 0.3s;">
+<div class="flex items-center gap-md mb-lg">
+<div class="bg-tertiary-container/10 p-sm rounded-lg">
+<span class="material-symbols-outlined text-tertiary text-3xl" data-icon="psychology">psychology</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-tertiary">AI / ML</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-xl">Predictive modeling for congestion detection and automated incident reporting.</p>
+<div class="flex flex-wrap gap-sm">
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">Python</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">YOLOv8</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">Scikit-learn</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">Gemini API</span>
+</div>
+</div>
+<!-- Database Stack -->
+<div class="tech-card bg-surface-container-lowest border border-outline-variant p-lg rounded-xl animate-fade-in-up" style="animation-delay: 0.4s;">
+<div class="flex items-center gap-md mb-lg">
+<div class="bg-on-background/5 p-sm rounded-lg">
+<span class="material-symbols-outlined text-on-background text-3xl" data-icon="database">database</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-background">Database</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-xl">Relational data integrity with PostGIS for spatial queries and time-series logging.</p>
+<div class="flex flex-wrap gap-sm">
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">PostgreSQL</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">PostGIS</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">TimescaleDB</span>
+</div>
+</div>
+<!-- Maps Stack -->
+<div class="tech-card bg-surface-container-lowest border border-outline-variant p-lg rounded-xl animate-fade-in-up" style="animation-delay: 0.5s;">
+<div class="flex items-center gap-md mb-lg">
+<div class="bg-primary/10 p-sm rounded-lg">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="map">map</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary">Maps &amp; Routing</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-xl">Complex graph analysis and custom routing algorithms for emergency response.</p>
+<div class="flex flex-wrap gap-sm">
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">OpenStreetMap</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">Leaflet.js</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">NetworkX</span>
+</div>
+</div>
+<!-- Deployment Stack -->
+<div class="tech-card bg-surface-container-lowest border border-outline-variant p-lg rounded-xl animate-fade-in-up" style="animation-delay: 0.6s;">
+<div class="flex items-center gap-md mb-lg">
+<div class="bg-secondary/10 p-sm rounded-lg">
+<span class="material-symbols-outlined text-secondary text-3xl" data-icon="cloud_done">cloud_done</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-secondary">Deployment</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-xl">Continuous integration and enterprise-grade hosting for high availability.</p>
+<div class="flex flex-wrap gap-sm">
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">Vercel</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">Railway</span>
+<span class="px-sm py-xs bg-surface-container text-on-surface font-label-md text-label-md rounded">GitHub Actions</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Technical Deep Dive (Decorative/Visual Impact) -->
+<section class="bg-surface-container py-xl px-margin-desktop overflow-hidden">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-xl">
+<div class="w-full md:w-1/2 space-y-md">
+<h2 class="font-headline-md text-headline-md text-primary">Mission-Critical Scalability</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                        Our architecture is built to ingest metadata from over 5,000 traffic nodes concurrently. Using WebSockets for live status updates and YOLOv8 for edge-based computer vision, Aegis reduces municipal operational costs by 40%.
+                    </p>
+<div class="grid grid-cols-2 gap-md pt-lg">
+<div class="p-md border-l-2 border-primary bg-white">
+<div class="text-primary font-bold text-2xl">99.9%</div>
+<div class="font-label-md text-label-md opacity-70">Uptime Reliability</div>
+</div>
+<div class="p-md border-l-2 border-secondary bg-white">
+<div class="text-secondary font-bold text-2xl">&lt; 50ms</div>
+<div class="font-label-md text-label-md opacity-70">Query Latency</div>
+</div>
+</div>
+</div>
+<div class="w-full md:w-1/2 relative min-h-[300px]">
+<div class="absolute inset-0 bg-primary-container/5 rounded-xl border border-outline-variant overflow-hidden">
+<img alt="Server infrastructure" class="w-full h-full object-cover mix-blend-overlay opacity-20" data-alt="A clean and clinical view of a high-tech server room with rows of blinking blue and green LED lights on server racks. The image uses a cool institutional blue and white color palette, suggesting a highly reliable and secure government data facility. The lighting is soft and professional, capturing the intricate wiring and metallic textures of advanced networking hardware in a modern light-mode aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-MPxkscyOcujRhE8JFyYduy5LKMfACoK_LCsL2TTHwz77ATswWzDFJ9e5K34Rpdc1wBYamTI1vGfCM3_84YG1wg3vApRN0QTvFISbFQ3Lh85yru63AdGTtuW24Aom8YlQAesosS7nK-Mv9YUuycBXguvkcXSVG4ZtZJCFwpuwWtogZoLALrblbrzYYDAl1zWl-8wQGjH_fE4vZPjwBg3wginMadtEPDxIDNo5Iv6lyMOLCkkZWYoTLHEDX6aqBWK5moq58Dct-uM"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="p-lg bg-white rounded-xl shadow-lg border border-outline-variant max-w-[280px]">
+<div class="flex items-center gap-sm mb-xs">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="font-label-md text-label-md text-secondary">LIVE SYSTEM MONITOR</span>
+</div>
+<div class="h-16 w-full bg-surface-container mb-md rounded overflow-hidden relative">
+<!-- Simple pulse visualization -->
+<div class="absolute bottom-0 left-0 right-0 h-8 bg-primary/10 flex items-end px-xs gap-[1px]">
+<div class="flex-1 bg-primary h-1/2"></div>
+<div class="flex-1 bg-primary h-2/3"></div>
+<div class="flex-1 bg-primary h-full"></div>
+<div class="flex-1 bg-primary h-1/3"></div>
+<div class="flex-1 bg-primary h-3/4"></div>
+<div class="flex-1 bg-primary h-1/2"></div>
+<div class="flex-1 bg-primary h-2/3"></div>
+</div>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between font-label-md text-label-md opacity-60"><span>Node Load</span><span>42%</span></div>
+<div class="w-full bg-surface-container h-1 rounded">
+<div class="w-[42%] bg-primary h-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low dark:bg-on-background w-full bottom-0 border-t border-outline-variant dark:border-outline">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-xl px-margin-desktop py-xl max-w-full mx-auto">
+<div>
+<span class="font-headline-sm text-headline-sm text-primary dark:text-primary-fixed">Aegis Traffic</span>
+<p class="font-body-md text-body-md mt-md text-on-surface-variant">Institutional traffic control solutions for modern metropolitan authorities.</p>
+</div>
+<div class="flex flex-col gap-sm">
+<h4 class="font-label-md text-label-md text-primary">Resources</h4>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Accessibility</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Contact Support</a>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface-variant">© 2024 Municipal Traffic Management Authority. A Digital India Initiative.</p>
+<div class="flex gap-md mt-md">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">language</span>
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">verified_user</span>
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">shield</span>
+</div>
+</div>
+</div>
+</footer>
+<script>
+        // Simple entrance observer for reveal animations
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-fade-in-up');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.animate-fade-in-up').forEach(el => observer.observe(el));
+    </script>
+</body></html>

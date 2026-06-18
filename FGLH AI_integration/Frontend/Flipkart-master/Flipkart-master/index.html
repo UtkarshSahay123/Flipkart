@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Aegis Traffic Management | Municipal Command Console</title>
+    <!-- Material Symbols -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffdad2",
+                        "outline-variant": "#c3c6d6",
+                        "on-background": "#091c35",
+                        "surface-bright": "#f9f9ff",
+                        "secondary-container": "#8af5be",
+                        "on-surface": "#091c35",
+                        "secondary-fixed-dim": "#71dba6",
+                        "surface-container-high": "#dfe8ff",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "surface-container-highest": "#d6e3ff",
+                        "on-surface-variant": "#434654",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "on-tertiary-fixed": "#3d0600",
+                        "secondary": "#006c47",
+                        "primary-fixed": "#dae2ff",
+                        "on-primary-fixed": "#001848",
+                        "surface-container-low": "#f0f3ff",
+                        "tertiary-fixed-dim": "#ffb4a3",
+                        "inverse-surface": "#20314b",
+                        "inverse-primary": "#b2c5ff",
+                        "background": "#f9f9ff",
+                        "surface-dim": "#cadbfc",
+                        "secondary-fixed": "#8df7c1",
+                        "on-primary-container": "#c4d2ff",
+                        "on-primary": "#ffffff",
+                        "surface": "#f9f9ff",
+                        "inverse-on-surface": "#ecf0ff",
+                        "on-secondary-container": "#00714b",
+                        "tertiary": "#851800",
+                        "on-tertiary-container": "#ffc6b9",
+                        "on-secondary-fixed": "#002113",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed-variant": "#8b1a00",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#e7eeff",
+                        "outline": "#737685",
+                        "primary-container": "#0052cc",
+                        "primary": "#003d9b",
+                        "on-secondary-fixed-variant": "#005235",
+                        "tertiary-container": "#b02300",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#0c56d0",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#d6e3ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "xs": "4px",
+                        "gutter": "16px",
+                        "base": "8px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "data-mono": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500" }]
+                    }
+                },
+            },
+        }
+    </script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="font-body-md text-body-md overflow-x-hidden">
+    <!-- TopNavBar (Shared Component) -->
+    <header
+        class="bg-surface dark:bg-on-background w-full top-0 sticky border-b border-outline-variant dark:border-outline z-50">
+        <div class="flex justify-between items-center px-margin-desktop py-md max-w-full mx-auto">
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-sm">
+                <span class="material-symbols-outlined text-primary"
+                    style="font-variation-settings: 'FILL' 1;">security</span>
+                <span class="text-headline-sm font-headline-sm text-primary dark:text-primary-fixed">Aegis Traffic
+                    Management</span>
+            </div>
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center gap-xl">
+                <a class="text-primary dark:text-primary-fixed font-bold border-b-2 border-primary font-label-md text-label-md py-xs active:opacity-80 transition-opacity"
+                    href="index.html">Home</a>
+                <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors font-label-md text-label-md py-xs active:opacity-80 transition-opacity"
+                    href="technology.html">Technology</a>
+                <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors font-label-md text-label-md py-xs active:opacity-80 transition-opacity"
+                    href="about.html">About</a>
+            </nav>
+            <!-- Actions -->
+            <div class="flex items-center gap-md">
+                <button
+                    class="bg-primary-container text-on-primary font-label-md text-label-md px-lg py-sm rounded-lg hover:opacity-90 active:opacity-80 transition-all flex items-center gap-xs shadow-sm">
+                    Command Center
+                </button>
+                <div class="flex items-center gap-sm text-primary">
+                    <span
+                        class="material-symbols-outlined cursor-pointer hover:text-primary-container transition-colors"
+                        data-icon="account_balance">account_balance</span>
+                </div>
+            </div>
+        </div>
+    </header>
+    <main>
+        <!-- Hero Section -->
+        <section class="relative min-h-[870px] flex items-center">
+            <!-- Background Image with Overlay -->
+            <div class="absolute inset-0 z-0">
+                <img alt="Modern Indian city intersection" class="w-full h-full object-cover"
+                    data-alt="A highly detailed and wide-angle aerial shot of a massive, modern urban intersection in a large Indian city like New Delhi or Mumbai. The traffic is flowing seamlessly through organized lanes, captured with a clean, high-shutter-speed photographic style that emphasizes efficiency and institutional order. Bright, natural daylight creates a professional atmosphere, highlighting the crisp white road markings and modern glass skyscrapers in the background. The overall mood is authoritative and reliable, symbolizing advanced municipal traffic management."
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDL_RiL3P-aY63_QjUI3Vl1HmIBphklzY4AfUQowzImMIL6hfcDeEeXidL690YUGWBdbCn0XoNm-A_YOeCnyeuOi5j0dZHPCjuVMpuDb3_IOPfqQGFu3OOCaeSF6Jgn2T0Ny1B_Cp-_Y69TaFcjs0GYvACr_5r-eEbjQq6f6UIiQcBLWyLfD0OZYVoFhh5qU7asE78v5CxnLJMFoQ7QvFuCM6azeV9SlIuXXKgpuMJ2X532KBsDWmE09KE86FeaqIL-An8BA0tIOwg" />
+                <div class="absolute inset-0 bg-gradient-to-r from-surface/95 via-surface/80 to-transparent"></div>
+            </div>
+            <!-- Content -->
+            <div
+                class="relative z-10 px-margin-desktop max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-xl">
+                <div class="flex flex-col justify-center items-start">
+                    <span
+                        class="bg-primary-container/10 text-primary px-md py-xs rounded-full font-label-md text-label-md mb-md border border-primary/20">
+                        OFFICIAL MUNICIPAL PLATFORM
+                    </span>
+                    <h1 class="font-display-lg text-display-lg text-on-surface mb-md leading-tight">
+                        Proactive Traffic Management for Smarter Cities
+                    </h1>
+                    <p class="font-body-lg text-body-lg text-on-surface-variant mb-xl max-w-lg">
+                        AI-powered forecasting and real-time incident response to keep our roads moving. Designed for
+                        Indian municipal authorities to manage wards, chowks, and highways.
+                    </p>
+                    <div class="flex flex-wrap gap-md">
+                        <button
+                            class="bg-primary-container text-on-primary px-xl py-md rounded-lg font-label-md text-label-md flex items-center gap-sm hover:bg-primary transition-colors shadow-lg">
+                            Launch Command Center
+                            <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                        </button>
+                        <button
+                            class="border border-outline text-primary px-xl py-md rounded-lg font-label-md text-label-md flex items-center gap-sm hover:bg-primary-fixed transition-colors">
+                            Learn More
+                            <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Stats Bar / Quick Insight -->
+        <section class="bg-surface-container py-md border-y border-outline-variant">
+            <div class="px-margin-desktop max-w-full mx-auto flex flex-wrap justify-between items-center gap-lg">
+                <div class="flex items-center gap-md">
+                    <div class="flex items-center gap-xs">
+                        <span class="w-3 h-3 rounded-full bg-secondary animate-pulse"></span>
+                        <span class="font-label-md text-label-md text-secondary uppercase tracking-widest">Live Network
+                            Status</span>
+                    </div>
+                    <div class="h-6 w-px bg-outline-variant"></div>
+                    <div class="flex items-center gap-xs text-on-surface">
+                        <span class="font-data-mono text-data-mono">1,248</span>
+                        <span class="text-on-surface-variant text-label-md">Active Signals</span>
+                    </div>
+                    <div class="flex items-center gap-xs text-on-surface">
+                        <span class="font-data-mono text-data-mono">42</span>
+                        <span class="text-on-surface-variant text-label-md">Major Intersections</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-sm bg-surface-container-highest px-md py-xs rounded">
+                    <span class="material-symbols-outlined text-primary text-[18px]"
+                        data-icon="location_on">location_on</span>
+                    <span class="font-label-md text-label-md text-on-surface">Current Sector: Ward 07 - Central Business
+                        District</span>
+                </div>
+            </div>
+        </section>
+        <!-- Mission Section: Motto -->
+        <section class="py-xl px-margin-desktop bg-surface-container-lowest">
+            <div class="max-w-7xl mx-auto">
+                <div class="text-center mb-xl">
+                    <h2 class="font-headline-md text-headline-md text-on-surface mb-sm">Our Mission: Predict. Manage.
+                        Respond.</h2>
+                    <div class="h-1 w-24 bg-primary mx-auto rounded-full"></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-xl">
+                    <!-- Predict -->
+                    <div
+                        class="bg-surface p-lg rounded-xl border border-outline-variant flex flex-col items-center text-center">
+                        <div class="w-16 h-16 bg-primary-fixed flex items-center justify-center rounded-full mb-md">
+                            <span class="material-symbols-outlined text-primary text-[32px]"
+                                data-icon="monitoring">monitoring</span>
+                        </div>
+                        <h3 class="font-headline-sm text-headline-sm text-on-surface mb-md">Predict</h3>
+                        <p class="text-on-surface-variant font-body-md text-body-md leading-relaxed">
+                            Leveraging historical data and computer vision to forecast congestion hotspots before they
+                            form. Our neural models analyze years of local movement patterns to anticipate peak-hour
+                            shifts.
+                        </p>
+                    </div>
+                    <!-- Manage -->
+                    <div
+                        class="bg-surface p-lg rounded-xl border border-outline-variant flex flex-col items-center text-center">
+                        <div class="w-16 h-16 bg-secondary-fixed flex items-center justify-center rounded-full mb-md">
+                            <span class="material-symbols-outlined text-secondary text-[32px]"
+                                data-icon="hub">hub</span>
+                        </div>
+                        <h3 class="font-headline-sm text-headline-sm text-on-surface mb-md">Manage</h3>
+                        <p class="text-on-surface-variant font-body-md text-body-md leading-relaxed">
+                            Real-time digital twin visualization of city sectors, chowks, and wards for total
+                            operational clarity. Seamlessly control traffic signals and manage road closures from a
+                            unified interface.
+                        </p>
+                    </div>
+                    <!-- Respond -->
+                    <div
+                        class="bg-surface p-lg rounded-xl border border-outline-variant flex flex-col items-center text-center">
+                        <div class="w-16 h-16 bg-tertiary-fixed flex items-center justify-center rounded-full mb-md">
+                            <span class="material-symbols-outlined text-tertiary text-[32px]"
+                                data-icon="emergency_share">emergency_share</span>
+                        </div>
+                        <h3 class="font-headline-sm text-headline-sm text-on-surface mb-md">Respond</h3>
+                        <p class="text-on-surface-variant font-body-md text-body-md leading-relaxed">
+                            AI-driven deployment recommendations for traffic personnel, emergency services, and
+                            diversions. Coordinate ground-level assets through high-priority radio and mobile alerts.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Platform Features Section -->
+        <section class="py-xl px-margin-desktop bg-surface-container-low">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex justify-between items-end mb-xl">
+                    <div>
+                        <h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Advanced Platform
+                            Capabilities</h2>
+                        <p class="text-on-surface-variant font-body-md text-body-md">Engineered for sub-second latency
+                            and 24/7 reliability.</p>
+                    </div>
+                    <button class="text-primary font-label-md text-label-md flex items-center gap-xs hover:underline">
+                        View Technical Specifications
+                        <span class="material-symbols-outlined" data-icon="open_in_new">open_in_new</span>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md">
+                    <!-- AI Digital Twin -->
+                    <div class="aegis-card bg-surface p-md flex flex-col">
+                        <div class="flex items-center justify-between mb-lg">
+                            <span class="material-symbols-outlined text-primary bg-primary-fixed p-sm rounded"
+                                data-icon="layers">layers</span>
+                            <span class="text-label-md font-label-md text-secondary">READY</span>
+                        </div>
+                        <h4 class="font-headline-sm text-headline-sm text-on-surface mb-sm">AI Digital Twin</h4>
+                        <p class="text-on-surface-variant font-body-md text-body-md mb-md">A 1:1 digital representation
+                            of city infrastructure including signals and sensors.</p>
+                        <div class="mt-auto pt-md border-t border-outline-variant flex justify-between items-center">
+                            <span class="text-label-md font-label-md text-on-surface-variant">Active Instances:
+                                14</span>
+                            <span class="material-symbols-outlined text-outline"
+                                data-icon="chevron_right">chevron_right</span>
+                        </div>
+                    </div>
+                    <!-- Citizen Verification -->
+                    <div class="aegis-card bg-surface p-md flex flex-col">
+                        <div class="flex items-center justify-between mb-lg">
+                            <span class="material-symbols-outlined text-primary bg-primary-fixed p-sm rounded"
+                                data-icon="verified_user">verified_user</span>
+                            <span class="text-label-md font-label-md text-secondary">SECURE</span>
+                        </div>
+                        <h4 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Citizen Verification</h4>
+                        <p class="text-on-surface-variant font-body-md text-body-md mb-md">Integrating Vahan and Sarathi
+                            databases for instant vehicle and driver identification.</p>
+                        <div class="mt-auto pt-md border-t border-outline-variant flex justify-between items-center">
+                            <span class="text-label-md font-label-md text-on-surface-variant">API Latency: 45ms</span>
+                            <span class="material-symbols-outlined text-outline"
+                                data-icon="chevron_right">chevron_right</span>
+                        </div>
+                    </div>
+                    <!-- Predictive Routing -->
+                    <div class="aegis-card bg-surface p-md flex flex-col">
+                        <div class="flex items-center justify-between mb-lg">
+                            <span class="material-symbols-outlined text-primary bg-primary-fixed p-sm rounded"
+                                data-icon="alt_route">alt_route</span>
+                            <span class="text-label-md font-label-md text-tertiary">BETA</span>
+                        </div>
+                        <h4 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Predictive Routing</h4>
+                        <p class="text-on-surface-variant font-body-md text-body-md mb-md">Dynamic diversion planning to
+                            offset congestion during massive public events.</p>
+                        <div class="mt-auto pt-md border-t border-outline-variant flex justify-between items-center">
+                            <span class="text-label-md font-label-md text-on-surface-variant">Load Score: 88%</span>
+                            <span class="material-symbols-outlined text-outline"
+                                data-icon="chevron_right">chevron_right</span>
+                        </div>
+                    </div>
+                    <!-- Resource Deployment -->
+                    <div class="aegis-card bg-surface p-md flex flex-col">
+                        <div class="flex items-center justify-between mb-lg">
+                            <span class="material-symbols-outlined text-primary bg-primary-fixed p-sm rounded"
+                                data-icon="person_pin_circle">person_pin_circle</span>
+                            <span class="text-label-md font-label-md text-secondary">ONLINE</span>
+                        </div>
+                        <h4 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Resource Deployment</h4>
+                        <p class="text-on-surface-variant font-body-md text-body-md mb-md">Live GPS tracking of patrol
+                            units and automatic dispatch based on incident proximity.</p>
+                        <div class="mt-auto pt-md border-t border-outline-variant flex justify-between items-center">
+                            <span class="text-label-md font-label-md text-on-surface-variant">Active Units: 452</span>
+                            <span class="material-symbols-outlined text-outline"
+                                data-icon="chevron_right">chevron_right</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- AI Traffic Impact Prediction Section -->
+        <section class="py-xl px-margin-desktop bg-surface-container-lowest border-y border-outline-variant"
+            id="prediction-section">
+            <div class="max-w-7xl mx-auto">
+                <div class="mb-xl">
+                    <div class="flex items-center gap-sm mb-xs">
+                        <div class="w-10 h-10 bg-primary-fixed flex items-center justify-center rounded-full">
+                            <span class="material-symbols-outlined text-primary text-[24px]">neurology</span>
+                        </div>
+                        <h2 class="font-headline-md text-headline-md text-on-surface">Event Impact Prediction</h2>
+                    </div>
+                    <p class="text-on-surface-variant font-body-md text-body-md ml-[52px]">Enter event details to
+                        forecast
+                        congestion, risk level, and generate deployment recommendations using AI.</p>
+                </div>
+
+                <!-- Input Form Card -->
+                <div class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm mb-xl">
+                    <div class="flex items-center gap-sm mb-lg pb-sm border-b border-outline-variant">
+                        <span class="material-symbols-outlined text-primary text-[20px]">edit_note</span>
+                        <h3 class="font-headline-sm text-headline-sm text-on-surface">Event Details</h3>
+                        <span
+                            class="ml-auto text-[11px] text-on-surface-variant font-label-md bg-surface-container-low px-sm py-xs rounded border border-outline-variant">All
+                            fields help improve prediction accuracy</span>
+                    </div>
+                    <form class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-lg" id="prediction-form">
+                        <!-- Event Type -->
+                        <div class="flex flex-col gap-xs">
+                            <label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">category</span> Event Type
+                            </label>
+                            <select id="event-type"
+                                class="p-sm border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
+                                <option value="planned">Planned</option>
+                                <option value="unplanned">Unplanned</option>
+                            </select>
+                            <span class="text-[11px] text-on-surface-variant leading-tight">Planned events allow
+                                pre-deployment of resources</span>
+                        </div>
+                        <!-- Event Cause -->
+                        <div class="flex flex-col gap-xs">
+                            <label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">report</span> Event Cause
+                            </label>
+                            <select id="event-cause"
+                                class="p-sm border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
+                                <option value="vehicle_breakdown">Vehicle Breakdown</option>
+                                <option value="accident">Accident</option>
+                                <option value="construction">Construction</option>
+                                <option value="water_logging">Water Logging</option>
+                                <option value="public_event">Public Event</option>
+                                <option value="procession">Procession</option>
+                                <option value="vip_movement">VIP Movement</option>
+                                <option value="protest">Protest</option>
+                                <option value="congestion">Congestion</option>
+                                <option value="road_conditions">Road Conditions</option>
+                                <option value="tree_fall">Tree Fall</option>
+                                <option value="others">Others</option>
+                            </select>
+                            <span class="text-[11px] text-on-surface-variant leading-tight">Primary cause determines
+                                base risk level</span>
+                        </div>
+                        <!-- Zone -->
+                        <div class="flex flex-col gap-xs">
+                            <label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">map</span> Zone
+                            </label>
+                            <select id="event-zone"
+                                class="p-sm border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
+                                <option value="Central Zone 1">Central Zone 1</option>
+                                <option value="Central Zone 2">Central Zone 2</option>
+                                <option value="North Zone 1">North Zone 1</option>
+                                <option value="North Zone 2">North Zone 2</option>
+                                <option value="South Zone 1">South Zone 1</option>
+                                <option value="South Zone 2">South Zone 2</option>
+                                <option value="East Zone 1">East Zone 1</option>
+                                <option value="East Zone 2">East Zone 2</option>
+                                <option value="West Zone 1">West Zone 1</option>
+                                <option value="West Zone 2">West Zone 2</option>
+                            </select>
+                            <span class="text-[11px] text-on-surface-variant leading-tight">Municipal zone for resource
+                                allocation</span>
+                        </div>
+                        <!-- Corridor -->
+                        <div class="flex flex-col gap-xs">
+                            <label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">route</span> Corridor <span class="text-error text-[10px]">*</span>
+                            </label>
+                            <select id="corridor" required
+                                class="p-sm border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
+                                <option value="CBD 1">CBD 1</option>
+                                <option value="CBD 2">CBD 2</option>
+                                <option value="ORR">ORR</option>
+                                <option value="Electronic City">Electronic City</option>
+                                <option value="Whitefield">Whitefield</option>
+                                <option value="Hebbal">Hebbal</option>
+                                <option value="Silk Board">Silk Board</option>
+                                <option value="Non-corridor">Non-corridor</option>
+                            </select>
+                            <span class="text-[11px] text-on-surface-variant leading-tight">Traffic corridor used by the AI model for congestion prediction.</span>
+                        </div>
+                        <!-- Junction -->
+                        <div class="flex flex-col gap-xs">
+                            <label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">conversion_path</span> Junction
+                            </label>
+                            <select id="event-junction"
+                                class="p-sm border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
+                                <option value="MG Road">MG Road</option>
+                                <option value="Silk Board">Silk Board</option>
+                                <option value="Hebbal">Hebbal</option>
+                                <option value="Electronic City">Electronic City</option>
+                                <option value="Majestic">Majestic</option>
+                                <option value="Whitefield">Whitefield</option>
+                                <option value="KR Puram">KR Puram</option>
+                            </select>
+                            <span class="text-[11px] text-on-surface-variant leading-tight">Nearest major intersection
+                                to the event</span>
+                        </div>
+                        <!-- Date -->
+                        <div class="flex flex-col gap-xs">
+                            <label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">calendar_month</span> Date
+                            </label>
+                            <input type="date" id="event-date"
+                                class="p-sm border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
+                            <span class="text-[11px] text-on-surface-variant leading-tight">Weekends &amp; holidays
+                                affect traffic patterns</span>
+                        </div>
+                        <!-- Time -->
+                        <div class="flex flex-col gap-xs">
+                            <label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">schedule</span> Time
+                            </label>
+                            <input type="time" id="event-time"
+                                class="p-sm border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
+                            <span class="text-[11px] text-on-surface-variant leading-tight">Peak hours: 8-11 AM &amp;
+                                5-8 PM</span>
+                        </div>
+                        <!-- Expected Crowd Size -->
+                        <div class="flex flex-col gap-xs">
+                            <label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">groups</span> Expected Crowd
+                            </label>
+                            <input type="number" id="event-crowd" placeholder="e.g. 5000" min="0"
+                                class="p-sm border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
+                            <span class="text-[11px] text-on-surface-variant leading-tight">Estimated number of people
+                                at the event</span>
+                        </div>
+                        <!-- Event Duration -->
+                        <div class="flex flex-col gap-xs">
+                            <label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">hourglass_top</span> Duration
+                                (Hours)
+                            </label>
+                            <input type="number" id="event-duration" placeholder="e.g. 3" min="0" max="72" step="0.5"
+                                class="p-sm border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
+                            <span class="text-[11px] text-on-surface-variant leading-tight">Longer events need sustained
+                                resource deployment</span>
+                        </div>
+                        <!-- Road Closure -->
+                        <div class="flex flex-col gap-xs sm:col-span-2">
+                            <label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">block</span> Road Closure Required?
+                            </label>
+                            <div class="flex gap-lg items-center mt-xs">
+                                <label
+                                    class="flex items-center gap-xs cursor-pointer bg-surface-container-low px-md py-xs rounded-lg border border-outline-variant hover:border-primary transition-colors">
+                                    <input type="radio" name="road_closure" value="yes"
+                                        class="text-primary focus:ring-primary">
+                                    <span class="text-body-md text-on-surface font-medium">Yes</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-xs cursor-pointer bg-surface-container-low px-md py-xs rounded-lg border border-outline-variant hover:border-primary transition-colors">
+                                    <input type="radio" name="road_closure" value="no" checked
+                                        class="text-primary focus:ring-primary">
+                                    <span class="text-body-md text-on-surface font-medium">No</span>
+                                </label>
+                            </div>
+                            <span class="text-[11px] text-on-surface-variant leading-tight">Road closures significantly
+                                increase congestion risk</span>
+                        </div>
+                        <!-- Location Description -->
+                        <div class="flex flex-col gap-xs sm:col-span-2">
+                            <label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">location_on</span> Location
+                                Description
+                            </label>
+                            <textarea id="event-location" rows="2"
+                                placeholder="e.g. Near MG Road Metro Station, opposite Commercial Street junction..."
+                                class="p-sm border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none"></textarea>
+                            <span class="text-[11px] text-on-surface-variant leading-tight">Describe the exact location
+                                for accurate geo-mapping</span>
+                        </div>
+                    </form>
+                    <!-- Single Predict Button -->
+                    <div
+                        class="mt-lg pt-lg border-t border-outline-variant flex flex-col sm:flex-row items-start sm:items-center gap-md">
+                        <button type="button" id="predict-btn"
+                            class="w-full sm:w-auto sm:min-w-[280px] bg-primary text-on-primary py-md px-xl rounded-lg font-label-md text-label-md hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-sm shadow-lg hover:shadow-xl">
+                            <span class="material-symbols-outlined text-[20px]">auto_awesome</span>
+                            Predict Impact
+                        </button>
+                        <span class="text-[11px] text-on-surface-variant">AI model analyzes 12+ parameters to generate
+                            predictions. Results are for planning purposes.</span>
+                    </div>
+                </div>
+
+                <!-- Loading Spinner (hidden by default) -->
+                <div id="prediction-loading" class="hidden mb-xl">
+                    <div class="bg-surface p-xl rounded-xl border border-outline-variant shadow-sm flex flex-col items-center justify-center gap-md"
+                        style="min-height: 220px;">
+                        <div class="relative w-20 h-20">
+                            <div class="absolute inset-0 rounded-full border-4 border-surface-container-highest"></div>
+                            <div
+                                class="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin">
+                            </div>
+                            <div class="absolute inset-[6px] rounded-full border-4 border-secondary/30 border-b-transparent animate-spin"
+                                style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+                        </div>
+                        <div class="text-center">
+                            <h4 class="font-headline-sm text-headline-sm text-on-surface mb-xs">Analyzing Traffic Impact
+                            </h4>
+                            <p class="text-body-md text-on-surface-variant">Processing event parameters through AI
+                                model...</p>
+                            <div class="flex items-center justify-center gap-sm mt-sm">
+                                <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                                <span class="w-2 h-2 rounded-full bg-primary animate-pulse"
+                                    style="animation-delay: 0.3s;"></span>
+                                <span class="w-2 h-2 rounded-full bg-primary animate-pulse"
+                                    style="animation-delay: 0.6s;"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Placeholder before prediction -->
+                <div class="bg-surface-container p-xl rounded-xl border border-outline-variant border-dashed flex flex-col items-center justify-center text-center"
+                    id="prediction-placeholder" style="min-height: 200px;">
+                    <div
+                        class="w-20 h-20 bg-surface-container-highest rounded-full flex items-center justify-center mb-md">
+                        <span class="material-symbols-outlined text-outline text-[40px]">online_prediction</span>
+                    </div>
+                    <h4 class="font-headline-sm text-headline-sm text-on-surface-variant mb-xs">Awaiting Event Data</h4>
+                    <p class="text-body-md text-on-surface-variant max-w-sm">Fill in the event details above and click
+                        <strong class="text-primary">Predict Impact</strong> to generate AI-powered traffic insights and
+                        deployment recommendations.
+                    </p>
+                </div>
+
+                <!-- Prediction Results (hidden by default) -->
+                <div id="prediction-results" class="hidden">
+                    <!-- Top Row: Risk Banner with color dot -->
+                    <div id="risk-banner"
+                        class="bg-error-container text-on-error-container p-lg rounded-xl mb-md flex items-center gap-md border border-error/20 shadow-sm">
+                        <div class="w-14 h-14 rounded-full flex items-center justify-center bg-white/20 flex-shrink-0">
+                            <span id="risk-icon" class="material-symbols-outlined text-[32px]">warning</span>
+                        </div>
+                        <div class="flex-grow">
+                            <div
+                                class="font-label-md text-label-md uppercase tracking-widest mb-xs opacity-80 flex items-center gap-xs">
+                                Risk Assessment
+                                <span id="risk-dot" class="inline-block w-3 h-3 rounded-full bg-red-500"
+                                    title="Risk Color"></span>
+                            </div>
+                            <div id="risk-level-text" class="text-[28px] font-bold leading-tight">High Risk</div>
+                        </div>
+                        <div class="hidden sm:flex flex-col items-end gap-xs">
+                            <div class="flex items-center gap-xs bg-white/10 px-md py-sm rounded-lg">
+                                <span class="material-symbols-outlined text-[16px]">query_stats</span>
+                                <span id="confidence-badge" class="font-label-md text-label-md">AI Confidence:
+                                    94%</span>
+                            </div>
+                            <div class="flex gap-xs">
+                                <span class="text-[10px] opacity-60 flex items-center gap-xs">
+                                    <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>Low
+                                </span>
+                                <span class="text-[10px] opacity-60 flex items-center gap-xs">
+                                    <span class="w-2 h-2 rounded-full bg-yellow-400 inline-block"></span>Med
+                                </span>
+                                <span class="text-[10px] opacity-60 flex items-center gap-xs">
+                                    <span class="w-2 h-2 rounded-full bg-orange-500 inline-block"></span>High
+                                </span>
+                                <span class="text-[10px] opacity-60 flex items-center gap-xs">
+                                    <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span>Critical
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Metrics Row (4 cards) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md mb-md">
+                        <div
+                            class="bg-surface p-md rounded-xl border border-outline-variant shadow-sm flex items-center gap-md">
+                            <div
+                                class="w-10 h-10 bg-tertiary-fixed rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span class="material-symbols-outlined text-tertiary text-[20px]">speed</span>
+                            </div>
+                            <div>
+                                <div class="text-on-surface-variant font-label-md text-[10px] uppercase tracking-wider">
+                                    Congestion Level</div>
+                                <div id="congestion-level-text"
+                                    class="font-data-mono text-data-mono text-on-surface text-[16px] font-bold">Severe
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface p-md rounded-xl border border-outline-variant shadow-sm flex items-center gap-md">
+                            <div
+                                class="w-10 h-10 bg-error-container rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span class="material-symbols-outlined text-error text-[20px]">timer</span>
+                            </div>
+                            <div>
+                                <div class="text-on-surface-variant font-label-md text-[10px] uppercase tracking-wider">
+                                    Expected Delay</div>
+                                <div id="delay-text"
+                                    class="font-data-mono text-data-mono text-on-surface text-[16px] font-bold">28 min
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface p-md rounded-xl border border-outline-variant shadow-sm flex items-center gap-md">
+                            <div
+                                class="w-10 h-10 bg-primary-fixed rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span class="material-symbols-outlined text-primary text-[20px]">radar</span>
+                            </div>
+                            <div>
+                                <div class="text-on-surface-variant font-label-md text-[10px] uppercase tracking-wider">
+                                    Affected Radius</div>
+                                <div id="radius-text"
+                                    class="font-data-mono text-data-mono text-on-surface text-[16px] font-bold">3 km
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Confidence Score Card -->
+                        <div
+                            class="bg-surface p-md rounded-xl border border-outline-variant shadow-sm flex items-center gap-md">
+                            <div
+                                class="w-10 h-10 bg-secondary-fixed rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span class="material-symbols-outlined text-secondary text-[20px]">verified</span>
+                            </div>
+                            <div class="flex-grow">
+                                <div class="text-on-surface-variant font-label-md text-[10px] uppercase tracking-wider">
+                                    Confidence Score</div>
+                                <div id="confidence-text"
+                                    class="font-data-mono text-data-mono text-on-surface text-[16px] font-bold">94%
+                                </div>
+                                <div class="w-full bg-surface-container-highest rounded-full h-1.5 mt-xs">
+                                    <div id="confidence-bar"
+                                        class="bg-secondary h-1.5 rounded-full transition-all duration-700"
+                                        style="width: 94%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resource Recommendations -->
+                    <div class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm">
+                        <div class="flex items-center justify-between mb-md pb-sm border-b border-outline-variant">
+                            <h4 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-sm">
+                                <span class="material-symbols-outlined text-primary text-[20px]">deployed_code</span>
+                                Resource Recommendations
+                            </h4>
+                            <span
+                                class="bg-secondary-container text-on-secondary-container font-label-md text-label-md px-sm py-xs rounded">AI
+                                Generated</span>
+                        </div>
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-md mb-lg">
+                            <div
+                                class="bg-surface-container-low p-md rounded-xl border border-outline-variant text-center hover:shadow-md transition-shadow">
+                                <div
+                                    class="w-10 h-10 bg-primary-fixed rounded-full flex items-center justify-center mx-auto mb-sm">
+                                    <span class="material-symbols-outlined text-primary text-[20px]">local_police</span>
+                                </div>
+                                <div id="police-count" class="font-data-mono text-[24px] font-bold text-on-surface">18
+                                </div>
+                                <div
+                                    class="text-on-surface-variant font-label-md text-[11px] uppercase tracking-wide mt-xs">
+                                    Police Officers</div>
+                            </div>
+                            <div
+                                class="bg-surface-container-low p-md rounded-xl border border-outline-variant text-center hover:shadow-md transition-shadow">
+                                <div
+                                    class="w-10 h-10 bg-secondary-fixed rounded-full flex items-center justify-center mx-auto mb-sm">
+                                    <span class="material-symbols-outlined text-secondary text-[20px]">fence</span>
+                                </div>
+                                <div id="barricade-count" class="font-data-mono text-[24px] font-bold text-on-surface">4
+                                </div>
+                                <div
+                                    class="text-on-surface-variant font-label-md text-[11px] uppercase tracking-wide mt-xs">
+                                    Barricades</div>
+                            </div>
+                            <div
+                                class="bg-surface-container-low p-md rounded-xl border border-outline-variant text-center hover:shadow-md transition-shadow">
+                                <div
+                                    class="w-10 h-10 bg-error-container rounded-full flex items-center justify-center mx-auto mb-sm">
+                                    <span class="material-symbols-outlined text-error text-[20px]">emergency</span>
+                                </div>
+                                <div id="ambulance-count" class="font-data-mono text-[24px] font-bold text-on-surface">1
+                                </div>
+                                <div
+                                    class="text-on-surface-variant font-label-md text-[11px] uppercase tracking-wide mt-xs">
+                                    Ambulances</div>
+                            </div>
+                            <div
+                                class="bg-surface-container-low p-md rounded-xl border border-outline-variant text-center hover:shadow-md transition-shadow">
+                                <div
+                                    class="w-10 h-10 bg-tertiary-fixed rounded-full flex items-center justify-center mx-auto mb-sm">
+                                    <span class="material-symbols-outlined text-tertiary text-[20px]">groups</span>
+                                </div>
+                                <div id="marshal-count" class="font-data-mono text-[24px] font-bold text-on-surface">6
+                                </div>
+                                <div
+                                    class="text-on-surface-variant font-label-md text-[11px] uppercase tracking-wide mt-xs">
+                                    Traffic Marshals</div>
+                            </div>
+                        </div>
+                        <!-- Diversion Route -->
+                        <button id="diversion-btn"
+                            class="w-full border-2 border-primary/30 text-primary py-md rounded-xl font-label-md text-label-md hover:bg-primary hover:text-on-primary transition-all flex items-center justify-center gap-sm">
+                            <span class="material-symbols-outlined text-[20px]">alt_route</span>
+                            <span id="diversion-route-text">Activate Diversion Route</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+
+        <!-- Live Map Dashboard (Part B) -->
+        <section class="py-xl px-margin-desktop bg-surface">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-xl gap-sm">
+                    <div>
+                        <h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Command Center Live Map</h2>
+                        <p class="text-on-surface-variant font-body-md text-body-md">Real-time view of traffic flow,
+                            incidents, and deployments.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-sm">
+                        <span
+                            class="flex items-center gap-xs text-label-md font-label-md text-on-surface-variant bg-surface-container-low px-sm py-xs rounded border border-outline-variant">
+                            <span class="w-2 h-2 rounded-full bg-error animate-pulse"></span> Red Zone
+                        </span>
+                        <span
+                            class="flex items-center gap-xs text-label-md font-label-md text-on-surface-variant bg-surface-container-low px-sm py-xs rounded border border-outline-variant">
+                            <span class="material-symbols-outlined text-[16px] text-primary">local_police</span> Police
+                        </span>
+                        <span
+                            class="flex items-center gap-xs text-label-md font-label-md text-on-surface-variant bg-surface-container-low px-sm py-xs rounded border border-outline-variant">
+                            <span class="material-symbols-outlined text-[16px] text-tertiary">warning</span> Report
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Map Container Mockup -->
+                <div
+                    class="w-full h-[500px] bg-surface-container-highest rounded-xl border border-outline-variant overflow-hidden relative shadow-inner">
+                    <!-- Simulated map background (A placeholder image that looks like a map) -->
+                    <div class="w-full h-full bg-[#e5e3df] relative opacity-80"
+                        style="background-image: repeating-linear-gradient(45deg, #d4d2cd 25%, transparent 25%, transparent 75%, #d4d2cd 75%, #d4d2cd), repeating-linear-gradient(45deg, #d4d2cd 25%, #e5e3df 25%, #e5e3df 75%, #d4d2cd 75%, #d4d2cd); background-position: 0 0, 20px 20px; background-size: 40px 40px;">
+                        <!-- Simulated Roads -->
+                        <div
+                            class="absolute top-0 bottom-0 left-1/3 w-8 bg-white shadow-sm flex flex-col justify-between items-center py-sm opacity-60">
+                            <div class="w-1 h-8 bg-outline-variant"></div>
+                            <div class="w-1 h-8 bg-outline-variant"></div>
+                            <div class="w-1 h-8 bg-outline-variant"></div>
+                            <div class="w-1 h-8 bg-outline-variant"></div>
+                        </div>
+                        <div
+                            class="absolute left-0 right-0 top-1/2 h-8 bg-white shadow-sm flex justify-between items-center px-sm opacity-60">
+                            <div class="w-8 h-1 bg-outline-variant"></div>
+                            <div class="w-8 h-1 bg-outline-variant"></div>
+                            <div class="w-8 h-1 bg-outline-variant"></div>
+                            <div class="w-8 h-1 bg-outline-variant"></div>
+                        </div>
+                    </div>
+
+                    <!-- Red Zone (Congestion) -->
+                    <div
+                        class="absolute top-1/2 left-1/3 w-48 h-48 bg-error/20 rounded-full animate-pulse pointer-events-none translate-x-[-50%] translate-y-[-50%]">
+                    </div>
+                    <div
+                        class="absolute top-1/2 left-1/3 w-48 h-48 bg-error/10 border border-error/50 rounded-full flex items-center justify-center translate-x-[-50%] translate-y-[-50%]">
+                        <span
+                            class="bg-error text-on-error font-label-md text-[10px] px-xs py-xs rounded shadow-lg whitespace-nowrap">High
+                            Congestion</span>
+                    </div>
+
+                    <!-- Road Closure -->
+                    <div class="absolute top-[40%] left-[45%] flex flex-col items-center justify-center">
+                        <div class="flex items-center justify-center bg-surface p-[2px] rounded-full shadow-md">
+                            <span class="material-symbols-outlined text-error text-[20px]">do_not_disturb</span>
+                        </div>
+                        <span
+                            class="bg-surface text-error font-label-md text-[10px] px-xs rounded shadow whitespace-nowrap mt-xs border border-error/20">Road
+                            Closed</span>
+                    </div>
+
+                    <!-- Police Deployments -->
+                    <div class="absolute top-1/4 left-1/2 flex flex-col items-center">
+                        <span
+                            class="material-symbols-outlined text-primary text-[24px] drop-shadow-md bg-white rounded-full p-[2px] shadow border border-primary/20">local_police</span>
+                    </div>
+                    <div class="absolute bottom-1/3 right-1/4 flex flex-col items-center">
+                        <span
+                            class="material-symbols-outlined text-primary text-[24px] drop-shadow-md bg-white rounded-full p-[2px] shadow border border-primary/20">local_police</span>
+                    </div>
+
+                    <!-- Citizen Report -->
+                    <div class="absolute top-2/3 left-1/4 flex flex-col items-center">
+                        <span
+                            class="material-symbols-outlined text-tertiary text-[24px] drop-shadow-md bg-white rounded-full p-[2px] shadow border border-tertiary/20">warning</span>
+                        <span
+                            class="bg-surface text-tertiary font-label-md text-[10px] px-xs rounded shadow whitespace-nowrap mt-xs border border-tertiary/20">Pothole
+                            Reported</span>
+                    </div>
+
+                    <!-- Live Camera Alert -->
+                    <div class="absolute top-1/4 right-1/3 flex flex-col items-center group cursor-pointer z-10">
+                        <span
+                            class="material-symbols-outlined text-secondary text-[24px] drop-shadow-md bg-white rounded-full p-[2px] border border-secondary shadow">videocam</span>
+                        <div
+                            class="bg-surface text-on-surface font-label-md text-[10px] px-sm py-xs rounded shadow-lg mt-xs hidden group-hover:block border border-outline-variant w-48 text-center">
+                            <div class="text-secondary mb-[2px]">Cam-42 Live</div>
+                            <div>Vehicle Count: 45/min</div>
+                            <div class="text-outline-variant font-normal">Density: 82%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Field Intelligence Section (Part C) -->
+        <section class="py-xl px-margin-desktop bg-surface-container border-y border-outline-variant">
+            <div class="max-w-7xl mx-auto">
+                <div class="mb-xl">
+                    <h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Field Intelligence & Algorithmic
+                        Routing</h2>
+                    <p class="text-on-surface-variant font-body-md text-body-md">Citizen-sourced data verification and
+                        active pathfinding operations.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-xl">
+
+                    <!-- Column 1: Citizen Reporting & Camera AI -->
+                    <div
+                        class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col h-full">
+                        <div class="flex items-center gap-sm mb-lg pb-sm border-b border-outline-variant">
+                            <span
+                                class="material-symbols-outlined text-primary bg-primary-fixed p-sm rounded">add_a_photo</span>
+                            <h3 class="font-headline-sm text-headline-sm text-on-surface">AI Auto-Verification</h3>
+                        </div>
+
+                        <div
+                            class="bg-surface-container-lowest p-md rounded border border-outline-dashed mb-md flex flex-col items-center justify-center text-center py-xl relative overflow-hidden group cursor-pointer">
+                            <span
+                                class="material-symbols-outlined text-[48px] text-outline mb-sm group-hover:scale-110 transition-transform">cloud_upload</span>
+                            <p class="text-on-surface-variant font-body-md">Drag & drop field photo here<br>or click to
+                                browse</p>
+                            <button
+                                class="mt-md border border-outline text-primary px-md py-sm rounded font-label-md text-label-md group-hover:bg-primary-container group-hover:border-primary-container transition-colors">Select
+                                Image</button>
+
+                            <!-- Simulated Hover State / Uploaded Image -->
+                            <div
+                                class="absolute inset-0 bg-inverse-surface/90 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity p-md backdrop-blur-sm">
+                                <div
+                                    class="text-inverse-on-surface font-label-md text-label-md mb-sm flex items-center gap-xs">
+                                    <span class="material-symbols-outlined animate-spin text-[16px]"
+                                        style="animation: spin 1s linear infinite;">autorenew</span> Analyzing via
+                                    YOLOv8
+                                </div>
+                                <div class="w-full bg-outline h-2 rounded-full mb-md overflow-hidden max-w-[200px]">
+                                    <div class="bg-secondary h-full" style="width: 100%;"></div>
+                                </div>
+                                <div class="flex flex-wrap gap-xs justify-center">
+                                    <span
+                                        class="bg-error text-on-error px-sm py-xs rounded text-[10px] uppercase font-bold tracking-wider">Detection:
+                                        Pothole</span>
+                                    <span
+                                        class="bg-surface-container text-on-surface px-sm py-xs rounded text-[10px] uppercase font-bold tracking-wider">Confidence:
+                                        98%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-surface-container p-md rounded border border-outline-variant mt-auto">
+                            <h4
+                                class="font-label-md text-label-md text-on-surface uppercase tracking-wide mb-md text-center">
+                                Automated Action Triggered</h4>
+                            <div class="flex items-center justify-between px-md">
+                                <div class="flex flex-col items-center flex-1">
+                                    <span
+                                        class="material-symbols-outlined text-secondary bg-secondary-fixed p-xs rounded-full mb-xs">verified</span>
+                                    <span class="text-[11px] font-label-md text-center text-on-surface">Verified</span>
+                                </div>
+                                <div class="w-12 border-t border-outline-variant border-dashed"></div>
+                                <div class="flex flex-col items-center flex-1">
+                                    <span
+                                        class="material-symbols-outlined text-primary bg-primary-fixed p-xs rounded-full mb-xs">dashboard</span>
+                                    <span class="text-[11px] font-label-md text-center text-on-surface">Logged</span>
+                                </div>
+                                <div class="w-12 border-t border-outline-variant border-dashed"></div>
+                                <div class="flex flex-col items-center flex-1">
+                                    <span
+                                        class="material-symbols-outlined text-tertiary bg-tertiary-fixed p-xs rounded-full mb-xs">notifications_active</span>
+                                    <span
+                                        class="text-[11px] font-label-md text-center text-on-surface">Dispatched</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Graph Algorithm (Dijkstra) -->
+                    <div
+                        class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col h-full">
+                        <div class="flex items-center gap-sm mb-lg pb-sm border-b border-outline-variant">
+                            <span
+                                class="material-symbols-outlined text-tertiary bg-tertiary-fixed p-sm rounded">account_tree</span>
+                            <h3 class="font-headline-sm text-headline-sm text-on-surface">Dijkstra Diversion Engine</h3>
+                        </div>
+
+                        <div class="flex flex-col gap-md flex-grow justify-center">
+                            <!-- Current State -->
+                            <div class="flex items-start gap-md">
+                                <div class="flex flex-col items-center mt-xs">
+                                    <div class="w-4 h-4 rounded-full bg-outline-variant border-2 border-surface"></div>
+                                    <div class="w-px h-10 bg-outline border-l-2 border-dotted"></div>
+                                    <div
+                                        class="w-4 h-4 rounded-full bg-error border-2 border-surface flex items-center justify-center shadow-md">
+                                        <span class="material-symbols-outlined text-[10px] text-white">close</span>
+                                    </div>
+                                </div>
+                                <div class="flex-grow">
+                                    <div class="font-label-md text-label-md text-on-surface-variant mb-xs">Current Route
+                                        Status</div>
+                                    <div
+                                        class="bg-error-container text-on-error-container p-sm rounded border border-error/20 font-body-md flex items-center gap-sm shadow-sm">
+                                        <span class="material-symbols-outlined text-[18px]">do_not_disturb_on</span>
+                                        <span>MG Road <span class="text-error font-bold">Blocked</span></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Algorithm Processing -->
+                            <div
+                                class="pl-xl flex items-center gap-sm text-secondary font-label-md text-[12px] uppercase tracking-wider animate-pulse my-xs">
+                                <span class="material-symbols-outlined text-[16px]">sync</span>
+                                Calculating shortest path via graph network
+                            </div>
+
+                            <!-- Alternate State -->
+                            <div class="flex items-start gap-md">
+                                <div class="flex flex-col items-center mt-xs">
+                                    <div
+                                        class="w-4 h-4 rounded-full bg-secondary border-2 border-surface shadow-md flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-[10px] text-white">check</span>
+                                    </div>
+                                    <div class="w-px h-10 bg-secondary"></div>
+                                    <div class="w-4 h-4 rounded-full bg-secondary border-2 border-surface shadow-md">
+                                    </div>
+                                </div>
+                                <div class="flex-grow">
+                                    <div class="font-label-md text-label-md text-on-surface-variant mb-xs">Best
+                                        Alternate Route Found</div>
+                                    <div
+                                        class="bg-secondary-container/20 text-on-surface p-sm rounded border border-secondary/30 font-body-md flex flex-col gap-xs shadow-sm w-full">
+                                        <div class="flex justify-between items-center">
+                                            <div class="font-semibold text-secondary">Route B (Outer Ring)</div>
+                                            <div
+                                                class="text-[12px] text-on-surface-variant bg-surface-container px-xs py-[2px] rounded">
+                                                +12 mins delay</div>
+                                        </div>
+                                        <button
+                                            class="mt-xs w-full bg-secondary text-on-secondary py-sm rounded font-label-md text-label-md shadow hover:bg-secondary/90 transition-colors flex items-center justify-center gap-xs">
+                                            <span class="material-symbols-outlined text-[18px]">send_to_mobile</span>
+                                            Push to Google Maps / VMS Boards
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Sector Summary (The Aegis Table) -->
+        <section class="py-xl px-margin-desktop bg-surface">
+            <div class="max-w-7xl mx-auto border border-outline-variant rounded-xl overflow-hidden bg-white shadow-sm">
+                <div
+                    class="p-lg bg-surface-container-low border-b border-outline-variant flex items-center justify-between">
+                    <div>
+                        <h3 class="font-headline-sm text-headline-sm text-on-surface">Sector-wise Traffic Status</h3>
+                        <p class="text-on-surface-variant font-body-md text-body-md">Latest ward-level operational
+                            metrics.</p>
+                    </div>
+                    <div class="flex gap-sm">
+                        <button
+                            class="px-md py-sm border border-outline rounded-lg font-label-md text-label-md bg-white hover:bg-surface-container transition-colors">Export
+                            Report</button>
+                        <button
+                            class="px-md py-sm bg-primary-container text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary transition-colors">Live
+                            View</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="aegis-table-header">
+                            <tr>
+                                <th
+                                    class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+                                    Sector ID</th>
+                                <th
+                                    class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+                                    Zone Name</th>
+                                <th
+                                    class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+                                    Congestion Index</th>
+                                <th
+                                    class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+                                    Status</th>
+                                <th
+                                    class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+                                    Deployments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="zebra-row">
+                                <td class="px-lg py-md font-data-mono text-data-mono">WRD-001</td>
+                                <td class="px-lg py-md font-body-md text-body-md font-semibold">South Gateway Hub</td>
+                                <td class="px-lg py-md">
+                                    <div class="w-full bg-outline-variant h-2 rounded-full max-w-[120px]">
+                                        <div class="bg-secondary h-2 rounded-full" style="width: 25%;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-lg py-md">
+                                    <span
+                                        class="inline-flex items-center gap-xs px-md py-xs bg-secondary-container/20 text-on-secondary-container rounded-full font-label-md text-label-md">
+                                        <span class="material-symbols-outlined text-[14px]"
+                                            data-icon="check_circle">check_circle</span> Live
+                                    </span>
+                                </td>
+                                <td class="px-lg py-md text-on-surface-variant font-data-mono">12 Units</td>
+                            </tr>
+                            <tr class="zebra-row">
+                                <td class="px-lg py-md font-data-mono text-data-mono">WRD-014</td>
+                                <td class="px-lg py-md font-body-md text-body-md font-semibold">Old City Market</td>
+                                <td class="px-lg py-md">
+                                    <div class="w-full bg-outline-variant h-2 rounded-full max-w-[120px]">
+                                        <div class="bg-error h-2 rounded-full" style="width: 85%;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-lg py-md">
+                                    <span
+                                        class="inline-flex items-center gap-xs px-md py-xs bg-error-container text-on-error-container rounded-full font-label-md text-label-md">
+                                        <span class="material-symbols-outlined text-[14px]"
+                                            data-icon="error">error</span> Heavy
+                                    </span>
+                                </td>
+                                <td class="px-lg py-md text-on-surface-variant font-data-mono">24 Units</td>
+                            </tr>
+                            <tr class="zebra-row">
+                                <td class="px-lg py-md font-data-mono text-data-mono">WRD-032</td>
+                                <td class="px-lg py-md font-body-md text-body-md font-semibold">Expressway Link</td>
+                                <td class="px-lg py-md">
+                                    <div class="w-full bg-outline-variant h-2 rounded-full max-w-[120px]">
+                                        <div class="bg-tertiary h-2 rounded-full" style="width: 55%;"></div>
+                                    </div>
+                                </td>
+                                <td class="px-lg py-md">
+                                    <span
+                                        class="inline-flex items-center gap-xs px-md py-xs bg-tertiary-container/20 text-on-tertiary-container rounded-full font-label-md text-label-md">
+                                        <span class="material-symbols-outlined text-[14px]"
+                                            data-icon="warning">warning</span> Moderate
+                                    </span>
+                                </td>
+                                <td class="px-lg py-md text-on-surface-variant font-data-mono">08 Units</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        <!-- Institutional Trust / Partner Section -->
+        <section class="py-lg px-margin-desktop bg-surface">
+            <div class="max-w-7xl mx-auto flex flex-col items-center">
+                <p class="font-label-md text-label-md text-outline uppercase tracking-widest mb-lg">In collaboration
+                    with</p>
+                <div class="flex flex-wrap justify-center items-center gap-xl grayscale opacity-60">
+                    <div class="flex items-center gap-sm">
+                        <span class="material-symbols-outlined text-[40px]"
+                            data-icon="location_city">location_city</span>
+                        <span class="font-headline-sm text-headline-sm">Municipal Authority</span>
+                    </div>
+                    <div class="flex items-center gap-sm">
+                        <span class="material-symbols-outlined text-[40px]"
+                            data-icon="account_balance">account_balance</span>
+                        <span class="font-headline-sm text-headline-sm">Digital India</span>
+                    </div>
+                    <div class="flex items-center gap-sm">
+                        <span class="material-symbols-outlined text-[40px]" data-icon="shield">shield</span>
+                        <span class="font-headline-sm text-headline-sm">State Police</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <!-- Footer (Shared Component) -->
+    <footer
+        class="bg-surface-container-low dark:bg-on-background w-full bottom-0 border-t border-outline-variant dark:border-outline">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-xl px-margin-desktop py-xl max-w-full mx-auto">
+            <!-- Brand Column -->
+            <div class="flex flex-col gap-md">
+                <div class="flex items-center gap-sm">
+                    <span class="material-symbols-outlined text-primary"
+                        style="font-variation-settings: 'FILL' 1;">security</span>
+                    <span class="font-headline-sm text-headline-sm text-primary dark:text-primary-fixed">Aegis
+                        Traffic</span>
+                </div>
+                <p class="text-on-surface-variant dark:text-outline-variant font-body-md text-body-md">
+                    Secure, scalable infrastructure for modern municipal traffic control. Delivering precision data for
+                    public safety.
+                </p>
+                <p class="text-on-surface-variant dark:text-outline-variant font-label-md text-label-md mt-sm">
+                    © 2024 Municipal Traffic Management Authority. A Digital India Initiative.
+                </p>
+            </div>
+            <!-- Links Column -->
+            <div class="flex flex-col gap-md">
+                <h4
+                    class="font-label-md text-label-md text-on-surface dark:text-on-background uppercase tracking-widest">
+                    Platform</h4>
+                <nav class="flex flex-col gap-sm">
+                    <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors font-body-md text-body-md cursor-pointer"
+                        href="#">Privacy Policy</a>
+                    <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors font-body-md text-body-md cursor-pointer"
+                        href="#">Terms of Service</a>
+                    <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors font-body-md text-body-md cursor-pointer"
+                        href="#">Accessibility</a>
+                    <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors font-body-md text-body-md cursor-pointer"
+                        href="#">Contact Support</a>
+                </nav>
+            </div>
+            <!-- Contact/Status Column -->
+            <div class="flex flex-col gap-md">
+                <h4
+                    class="font-label-md text-label-md text-on-surface dark:text-on-background uppercase tracking-widest">
+                    System Status</h4>
+                <div class="flex flex-col gap-md">
+                    <div class="flex items-center gap-sm">
+                        <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                        <span class="text-on-surface-variant font-body-md text-body-md">All Systems Operational</span>
+                    </div>
+                    <div class="flex items-center gap-sm">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]"
+                            data-icon="language">language</span>
+                        <span class="text-on-surface-variant font-body-md text-body-md">Network: Tier-1 Secure
+                            Hub</span>
+                    </div>
+                    <div class="flex items-center gap-sm">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]"
+                            data-icon="update">update</span>
+                        <span class="text-on-surface-variant font-body-md text-body-md">Last Update: 12 Oct 2024</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- Floating AI Chat Assistant (Part D) -->
+    <div class="fixed bottom-lg right-lg z-[100] flex flex-col items-end pointer-events-none">
+
+        <!-- Chat Window -->
+        <div id="ai-chat-window"
+            class="w-80 bg-surface rounded-xl shadow-2xl border border-outline-variant mb-md overflow-hidden flex flex-col transition-all duration-300 origin-bottom-right pointer-events-auto transform scale-0 opacity-0">
+            <!-- Header -->
+            <div class="bg-primary p-md flex items-center justify-between text-on-primary">
+                <div class="flex items-center gap-sm">
+                    <span class="material-symbols-outlined">smart_toy</span>
+                    <div>
+                        <div class="font-headline-sm text-[16px] leading-tight">Aegis Officer Bot</div>
+                        <div class="text-[10px] text-primary-fixed opacity-80">AI Assistant Online</div>
+                    </div>
+                </div>
+                <button id="close-chat-btn"
+                    class="hover:bg-primary-container/20 rounded-full p-xs flex items-center justify-center transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">keyboard_arrow_down</span>
+                </button>
+            </div>
+
+            <!-- Chat Body -->
+            <div class="p-md bg-surface-container-lowest h-72 overflow-y-auto flex flex-col gap-md">
+                <div class="text-center font-label-md text-[10px] text-outline uppercase tracking-widest my-xs">Today,
+                    17:30 PM</div>
+
+                <!-- User Message -->
+                <div class="flex justify-end">
+                    <div
+                        class="bg-surface-container px-md py-sm rounded-lg rounded-tr-none border border-outline-variant max-w-[85%] shadow-sm">
+                        <p class="font-body-md text-on-surface text-[13px]">What should I do at Silk Board right now?
+                        </p>
+                    </div>
+                </div>
+
+                <!-- AI Response -->
+                <div class="flex justify-start">
+                    <div
+                        class="bg-primary-container/10 px-md py-sm rounded-lg rounded-tl-none border border-primary/20 max-w-[95%] shadow-sm">
+                        <div class="font-label-md text-[10px] text-primary mb-xs flex items-center gap-xs">
+                            <span class="material-symbols-outlined text-[14px]">auto_awesome</span> System AI
+                        </div>
+                        <p class="font-body-md text-on-surface text-[13px] mb-sm">Expected congestion: <strong
+                                class="text-error font-semibold">Very High</strong>.</p>
+                        <p class="font-body-md text-on-surface-variant text-[12px] mb-sm">I recommend immediate
+                            deployment to mitigate gridlock.</p>
+
+                        <div class="bg-white p-sm rounded border border-outline-variant shadow-sm">
+                            <div
+                                class="font-label-md text-[10px] text-outline uppercase tracking-wider mb-xs border-b border-outline-variant pb-[2px]">
+                                Action Plan</div>
+                            <ul class="text-[12px] font-body-md flex flex-col gap-xs">
+                                <li class="flex items-center gap-xs"><span
+                                        class="material-symbols-outlined text-[14px] text-primary">person</span> Deploy:
+                                    16 officers</li>
+                                <li class="flex items-center gap-xs"><span
+                                        class="material-symbols-outlined text-[14px] text-secondary">fence</span>
+                                    Barricades: 4</li>
+                                <li class="flex items-center gap-xs"><span
+                                        class="material-symbols-outlined text-[14px] text-tertiary">schedule</span>
+                                    Clearance Time: 2 hr</li>
+                            </ul>
+                            <button
+                                class="mt-sm w-full bg-primary-container text-on-primary-container text-[11px] py-xs rounded font-label-md hover:bg-primary hover:text-on-primary transition-colors">
+                                Authorize Deployment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-sm bg-surface border-t border-outline-variant flex items-center gap-sm">
+                <input type="text" placeholder="Ask Aegis..."
+                    class="flex-grow px-sm py-xs border border-outline-variant bg-surface-container-lowest rounded-full font-body-md text-[13px] focus:border-primary focus:ring-1 focus:ring-primary outline-none text-on-surface transition-all">
+                <button
+                    class="bg-primary text-on-primary hover:bg-primary/90 w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow">
+                    <span class="material-symbols-outlined text-[16px]">send</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Toggle Button -->
+        <button id="ai-chat-btn"
+            class="w-16 h-16 bg-primary text-on-primary rounded-full shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all pointer-events-auto border-4 border-surface group relative">
+            <span class="material-symbols-outlined text-[32px]">forum</span>
+            <!-- Notification dot -->
+            <span class="absolute top-0 right-0 w-4 h-4 bg-error border-2 border-surface rounded-full"></span>
+
+            <!-- Tooltip -->
+            <span
+                class="absolute right-full mr-md px-md py-sm bg-inverse-surface text-inverse-on-surface rounded font-label-md text-label-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg">
+                Ask AI Assistant
+            </span>
+        </button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
