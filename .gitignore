@@ -14,3 +14,4 @@ stats_out.txt
 /RoadDamageDetection-main/models/
 /RoadDamageDetection-main/training/*.pt
 /RoadDamageDetection-main/training/dataset/
+part_a
