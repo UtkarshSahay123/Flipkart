@@ -646,9 +646,7 @@
 
         // ── Live Incident Table ──────────────────────────────────────────
         // Auto-detect: relative when served via http server, absolute as fallback
-        const API_BASE = window.location.protocol === 'file:'
-            ? 'http://localhost:8001'
-            : window.location.origin;
+        const API_BASE = 'https://flipkart-06iz.onrender.com';
         const API = `${API_BASE}/api/stats`;
         const geocodeCache = {};   // coords string → human name
 
