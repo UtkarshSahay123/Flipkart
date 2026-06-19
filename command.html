@@ -132,7 +132,7 @@
 <body class="bg-background text-on-surface overflow-hidden">
     <!-- Predicted SideNavBar (Global Navigation) -->
     <aside
-        class="flex flex-col h-full p-md bg-surface-container-low dark:bg-on-background w-[280px] h-screen fixed left-0 top-0 z-50 border-r border-outline-variant dark:border-outline">
+        class="flex flex-col p-md bg-surface-container-low dark:bg-on-background w-full md:w-[280px] h-auto md:h-screen relative md:fixed left-0 top-0 z-50 border-b md:border-r border-outline-variant dark:border-outline">
         <div class="mb-xl">
             <h2 class="text-headline-sm font-headline-sm font-bold text-on-surface dark:text-on-primary-fixed-variant">
                 Traffic Command Centre</h2>
@@ -179,10 +179,10 @@
         </div>
     </aside>
     <!-- Main Content Area -->
-    <main class="ml-[280px] flex flex-col h-screen">
+    <main class="md:ml-[280px] flex flex-col h-screen">
         <!-- TopNavBar Integrated Status -->
         <header
-            class="flex justify-between items-center px-margin-desktop w-full bg-surface-container-lowest dark:bg-on-background h-16 border-b border-outline-variant dark:border-outline">
+            class="flex flex-col md:flex-row justify-between items-center px-margin-desktop w-full bg-surface-container-lowest dark:bg-on-background py-2 md:h-16 h-auto gap-4 md:gap-0 border-b border-outline-variant dark:border-outline">
             <div class="flex items-center gap-lg">
                 <a href="index.html" class="hover:opacity-90 transition-opacity">
                     <h1 class="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed">Road
@@ -195,7 +195,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-xl">
-                <nav class="hidden md:flex items-center gap-lg">
+                <nav class="flex flex-wrap justify-center items-center gap-sm md:gap-lg">
                     <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors font-label-md"
                         href="index.html">Home</a>
                     <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors font-label-md"
@@ -212,9 +212,9 @@
             </div>
         </header>
         <!-- Dynamic Content (Map + Panels) -->
-        <div class="flex-1 flex overflow-hidden">
+        <div class="flex-1 flex flex-col lg:flex-row overflow-hidden overflow-y-auto lg:overflow-y-hidden">
             <!-- Map Section -->
-            <section class="relative flex-1 bg-surface-dim">
+            <section class="relative flex-1 min-h-[400px] lg:min-h-0 bg-surface-dim">
                 <div id="map" class="absolute inset-0 z-0"></div>
                 <!-- Sector Overview Widget -->
                 <div
@@ -321,7 +321,7 @@
 
             </section>
             <!-- Right Sidebar: Incidents & Reports -->
-            <aside class="w-[380px] bg-surface-container-lowest border-l border-outline-variant flex flex-col h-full">
+            <aside class="w-full lg:w-[380px] bg-surface-container-lowest border-t lg:border-t-0 lg:border-l border-outline-variant flex flex-col h-[500px] lg:h-full flex-shrink-0">
                 <!-- Tabs for Sidebar -->
                 <div class="flex border-b border-outline-variant">
                     <button id="tab-incidents"
