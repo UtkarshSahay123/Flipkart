@@ -9,6 +9,7 @@ from pathlib import Path
 from fastapi import FastAPI, WebSocket, HTTPException, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+import google.generativeai as genai
 from pydantic import BaseModel
 
 # ── Add project root to path so ml_models can be imported ──
@@ -72,11 +73,21 @@ def get_yolo_coco():
     return _yolo_coco
 
 
+from typing import Optional
+
 class SimulationRequest(BaseModel):
     event_type: str
-    location: str
-    crowd_size: int
-    time: str
+    start_point: str = ""
+    end_point: str = ""
+    start_coords: Optional[list] = None
+    end_coords: Optional[list] = None
+    crowd_size: int = 0
+    time: str = "17:00"
+    event_cause: str = "others"
+    date: str = ""
+    duration_hours: float = 1.0
+    road_closure: str = "no"
+    location_description: str = ""
 
 
 # ─────────────────────────────────────────────
@@ -114,6 +125,18 @@ async def read_about():
 async def read_technology():
     return FileResponse(str(ROOT / "technology.html"))
 
+@app.get("/pic1.png", response_class=FileResponse, summary="Serve Pic1 Image")
+async def read_pic1():
+    return FileResponse(str(ROOT / "pic1.png"))
+
+@app.get("/pic2.png", response_class=FileResponse, summary="Serve Pic2 Image")
+async def read_pic2():
+    return FileResponse(str(ROOT / "pic2.png"))
+
+@app.get("/pic3.png", response_class=FileResponse, summary="Serve Pic3 Image")
+async def read_pic3():
+    return FileResponse(str(ROOT / "pic3.png"))
+
 
 # ── Shared state (updated by background ML workers) ──
 model_states = {
@@ -133,6 +156,10 @@ class Base64ImageRequest(BaseModel):
     image_base64: str
     mime_type: str = "image/jpeg"
     location: str = "Unknown Location"
+
+class ChatRequest(BaseModel):
+    message: str
+    location: str = "Unknown"
 
 
 # ─────────────────────────────────────────────
@@ -265,12 +292,13 @@ async def predict_simulation(req: SimulationRequest):
         "Ward 4": [12.9800, 77.5900],
     }
 
-    loc = req.location
-    if loc not in LOCATION_COORDS:
-        # Default or fallback coords
-        LOCATION_COORDS[loc] = [12.9716, 77.5946]
-
-    center_coords = LOCATION_COORDS[loc]
+    center_coords = req.start_coords
+    if not center_coords:
+        loc = req.start_point
+        if loc in LOCATION_COORDS:
+            center_coords = LOCATION_COORDS[loc]
+        else:
+            center_coords = [25.61591, 85.09529] # Default Patna
 
     # Rule-based predictive calculations
     crowd = req.crowd_size
@@ -325,20 +353,10 @@ async def predict_simulation(req: SimulationRequest):
             [12.9345, 77.6210], # HSR layout connection
             [12.9150, 77.6380], # Sector 4 Flyover
             [12.9050, 77.6150], # BTM layout diversion
-        ],
-        "Sector 4 Flyover": [
-            [12.9176, 77.6244], # Silk Board
-            [12.9220, 77.6420], # HSR 27th Main
-            [12.9300, 77.6300], # HSR 14th Main
-        ],
-        "Cubbon Park Road": [
-            [12.9740, 77.6101], # MG Road
-            [12.9715, 77.5946], # Hudson Circle
-            [12.9780, 77.5910], # Queen's Road
         ]
     }
     
-    alt_route = routes.get(loc, [
+    alt_route = routes.get(req.start_point, [
         [center_coords[0] + 0.005, center_coords[1] - 0.005],
         [center_coords[0] + 0.008, center_coords[1] + 0.002],
         [center_coords[0] - 0.002, center_coords[1] + 0.006]
@@ -346,7 +364,7 @@ async def predict_simulation(req: SimulationRequest):
 
     result = {
         "event_type": req.event_type,
-        "location": loc,
+        "location": f"{req.start_point} to {req.end_point}",
         "coords": center_coords,
         "congestion": congestion,
         "delay_minutes": delay,
@@ -362,14 +380,18 @@ async def predict_simulation(req: SimulationRequest):
         "alternative_route": alt_route
     }
 
+    sim_id = f"sim_{random.randint(100000, 999999)}"
+    result["id"] = sim_id
+
     sim_alert = {
-        "id": f"sim_{random.randint(100000, 999999)}",
-        "type": "Simulation: " + req.event_type,
-        "location": f"{loc} (Simulated)",
+        "id": sim_id,
+        "type": "Simulation: " + req.event_type + (f" - {req.event_cause.title()}" if req.event_cause and req.event_cause != "others" else ""),
+        "location": f"{req.start_point} to {req.end_point} (Simulated)",
         "confidence": f"{risk}% Risk",
         "severity": "CRITICAL" if risk > 80 else "CONGESTED" if risk > 50 else "PLANNED",
-        "description": f"Predicted congestion: {congestion} with {delay} min delay. Affected radius: {radius} km.",
-        "coords": center_coords
+        "description": f"Predicted congestion: {congestion} with {delay} min delay. Affected Area: ~{radius}km radius.",
+        "coords": center_coords,
+        "recommendations": result["recommendations"]
     }
     
     if "simulations" not in model_states:
@@ -583,6 +605,53 @@ async def health():
 
 
 # ─────────────────────────────────────────────
+
+# ─────────────────────────────────────────────
+# CUSTOM CHAT ENDPOINT
+# ─────────────────────────────────────────────
+@app.post("/api/chat", summary="Chat with TrafficAide Assistant")
+async def chat_with_assistant(req: ChatRequest):
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY environment variable is required.")
+        
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel('gemini-2.5-flash')
+    
+    # Build context from current states
+    citizen_reports = model_states.get("citizen_reports", [])
+    simulations = model_states.get("simulations", [])
+    
+    context_str = "CURRENT INCIDENTS ON DASHBOARD:\\n"
+    if not citizen_reports and not simulations:
+        context_str += "No active incidents reported.\\n"
+    else:
+        for inc in citizen_reports:
+            context_str += f"- Citizen Report: {inc.get('type')} at {inc.get('location')} (Severity: {inc.get('severity')})\\n"
+        for sim in simulations:
+            incident_type = sim.get('type', '').replace('Simulation: ', '')
+            context_str += f"- Active Incident: {incident_type} at {sim.get('location')} (Severity: {sim.get('severity')})\\n"
+            
+    prompt = f"""You are TrafficAide, a helpful AI assistant for the Road Guard dashboard in India.
+Your goal is to answer citizen questions about traffic and disturbances.
+You MUST prioritize checking the current incidents on the dashboard to answer questions, especially if the user asks about their area.
+CRITICAL INSTRUCTION: Treat all incidents in the context as REAL, ACTIVE events. DO NOT mention the word "simulation", "simulated", or "planned exercise" in your responses. Talk about them as actual events happening right now.
+If an incident location is given as GPS coordinates, do not recite the raw GPS numbers. Instead, refer to the general "USER LOCATION" area.
+
+USER LOCATION: {req.location}
+
+{context_str}
+
+USER MESSAGE: {req.message}
+"""
+    
+    try:
+        response = model.generate_content(prompt)
+        return {"reply": response.text}
+    except Exception as e:
+        print(f"Chat error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8001)

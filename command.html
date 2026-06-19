@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Command Center | Aegis Traffic Control</title>
+    <title>Command Center | Road Guard</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap"
         rel="stylesheet" />
@@ -135,7 +135,7 @@
         class="flex flex-col h-full p-md bg-surface-container-low dark:bg-on-background w-[280px] h-screen fixed left-0 top-0 z-50 border-r border-outline-variant dark:border-outline">
         <div class="mb-xl">
             <h2 class="text-headline-sm font-headline-sm font-bold text-on-surface dark:text-on-primary-fixed-variant">
-                Sector Alpha</h2>
+                Traffic Command Centre</h2>
             <p class="text-label-md font-label-md text-on-surface-variant">City Traffic HQ</p>
         </div>
 
@@ -184,8 +184,10 @@
         <header
             class="flex justify-between items-center px-margin-desktop w-full bg-surface-container-lowest dark:bg-on-background h-16 border-b border-outline-variant dark:border-outline">
             <div class="flex items-center gap-lg">
-                <h1 class="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed">Aegis
-                    Traffic Control</h1>
+                <a href="index.html" class="hover:opacity-90 transition-opacity">
+                    <h1 class="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed">Road
+                        Guard</h1>
+                </a>
                 <div
                     class="flex items-center gap-sm px-md py-xs bg-secondary-container text-on-secondary-container rounded-full">
                     <span class="w-2 h-2 rounded-full bg-secondary"></span>
@@ -200,8 +202,10 @@
                         href="technology.html">Technology</a>
                     <a class="text-on-surface-variant dark:text-outline-variant hover:text-primary transition-colors font-label-md"
                         href="about.html">About Us</a>
-                    <a class="inline-flex items-center gap-xs bg-primary text-on-primary font-label-md text-label-md px-md py-xs rounded-lg shadow-sm pointer-events-none" href="command.html">
-                        <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">monitor_heart</span>
+                    <a class="inline-flex items-center gap-xs bg-primary text-on-primary font-label-md text-label-md px-md py-xs rounded-lg shadow-sm pointer-events-none"
+                        href="command.html">
+                        <span class="material-symbols-outlined text-[14px]"
+                            style="font-variation-settings: 'FILL' 1;">monitor_heart</span>
                         Command Centre
                     </a>
                 </nav>
@@ -334,8 +338,6 @@
                         <div id="active-incidents-list" class="space-y-md">
                             <!-- Only actual reported incidents will appear here -->
                         </div>
-
-
                     </div>
 
                     <!-- Panel 2: Citizen Reports Upload/Capture (hidden by default) -->
@@ -409,130 +411,400 @@
 
     <!-- Simulation Input Modal -->
     <div id="simulation-modal"
-        class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-8">
         <div
-            class="bg-surface p-lg rounded-2xl shadow-2xl border border-outline-variant w-full max-w-md mx-margin-mobile relative">
+            class="bg-surface p-lg rounded-2xl shadow-2xl border border-outline-variant w-full max-w-5xl mx-margin-mobile relative my-auto">
             <button id="btn-close-modal" class="absolute top-md right-md text-outline hover:text-on-surface">
                 <span class="material-symbols-outlined">close</span>
             </button>
-            <h3 class="text-headline-sm font-bold text-primary mb-md">Forecast Congestion & Resources</h3>
-            <p class="text-body-md text-on-surface-variant mb-md leading-tight">Run a traffic simulation based on
-                upcoming events to forecast congestion zones and generate diversion routes.</p>
 
-            <form id="simulation-form" class="space-y-md">
-                <div>
-                    <label class="block text-label-md font-bold text-on-surface-variant mb-xs">Event Type</label>
-                    <select id="sim-event-type"
-                        class="w-full rounded-lg border-outline-variant bg-surface-container-low text-body-md py-sm">
-                        <option value="Political Rally">Political Rally</option>
-                        <option value="Religious Festival">Religious Festival</option>
-                        <option value="Sports Event">Sports Event</option>
-                        <option value="Road Construction">Road Construction</option>
-                        <option value="Sudden Gathering">Sudden Gathering</option>
-                    </select>
+            <div class="mb-lg flex items-center gap-sm">
+                <div class="w-10 h-10 bg-primary/10 flex items-center justify-center rounded-full">
+                    <span class="material-symbols-outlined text-primary text-[24px]">science</span>
                 </div>
                 <div>
-                    <label class="block text-label-md font-bold text-on-surface-variant mb-xs">Location</label>
-                    <select id="sim-location"
-                        class="w-full rounded-lg border-outline-variant bg-surface-container-low text-body-md py-sm">
-                        <option value="MG Road Junction">MG Road Junction</option>
-                        <option value="Silk Board">Silk Board</option>
-                        <option value="Outer Ring Road">Outer Ring Road</option>
-                        <option value="Cubbon Park Road">Cubbon Park Road</option>
-                        <option value="Sector 4 Flyover">Sector 4 Flyover</option>
-                    </select>
+                    <h3 class="text-headline-sm font-bold text-primary">Event Impact Prediction</h3>
+                    <p class="text-body-md text-on-surface-variant leading-tight">Enter event details to forecast
+                        congestion, risk level, and generate deployment recommendations using AI.</p>
                 </div>
-                <div class="grid grid-cols-2 gap-md">
-                    <div>
-                        <label class="block text-label-md font-bold text-on-surface-variant mb-xs">Time</label>
-                        <input type="time" id="sim-time"
-                            class="w-full rounded-lg border-outline-variant bg-surface-container-low text-body-md py-sm"
-                            value="17:00">
+            </div>
+
+            <form id="simulation-form" class="space-y-md" onsubmit="return false;">
+                <!-- Inner card styling -->
+                <div class="bg-surface p-md rounded-xl border border-outline-variant shadow-sm">
+                    <div class="flex items-center gap-sm mb-md pb-sm border-b border-outline-variant">
+                        <span class="material-symbols-outlined text-primary text-[20px]">edit_note</span>
+                        <h4 class="font-bold text-on-surface">Event Details</h4>
+                        <span
+                            class="ml-auto text-[11px] text-on-surface-variant font-label-md bg-surface-container-low px-sm py-xs rounded border border-outline-variant">
+                            All fields help improve prediction accuracy
+                        </span>
                     </div>
-                    <div>
-                        <label class="block text-label-md font-bold text-on-surface-variant mb-xs">Expected
-                            Crowd</label>
-                        <input type="number" id="sim-crowd"
-                            class="w-full rounded-lg border-outline-variant bg-surface-container-low text-body-md py-sm"
-                            value="12000" min="100">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-md">
+                        <!-- Event Type -->
+                        <div class="flex flex-col gap-xs">
+                            <label
+                                class="font-label-md text-[11px] font-bold text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">category</span> Event Type
+                            </label>
+                            <select id="sim-event-type"
+                                class="p-xs border border-outline-variant rounded-lg bg-surface-container-low text-body-md text-on-surface outline-none focus:border-primary">
+                                <option value="Planned">Planned</option>
+                                <option value="Unplanned">Unplanned</option>
+                            </select>
+                            <span class="text-[10px] text-on-surface-variant leading-tight">Planned events allow
+                                pre-deployment of resources</span>
+                        </div>
+
+                        <!-- Event Cause -->
+                        <div class="flex flex-col gap-xs">
+                            <label
+                                class="font-label-md text-[11px] font-bold text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">report</span> Event Cause
+                            </label>
+                            <select id="sim-event-cause"
+                                class="p-xs border border-outline-variant rounded-lg bg-surface-container-low text-body-md text-on-surface outline-none focus:border-primary">
+                                <option value="Vehicle Breakdown">Vehicle Breakdown</option>
+                                <option value="Accident">Accident</option>
+                                <option value="Construction">Construction</option>
+                                <option value="Water Logging">Water Logging</option>
+                                <option value="Public Event">Public Event</option>
+                                <option value="Procession">Procession</option>
+                                <option value="VIP Movement">VIP Movement</option>
+                                <option value="Protest">Protest</option>
+                                <option value="Congestion">Congestion</option>
+                                <option value="Road Conditions">Road Conditions</option>
+                                <option value="Tree Fall">Tree Fall</option>
+                                <option value="Others">Others</option>
+                            </select>
+                            <span class="text-[10px] text-on-surface-variant leading-tight">Primary cause determines
+                                base risk level</span>
+                        </div>
+
+                        <!-- Start Point -->
+                        <div class="flex flex-col gap-xs relative">
+                            <label
+                                class="font-label-md text-[11px] font-bold text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">my_location</span> Start Point <span
+                                    class="text-error text-[10px]">*</span>
+                            </label>
+                            <input type="text" id="sim-start-point" required
+                                placeholder="Enter start location or lat, lng..." autocomplete="off"
+                                class="p-xs border border-outline-variant rounded-lg bg-surface-container-low text-body-md text-on-surface outline-none focus:border-primary">
+                            <span class="text-[10px] text-on-surface-variant leading-tight">Event starting intersection
+                                or coordinate</span>
+                            <!-- Autocomplete dropdown -->
+                            <div id="sim-start-suggestions"
+                                class="absolute left-0 right-0 top-[100%] bg-surface border border-outline-variant rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto hidden">
+                            </div>
+                        </div>
+
+                        <!-- End Point -->
+                        <div class="flex flex-col gap-xs relative">
+                            <label
+                                class="font-label-md text-[11px] font-bold text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">location_on</span> End Point <span
+                                    class="text-on-surface-variant text-[10px] font-normal">(optional)</span>
+                            </label>
+                            <input type="text" id="sim-end-point" placeholder="Enter end location or lat, lng..."
+                                autocomplete="off"
+                                class="p-xs border border-outline-variant rounded-lg bg-surface-container-low text-body-md text-on-surface outline-none focus:border-primary">
+                            <span class="text-[10px] text-on-surface-variant leading-tight">Event ending intersection or
+                                coordinate</span>
+                            <!-- Autocomplete dropdown -->
+                            <div id="sim-end-suggestions"
+                                class="absolute left-0 right-0 top-[100%] bg-surface border border-outline-variant rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto hidden">
+                            </div>
+                        </div>
+
+                        <!-- Date -->
+                        <div class="flex flex-col gap-xs">
+                            <label
+                                class="font-label-md text-[11px] font-bold text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">calendar_month</span> Date
+                            </label>
+                            <input type="date" id="sim-date"
+                                class="p-xs border border-outline-variant rounded-lg bg-surface-container-low text-body-md text-on-surface outline-none focus:border-primary">
+                            <span class="text-[10px] text-on-surface-variant leading-tight">Weekends & holidays affect
+                                traffic</span>
+                        </div>
+
+                        <!-- Time -->
+                        <div class="flex flex-col gap-xs">
+                            <label
+                                class="font-label-md text-[11px] font-bold text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">schedule</span> Time
+                            </label>
+                            <input type="time" id="sim-time" value="17:00"
+                                class="p-xs border border-outline-variant rounded-lg bg-surface-container-low text-body-md text-on-surface outline-none focus:border-primary">
+                            <span class="text-[10px] text-on-surface-variant leading-tight">Peak hours: 8-11 AM & 5-8
+                                PM</span>
+                        </div>
+
+                        <!-- Expected Crowd Size -->
+                        <div class="flex flex-col gap-xs">
+                            <label
+                                class="font-label-md text-[11px] font-bold text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">groups</span> Expected Crowd
+                            </label>
+                            <input type="number" id="sim-crowd" placeholder="e.g. 5000" min="0" value="12000"
+                                class="p-xs border border-outline-variant rounded-lg bg-surface-container-low text-body-md text-on-surface outline-none focus:border-primary">
+                            <span class="text-[10px] text-on-surface-variant leading-tight">Estimated number of
+                                people</span>
+                        </div>
+
+                        <!-- Event Duration -->
+                        <div class="flex flex-col gap-xs">
+                            <label
+                                class="font-label-md text-[11px] font-bold text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">hourglass_top</span> Duration
+                                (Hours)
+                            </label>
+                            <input type="number" id="sim-duration" placeholder="e.g. 3" min="0" max="72" step="0.5"
+                                value="3"
+                                class="p-xs border border-outline-variant rounded-lg bg-surface-container-low text-body-md text-on-surface outline-none focus:border-primary">
+                            <span class="text-[10px] text-on-surface-variant leading-tight">Longer events need sustained
+                                deployment</span>
+                        </div>
+
+                        <!-- Road Closure Required -->
+                        <div class="flex flex-col gap-xs">
+                            <label
+                                class="font-label-md text-[11px] font-bold text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">block</span> Road Closure?
+                            </label>
+                            <div class="flex gap-md items-center py-[2px]">
+                                <label
+                                    class="flex items-center gap-xs cursor-pointer text-body-md font-semibold text-on-surface">
+                                    <input type="radio" name="sim-road-closure" value="yes"
+                                        class="text-primary focus:ring-primary">
+                                    <span>Yes</span>
+                                </label>
+                                <label
+                                    class="flex items-center gap-xs cursor-pointer text-body-md font-semibold text-on-surface">
+                                    <input type="radio" name="sim-road-closure" value="no" checked
+                                        class="text-primary focus:ring-primary">
+                                    <span>No</span>
+                                </label>
+                            </div>
+                            <span class="text-[10px] text-on-surface-variant leading-tight">Road closures increase
+                                congestion risk</span>
+                        </div>
+
+                        <!-- Location Description -->
+                        <div class="flex flex-col gap-xs sm:col-span-2">
+                            <label
+                                class="font-label-md text-[11px] font-bold text-on-surface-variant flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[14px]">location_on</span> Location
+                                Description
+                            </label>
+                            <textarea id="sim-location-description" rows="2"
+                                placeholder="e.g. Near MG Road Metro Station..."
+                                class="p-xs border border-outline-variant rounded-lg bg-surface-container-low text-body-md text-on-surface outline-none focus:border-primary resize-none"></textarea>
+                            <span class="text-[10px] text-on-surface-variant leading-tight">Describe the exact location
+                                for mapping</span>
+                        </div>
                     </div>
                 </div>
 
-                <button type="submit"
-                    class="w-full py-md bg-primary text-on-primary font-bold rounded-lg hover:opacity-90 transition-opacity flex justify-center items-center gap-sm">
-                    <span class="material-symbols-outlined text-sm">cycle</span> Run Forecast
-                </button>
+                <div
+                    class="flex flex-col sm:flex-row items-center justify-between gap-md border-t border-outline-variant pt-md">
+                    <button type="submit"
+                        class="w-full sm:w-auto sm:min-w-[240px] py-md bg-primary text-on-primary font-bold rounded-lg hover:opacity-90 transition-opacity flex justify-center items-center gap-sm shadow-md">
+                        <span class="material-symbols-outlined text-sm">auto_awesome</span> Update Prediction
+                    </button>
+                    <span class="text-[11px] text-on-surface-variant text-right">
+                        AI model analyzes 12+ parameters to generate predictions. Results are for planning purposes.
+                    </span>
+                </div>
             </form>
         </div>
     </div>
 
     <!-- Simulation Results Modal -->
     <div id="simulation-results-modal"
-        class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-8">
         <div
-            class="bg-surface p-lg rounded-2xl shadow-2xl border border-outline-variant w-full max-w-lg mx-margin-mobile relative max-h-[90vh] overflow-y-auto">
+            class="bg-surface p-lg rounded-2xl shadow-2xl border border-outline-variant w-full max-w-3xl mx-margin-mobile relative my-auto">
             <button id="btn-close-results" class="absolute top-md right-md text-outline hover:text-on-surface">
                 <span class="material-symbols-outlined">close</span>
             </button>
-            <h3 class="text-headline-sm font-bold text-primary mb-xs" id="res-title">Simulation Forecast Results</h3>
-            <p class="text-label-md text-on-surface-variant mb-md" id="res-subtitle">Results from Traffic Intelligence
-                API</p>
+            <h3 class="text-headline-sm font-bold text-primary mb-xs">Simulation Forecast Results</h3>
+            <p class="text-label-md text-on-surface-variant mb-md">Results from Traffic Intelligence API</p>
 
             <div class="space-y-md text-body-md">
-                <div class="grid grid-cols-2 gap-md">
-                    <div class="p-md bg-error/5 border border-error/20 rounded-xl">
-                        <p class="text-label-md text-error font-bold uppercase">Congestion Level</p>
-                        <p id="res-congestion" class="text-2xl font-black text-error">Very High</p>
+                <!-- Top Row: Risk Banner with color dot (matches second image) -->
+                <div id="res-risk-banner"
+                    class="bg-error text-white p-md rounded-xl mb-md flex items-center justify-between border shadow-sm transition-all duration-300">
+                    <div class="flex items-center gap-md">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center bg-white/20 flex-shrink-0">
+                            <span id="res-risk-icon" class="material-symbols-outlined text-[28px]">warning</span>
+                        </div>
+                        <div>
+                            <div
+                                class="font-label-md text-[10px] uppercase tracking-widest opacity-80 flex items-center gap-xs">
+                                Risk Assessment
+                                <span id="res-risk-dot" class="inline-block w-2.5 h-2.5 rounded-full bg-red-500"
+                                    title="Risk Color"></span>
+                            </div>
+                            <div id="res-risk-level-text" class="text-2xl font-bold leading-tight">Medium</div>
+                        </div>
                     </div>
-                    <div class="p-md bg-tertiary-container/5 border border-tertiary-container/20 rounded-xl">
-                        <p class="text-label-md text-tertiary-container font-bold uppercase">Expected Delay</p>
-                        <p id="res-delay" class="text-2xl font-black text-tertiary-container">28 mins</p>
-                    </div>
-                    <div class="p-md bg-surface-container-high rounded-xl">
-                        <p class="text-label-md text-on-surface-variant font-bold uppercase">Affected Radius</p>
-                        <p id="res-radius" class="text-xl font-bold">3.0 km</p>
-                    </div>
-                    <div class="p-md bg-surface-container-high rounded-xl">
-                        <p class="text-label-md text-on-surface-variant font-bold uppercase">Accident/Safety Risk</p>
-                        <p id="res-risk" class="text-xl font-bold">92%</p>
+                    <div class="flex flex-col items-end gap-xs">
+                        <div
+                            class="flex items-center gap-xs bg-white/10 px-sm py-xs rounded-lg text-label-md font-bold">
+                            <span class="material-symbols-outlined text-[14px]">query_stats</span>
+                            <span id="res-confidence-badge">AI Confidence: 37%</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="p-md bg-secondary-container/10 border border-secondary/20 rounded-xl space-y-sm">
-                    <h4 class="font-bold text-on-secondary-container flex items-center gap-sm">
-                        <span class="material-symbols-outlined">verified</span> Resource Recommendations
-                    </h4>
-                    <div class="grid grid-cols-2 gap-sm text-label-md">
-                        <div class="flex items-center gap-xs"><span
-                                class="material-symbols-outlined text-sm">local_police</span> Deploy Police: <span
-                                id="res-police" class="font-bold">18</span></div>
-                        <div class="flex items-center gap-xs"><span
-                                class="material-symbols-outlined text-sm">fence</span> Barricades: <span
-                                id="res-barricades" class="font-bold">4</span></div>
-                        <div class="flex items-center gap-xs"><span
-                                class="material-symbols-outlined text-sm">medical_services</span> Ambulances: <span
-                                id="res-ambulances" class="font-bold">1</span></div>
-                        <div class="flex items-center gap-xs"><span
-                                class="material-symbols-outlined text-sm">group</span> Traffic Marshals: <span
-                                id="res-marshals" class="font-bold">6</span></div>
+                <!-- Metrics Row (4 cards) -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-md mb-md">
+                    <div
+                        class="bg-surface p-md rounded-xl border border-outline-variant shadow-sm flex items-center gap-md">
+                        <div
+                            class="w-9 h-9 bg-tertiary-fixed flex items-center justify-center rounded-lg flex-shrink-0">
+                            <span class="material-symbols-outlined text-tertiary text-[18px]">speed</span>
+                        </div>
+                        <div>
+                            <div class="text-on-surface-variant font-label-md text-[9px] uppercase tracking-wider">
+                                Congestion Level</div>
+                            <div id="res-congestion" class="font-data-mono text-on-surface text-[14px] font-bold">Medium
+                            </div>
+                        </div>
                     </div>
-                    <p class="text-label-md text-on-secondary-container/80 pt-xs border-t border-secondary/10">
-                        <strong>Diversion:</strong> Alternating traffic to <span id="res-diversion-route"
-                            class="font-bold">Route B</span>. Routes plotted on the map.
-                    </p>
+                    <div
+                        class="bg-surface p-md rounded-xl border border-outline-variant shadow-sm flex items-center gap-md">
+                        <div
+                            class="w-9 h-9 bg-error-container flex items-center justify-center rounded-lg flex-shrink-0">
+                            <span class="material-symbols-outlined text-error text-[18px]">timer</span>
+                        </div>
+                        <div>
+                            <div class="text-on-surface-variant font-label-md text-[9px] uppercase tracking-wider">
+                                Expected Delay</div>
+                            <div id="res-delay" class="font-data-mono text-on-surface text-[14px] font-bold">41 min
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="bg-surface p-md rounded-xl border border-outline-variant shadow-sm flex items-center gap-md">
+                        <div class="w-9 h-9 bg-primary-fixed flex items-center justify-center rounded-lg flex-shrink-0">
+                            <span class="material-symbols-outlined text-primary text-[18px]">radar</span>
+                        </div>
+                        <div>
+                            <div class="text-on-surface-variant font-label-md text-[9px] uppercase tracking-wider">
+                                Affected Radius</div>
+                            <div id="res-radius" class="font-data-mono text-on-surface text-[14px] font-bold">1.2 km
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="bg-surface p-md rounded-xl border border-outline-variant shadow-sm flex items-center gap-md">
+                        <div
+                            class="w-9 h-9 bg-secondary-fixed flex items-center justify-center rounded-lg flex-shrink-0">
+                            <span class="material-symbols-outlined text-secondary text-[18px]">verified</span>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="text-on-surface-variant font-label-md text-[9px] uppercase tracking-wider">
+                                Confidence</div>
+                            <div id="res-risk" class="font-data-mono text-on-surface text-[14px] font-bold">37%</div>
+                            <div class="w-full bg-surface-container-highest rounded-full h-1 mt-xs">
+                                <div id="res-confidence-bar"
+                                    class="bg-secondary h-1 rounded-full transition-all duration-700"
+                                    style="width: 37%"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <button id="btn-apply-simulation"
-                    class="w-full py-md bg-primary text-on-primary font-bold rounded-lg hover:opacity-90 transition-opacity">
-                    Apply Diversion & Close
-                </button>
+                <!-- Resource Recommendations -->
+                <div class="bg-surface p-md rounded-xl border border-outline-variant shadow-sm">
+                    <div class="flex items-center justify-between mb-md pb-xs border-b border-outline-variant">
+                        <h4 class="font-bold text-on-surface flex items-center gap-sm">
+                            <span class="material-symbols-outlined text-primary text-[20px]">deployed_code</span>
+                            Resource Recommendations
+                        </h4>
+                        <span
+                            class="bg-secondary-container text-on-secondary-container font-label-md text-[10px] px-sm py-xs rounded">AI
+                            Generated</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-md mb-md">
+                        <div
+                            class="bg-surface-container-low p-sm rounded-xl border border-outline-variant text-center hover:shadow-md transition-shadow">
+                            <div
+                                class="w-9 h-9 bg-primary-fixed rounded-full flex items-center justify-center mx-auto mb-xs">
+                                <span class="material-symbols-outlined text-primary text-[18px]">local_police</span>
+                            </div>
+                            <div id="res-police" class="font-data-mono text-[20px] font-bold text-on-surface">6</div>
+                            <div class="text-on-surface-variant font-label-md text-[9px] uppercase tracking-wide">Police
+                                Officers</div>
+                        </div>
+                        <div
+                            class="bg-surface-container-low p-sm rounded-xl border border-outline-variant text-center hover:shadow-md transition-shadow">
+                            <div
+                                class="w-9 h-9 bg-secondary-fixed rounded-full flex items-center justify-center mx-auto mb-xs">
+                                <span class="material-symbols-outlined text-secondary text-[18px]">fence</span>
+                            </div>
+                            <div id="res-barricades" class="font-data-mono text-[20px] font-bold text-on-surface">2
+                            </div>
+                            <div class="text-on-surface-variant font-label-md text-[9px] uppercase tracking-wide">
+                                Barricades</div>
+                        </div>
+                        <div
+                            class="bg-surface-container-low p-sm rounded-xl border border-outline-variant text-center hover:shadow-md transition-shadow">
+                            <div
+                                class="w-9 h-9 bg-error-container rounded-full flex items-center justify-center mx-auto mb-xs">
+                                <span class="material-symbols-outlined text-error text-[18px]">emergency</span>
+                            </div>
+                            <div id="res-ambulances" class="font-data-mono text-[20px] font-bold text-on-surface">1
+                            </div>
+                            <div class="text-on-surface-variant font-label-md text-[9px] uppercase tracking-wide">
+                                Ambulances</div>
+                        </div>
+                        <div
+                            class="bg-surface-container-low p-sm rounded-xl border border-outline-variant text-center hover:shadow-md transition-shadow">
+                            <div
+                                class="w-9 h-9 bg-tertiary-fixed rounded-full flex items-center justify-center mx-auto mb-xs">
+                                <span class="material-symbols-outlined text-tertiary text-[18px]">groups</span>
+                            </div>
+                            <div id="res-marshals" class="font-data-mono text-[20px] font-bold text-on-surface">2</div>
+                            <div class="text-on-surface-variant font-label-md text-[9px] uppercase tracking-wide">
+                                Traffic Marshals</div>
+                        </div>
+                    </div>
+
+                    <!-- Diversion Route Text -->
+                    <div
+                        class="w-full border border-primary/20 bg-primary-container/10 p-sm rounded-lg flex items-center gap-sm">
+                        <span class="material-symbols-outlined text-primary text-[20px]">alt_route</span>
+                        <div class="text-label-md text-on-surface">
+                            <strong>Recommended Route:</strong> <span id="res-diversion-route"
+                                class="font-bold text-primary">Route via MG Road -> Brigade Road -> Residency
+                                Road</span>
+                        </div>
+                    </div>
+                </div>
+
+
             </div>
         </div>
     </div>
     <script>
+        // Auto-detect API base URLs
+        const API_BASE = window.location.protocol === 'file:'
+            ? 'http://localhost:8001'
+            : window.location.origin;
+
+        const WS_BASE = window.location.protocol === 'file:'
+            ? 'ws://localhost:8001'
+            : (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host;
+
         // Map items tracking
         var activeMarkers = {};
-        var simulationLayers = [];
+        var activeSimulationLayers = {};
         var displayedReports = new Set();
         var userCoords = [25.61591, 85.09529]; // Default Patna coordinates
 
@@ -657,22 +929,111 @@
         // Populate initial static markers on map (Removed mock data - only showing actual data now)
         var initialIncidents = [];
 
+        function removeIncidentCardFromDOM(id) {
+            const list = document.getElementById('active-incidents-list');
+            if (!list) return;
+            const cards = list.querySelectorAll('.p-md');
+            cards.forEach(card => {
+                const btn = card.querySelector('button[onclick*="deleteIncident"]');
+                if (btn) {
+                    const onclickStr = btn.getAttribute('onclick') || "";
+                    if (onclickStr.includes(`'${id}'`) || onclickStr.includes(`"${id}"`)) {
+                        card.remove();
+                        const counter = document.getElementById('incidents-count');
+                        counter.innerText = Math.max(0, parseInt(counter.innerText) - 1);
+                    }
+                }
+            });
+        }
+
+        function setupAutocomplete(inputId, suggestionsId) {
+            const input = document.getElementById(inputId);
+            const suggestionsContainer = document.getElementById(suggestionsId);
+            let debounceTimer;
+
+            input.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                const query = input.value.trim();
+
+                if (query.length < 3) {
+                    suggestionsContainer.innerHTML = '';
+                    suggestionsContainer.classList.add('hidden');
+                    return;
+                }
+
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        let url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}`;
+                        if (userCoords && userCoords.length === 2) {
+                            url += `&lat=${userCoords[0]}&lon=${userCoords[1]}`;
+                        }
+                        const response = await fetch(url, {
+                            headers: { 'User-Agent': 'AegisTrafficControl/1.0' }
+                        });
+                        if (!response.ok) throw new Error("Search failed");
+                        const data = await response.json();
+
+                        suggestionsContainer.innerHTML = '';
+                        if (data && data.length > 0) {
+                            data.forEach(item => {
+                                const div = document.createElement('div');
+                                div.className = "p-xs hover:bg-primary-container/10 cursor-pointer text-body-md text-on-surface border-b border-outline-variant/30 last:border-b-0";
+                                div.innerText = item.display_name;
+                                div.addEventListener('mousedown', (e) => {
+                                    e.preventDefault();
+                                    input.value = item.display_name;
+                                    input.setAttribute('data-lat', item.lat);
+                                    input.setAttribute('data-lon', item.lon);
+                                    suggestionsContainer.classList.add('hidden');
+                                });
+                                suggestionsContainer.appendChild(div);
+                            });
+                            suggestionsContainer.classList.remove('hidden');
+                        } else {
+                            suggestionsContainer.classList.add('hidden');
+                        }
+                    } catch (err) {
+                        console.error("Autocomplete error: ", err);
+                    }
+                }, 400);
+            });
+
+            input.addEventListener('blur', () => {
+                setTimeout(() => {
+                    suggestionsContainer.classList.add('hidden');
+                }, 200);
+            });
+
+            input.addEventListener('focus', () => {
+                if (suggestionsContainer.children.length > 0) {
+                    suggestionsContainer.classList.remove('hidden');
+                }
+            });
+        }
+
+        // Initialize autocompletes
+        setupAutocomplete('sim-start-point', 'sim-start-suggestions');
+        setupAutocomplete('sim-end-point', 'sim-end-suggestions');
+
         // Tab Toggle Navigation
         const tabIncidents = document.getElementById('tab-incidents');
         const tabReports = document.getElementById('tab-reports');
         const panelIncidents = document.getElementById('panel-incidents');
         const panelReports = document.getElementById('panel-reports');
 
+        const ACTIVE_TAB = "flex-1 py-md text-label-md font-bold text-primary border-b-2 border-primary bg-primary-container/10";
+        const IDLE_TAB = "flex-1 py-md text-label-md font-bold text-on-surface-variant hover:bg-surface-container-low border-b-2 border-transparent";
+
         tabIncidents.addEventListener('click', () => {
-            tabIncidents.className = "flex-1 py-md text-label-md font-bold text-primary border-b-2 border-primary bg-primary-container/10";
-            tabReports.className = "flex-1 py-md text-label-md font-bold text-on-surface-variant hover:bg-surface-container-low border-b-2 border-transparent";
+            tabIncidents.className = ACTIVE_TAB;
+            tabReports.className = IDLE_TAB;
             panelIncidents.classList.remove('hidden');
             panelReports.classList.add('hidden');
         });
 
         tabReports.addEventListener('click', () => {
-            tabReports.className = "flex-1 py-md text-label-md font-bold text-primary border-b-2 border-primary bg-primary-container/10";
-            tabIncidents.className = "flex-1 py-md text-label-md font-bold text-on-surface-variant hover:bg-surface-container-low border-b-2 border-transparent";
+            tabReports.className = ACTIVE_TAB;
+            tabIncidents.className = IDLE_TAB;
             panelReports.classList.remove('hidden');
             panelIncidents.classList.add('hidden');
         });
@@ -685,7 +1046,6 @@
 
         const simulationResultsModal = document.getElementById('simulation-results-modal');
         const btnCloseResults = document.getElementById('btn-close-results');
-        const btnApplySimulation = document.getElementById('btn-apply-simulation');
 
         btnNewSimulation.addEventListener('click', (e) => {
             e.preventDefault();
@@ -700,18 +1060,41 @@
             simulationResultsModal.classList.add('hidden');
         });
 
-        btnApplySimulation.addEventListener('click', () => {
-            simulationResultsModal.classList.add('hidden');
-        });
 
         // Simulation Form Submission (Prediction Backend)
         simulationForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const event_type = document.getElementById('sim-event-type').value;
-            const location = document.getElementById('sim-location').value;
-            const crowd_size = parseInt(document.getElementById('sim-crowd').value) || 1000;
-            const time = document.getElementById('sim-time').value;
+            const startInput = document.getElementById('sim-start-point');
+            const endInput = document.getElementById('sim-end-point');
+            const crowd_size = parseInt(document.getElementById('sim-crowd').value) || 12000;
+            const time = document.getElementById('sim-time').value || "17:00";
+            const event_cause = document.getElementById('sim-event-cause').value;
+            const date = document.getElementById('sim-date').value;
+            const duration_hours = parseFloat(document.getElementById('sim-duration').value) || 3.0;
+            const road_closure = document.querySelector('input[name="sim-road-closure"]:checked') ? document.querySelector('input[name="sim-road-closure"]:checked').value : 'no';
+            const location_description = document.getElementById('sim-location-description').value;
+
+            // Resolve coordinates
+            let startCoords = null;
+            let endCoords = null;
+
+            let startLat = startInput.getAttribute('data-lat');
+            let startLon = startInput.getAttribute('data-lon');
+            if (startLat && startLon) {
+                startCoords = [parseFloat(startLat), parseFloat(startLon)];
+            } else {
+                startCoords = await resolveLocationToCoords(startInput.value);
+            }
+
+            let endLat = endInput.getAttribute('data-lat');
+            let endLon = endInput.getAttribute('data-lon');
+            if (endLat && endLon) {
+                endCoords = [parseFloat(endLat), parseFloat(endLon)];
+            } else if (endInput.value.trim()) {
+                endCoords = await resolveLocationToCoords(endInput.value);
+            }
 
             // Show loading state
             const submitBtn = simulationForm.querySelector('button[type="submit"]');
@@ -720,10 +1103,23 @@
             submitBtn.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin">cyclone</span> Simulating...`;
 
             try {
-                const response = await fetch('http://localhost:8000/api/simulation/predict', {
+                const response = await fetch(`${API_BASE}/api/simulation/predict`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ event_type, location, crowd_size, time })
+                    body: JSON.stringify({
+                        event_type,
+                        start_point: startInput.value,
+                        end_point: endInput.value,
+                        start_coords: startCoords,
+                        end_coords: endCoords,
+                        crowd_size,
+                        time,
+                        event_cause,
+                        date,
+                        duration_hours,
+                        road_closure,
+                        location_description
+                    })
                 });
 
                 if (!response.ok) throw new Error("Simulation endpoint failed");
@@ -733,33 +1129,56 @@
                 // Close input modal
                 simulationModal.classList.add('hidden');
 
+                // Determine risk level and colors dynamically
+                const score = result.risk || 0;
+                let bannerClass, iconName, riskDotColor, riskText;
+
+                if (score >= 75) {
+                    bannerClass = "bg-error text-white border-error/30";
+                    iconName = "emergency";
+                    riskDotColor = "bg-red-500";
+                    riskText = "Critical";
+                } else if (score >= 50) {
+                    bannerClass = "bg-[#b02300] text-white border-error/30";
+                    iconName = "warning";
+                    riskDotColor = "bg-orange-500";
+                    riskText = "High";
+                } else if (score >= 25) {
+                    bannerClass = "bg-amber-500 text-white border-tertiary/30";
+                    iconName = "traffic";
+                    riskDotColor = "bg-yellow-400";
+                    riskText = "Medium";
+                } else {
+                    bannerClass = "bg-secondary text-white border-outline-variant";
+                    iconName = "check_circle";
+                    riskDotColor = "bg-green-500";
+                    riskText = "Low";
+                }
+
                 // Populate results modal
+                const bannerEl = document.getElementById('res-risk-banner');
+                if (bannerEl) bannerEl.className = `p-md rounded-xl mb-md flex items-center justify-between border shadow-sm transition-all duration-300 ${bannerClass}`;
+                document.getElementById('res-risk-icon').innerText = iconName;
+                document.getElementById('res-risk-dot').className = `inline-block w-2.5 h-2.5 rounded-full ${riskDotColor}`;
+                document.getElementById('res-risk-level-text').innerText = riskText;
+                document.getElementById('res-confidence-badge').innerText = `AI Confidence: ${score}%`;
+
                 document.getElementById('res-congestion').innerText = result.congestion;
-                document.getElementById('res-delay').innerText = result.delay_minutes + " mins";
-                document.getElementById('res-radius').innerText = result.radius_km + " km";
-                document.getElementById('res-risk').innerText = result.risk + "%";
+                document.getElementById('res-delay').innerText = `${result.delay_minutes} min`;
+                document.getElementById('res-radius').innerText = `${result.radius_km} km`;
+                document.getElementById('res-risk').innerText = `${score}%`;
+                document.getElementById('res-confidence-bar').style.width = `${score}%`;
+
                 document.getElementById('res-police').innerText = result.recommendations.police;
                 document.getElementById('res-barricades').innerText = result.recommendations.barricades;
                 document.getElementById('res-ambulances').innerText = result.recommendations.ambulances;
                 document.getElementById('res-marshals').innerText = result.recommendations.marshals;
-                document.getElementById('res-diversion-route').innerText = result.recommendations.diversion_route;
-
-                // Adjust color scheme in results based on severity
-                const congEl = document.getElementById('res-congestion');
-                if (result.congestion === "Very High" || result.congestion === "Heavy") {
-                    congEl.className = "text-2xl font-black text-error";
-                } else {
-                    congEl.className = "text-2xl font-black text-secondary";
-                }
+                document.getElementById('res-diversion-route').innerText = result.recommendations.diversion_route || "No diversion needed";
 
                 // Show results modal
                 simulationResultsModal.classList.remove('hidden');
 
-                // Render Simulation Forecast Zone & Route on Map
-                // Clear previous simulation layers
-                simulationLayers.forEach(l => map.removeLayer(l));
-                simulationLayers = [];
-
+                // Render Simulation Forecast Zone (No green line)
                 const coords = result.coords;
                 // 1. Draw Red Affected Radius circle
                 var zoneCircle = L.circle(coords, {
@@ -770,32 +1189,26 @@
                     weight: 2,
                     dashArray: '5, 5'
                 }).addTo(map);
-                simulationLayers.push(zoneCircle);
 
-                // 2. Draw Green Diversion Polyline Route (Dijkstra Alternative Route)
-                var diversionPath = L.polyline(result.alternative_route, {
-                    color: '#006c47',
-                    weight: 6,
-                    opacity: 0.85,
-                    lineJoin: 'round'
-                }).addTo(map);
-                simulationLayers.push(diversionPath);
-
-                // 3. Add Simulated Blockage Marker
+                // 2. Add Simulated Blockage Marker
                 var blockMarker = L.marker(coords).addTo(map)
                     .bindPopup(`<b>Simulation: ${result.event_type}</b><br>Congestion: ${result.congestion}<br>Radius: ${result.radius_km}km`)
                     .openPopup();
-                simulationLayers.push(blockMarker);
+
+                // Track simulation layers by simulation ID
+                activeSimulationLayers[result.id] = [zoneCircle, blockMarker];
+                displayedReports.add(result.id);
 
                 // Fly to coords
                 map.flyTo(coords, 14);
 
                 // Append new card to Active Incidents sidebar
                 prependIncidentCard({
+                    id: result.id,
                     type: `SIMULATION: ${result.event_type}`,
-                    severity: result.risk > 75 ? 'CRITICAL' : 'CONGESTED',
-                    location: `${result.location} (Simulated Zone)`,
-                    description: `Affected Area: ~${result.radius_km}km radius. Expected delay: ${result.delay_minutes} min. Diverting via Route B.`,
+                    severity: result.risk > 75 ? 'CRITICAL' : result.risk > 50 ? 'CONGESTED' : 'PLANNED',
+                    location: event_cause && event_cause !== 'others' ? event_cause : `${result.event_type} Event`,
+                    description: `Affected Area: ~${result.radius_km}km radius. Expected delay: ${result.delay_minutes} min. Recommended police: ${result.recommendations.police || 0}.`,
                     time_ago: "Just now",
                     coords: coords
                 });
@@ -808,10 +1221,24 @@
 
                 // Offline fallback
                 simulationModal.classList.add('hidden');
+
+                const offlineId = `sim_${Math.random().toString(36).substr(2, 9)}`;
+                const fallbackCoords = startCoords || [25.61591, 85.09529];
+                const radius_km = 1.5;
+
+                const bannerEl = document.getElementById('res-risk-banner');
+                if (bannerEl) bannerEl.className = `p-md rounded-xl mb-md flex items-center justify-between border shadow-sm transition-all duration-300 bg-[#b02300] text-white border-error/30`;
+                document.getElementById('res-risk-icon').innerText = "warning";
+                document.getElementById('res-risk-dot').className = `inline-block w-2.5 h-2.5 rounded-full bg-orange-500`;
+                document.getElementById('res-risk-level-text').innerText = "High";
+                document.getElementById('res-confidence-badge').innerText = `AI Confidence: 78%`;
+
                 document.getElementById('res-congestion').innerText = "Heavy";
-                document.getElementById('res-delay').innerText = "25 mins";
-                document.getElementById('res-radius').innerText = "1.5 km";
+                document.getElementById('res-delay').innerText = "25 min";
+                document.getElementById('res-radius').innerText = `${radius_km} km`;
                 document.getElementById('res-risk').innerText = "78%";
+                document.getElementById('res-confidence-bar').style.width = "78%";
+
                 document.getElementById('res-police').innerText = "12";
                 document.getElementById('res-barricades').innerText = "3";
                 document.getElementById('res-ambulances').innerText = "1";
@@ -819,15 +1246,33 @@
                 document.getElementById('res-diversion-route').innerText = "Route B (Fallback)";
                 simulationResultsModal.classList.remove('hidden');
 
-                // Plot local fallback coordinates (Bangalore center)
-                const fallbackCoords = LOCATION_COORDS[location] || [12.9716, 77.5946];
-                simulationLayers.forEach(l => map.removeLayer(l));
-                simulationLayers = [];
-                var circle = L.circle(fallbackCoords, { color: '#ba1a1a', fillOpacity: 0.15, radius: 1500 }).addTo(map);
-                simulationLayers.push(circle);
-                var mark = L.marker(fallbackCoords).addTo(map).bindPopup("<b>Offline Simulation Fallback</b>").openPopup();
-                simulationLayers.push(mark);
+                // Plot local fallback coordinates
+                var circle = L.circle(fallbackCoords, {
+                    color: '#ba1a1a',
+                    fillColor: '#ba1a1a',
+                    fillOpacity: 0.15,
+                    radius: radius_km * 1000,
+                    weight: 2,
+                    dashArray: '5, 5'
+                }).addTo(map);
+
+                var mark = L.marker(fallbackCoords).addTo(map)
+                    .bindPopup(`<b>Simulation (Offline): ${event_type}</b><br>Congestion: Heavy<br>Radius: ${radius_km}km`)
+                    .openPopup();
+
+                activeSimulationLayers[offlineId] = [circle, mark];
+                displayedReports.add(offlineId);
                 map.flyTo(fallbackCoords, 14);
+
+                prependIncidentCard({
+                    id: offlineId,
+                    type: `SIMULATION: ${event_type}`,
+                    severity: 'CONGESTED',
+                    location: event_cause && event_cause !== 'others' ? event_cause : `${event_type} Event`,
+                    description: `Affected Area: ~${radius_km}km radius. Expected delay: 25 min. Recommended police: 12.`,
+                    time_ago: "Just now",
+                    coords: fallbackCoords
+                });
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = origText;
@@ -869,9 +1314,16 @@
             const list = document.getElementById('active-incidents-list');
             const card = document.createElement('div');
 
-            const isCritical = inc.severity.toUpperCase() === 'CRITICAL';
-            const borderClass = isCritical ? 'border-error' : 'border-outline-variant';
-            const badgeClass = isCritical ? 'bg-error text-on-error' : 'bg-tertiary-container text-white';
+            const sev = (inc.severity || 'medium').toUpperCase();
+            let badgeClass = 'bg-secondary text-white';
+            let borderClass = 'border-outline-variant';
+            if (sev === 'CRITICAL' || sev === 'HIGH' || sev === 'CONGESTED') {
+                badgeClass = 'bg-error text-white font-bold';
+                borderClass = 'border-error';
+            } else if (sev === 'MEDIUM') {
+                badgeClass = 'bg-amber-500 text-white font-bold';
+                borderClass = 'border-amber-500/30';
+            }
 
             const locId = `loc-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -879,13 +1331,15 @@
 
             const lat = inc.coords ? inc.coords[0] : null;
             const lng = inc.coords ? inc.coords[1] : null;
+            const initialCoords = lat && lng ? ` (${lat.toFixed(4)}, ${lng.toFixed(4)})` : '';
+            const initialLocation = inc.location.includes('(') ? inc.location : `${inc.location}${initialCoords}`;
 
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-sm">
                     <span class="px-sm py-xs ${badgeClass} text-[10px] font-bold rounded uppercase">${inc.severity}</span>
                     <span class="text-label-md text-on-surface-variant">${inc.time_ago || 'Just now'}</span>
                 </div>
-                <h4 class="text-body-md font-bold mb-xs">${inc.type}: <span id="${locId}">${inc.location}</span></h4>
+                <h4 class="text-body-md font-bold mb-xs">${inc.type}: <span id="${locId}">${initialLocation}</span></h4>
                 <p class="text-body-md text-on-surface-variant mb-md leading-tight">${inc.description}</p>
                 <div class="flex gap-sm">
                     <button class="flex-1 py-xs bg-primary text-on-primary text-label-md rounded font-bold hover:opacity-90" onclick="focusOnMap(${lat}, ${lng})">View on Map</button>
@@ -897,16 +1351,23 @@
 
             list.insertBefore(card, list.firstChild);
 
-            // Attempt to reverse geocode coordinates
+            // Attempt to reverse geocode coordinates (skip for simulations to preserve event cause)
             if (lat && lng) {
-                getAreaName(lat, lng).then(areaName => {
-                    if (areaName) {
-                        const locEl = document.getElementById(locId);
-                        if (locEl) {
-                            locEl.innerHTML = `${areaName} <span class="text-[10px] text-on-surface-variant font-normal">(${lat.toFixed(4)}, ${lng.toFixed(4)})</span>`;
-                        }
+                if (inc.type && inc.type.includes('SIMULATION')) {
+                    const locEl = document.getElementById(locId);
+                    if (locEl) {
+                        locEl.innerHTML = `${inc.location} <span class="text-[10px] text-on-surface-variant font-normal">(${lat.toFixed(4)}, ${lng.toFixed(4)})</span>`;
                     }
-                });
+                } else {
+                    getAreaName(lat, lng).then(areaName => {
+                        if (areaName) {
+                            const locEl = document.getElementById(locId);
+                            if (locEl) {
+                                locEl.innerHTML = `${areaName} <span class="text-[10px] text-on-surface-variant font-normal">(${lat.toFixed(4)}, ${lng.toFixed(4)})</span>`;
+                            }
+                        }
+                    });
+                }
             }
 
             // Update counter
@@ -928,7 +1389,7 @@
 
             try {
                 const endpoint = id.startsWith('sim_') ? 'simulation' : 'report';
-                const response = await fetch(`http://localhost:8000/api/${endpoint}/delete/${id}`, {
+                const response = await fetch(`${API_BASE}/api/${endpoint}/delete/${id}`, {
                     method: 'DELETE'
                 });
 
@@ -941,6 +1402,12 @@
                     if (activeMarkers[id]) {
                         map.removeLayer(activeMarkers[id]);
                         delete activeMarkers[id];
+                    }
+
+                    // Remove Leaflet simulation layers
+                    if (activeSimulationLayers[id]) {
+                        activeSimulationLayers[id].forEach(layer => map.removeLayer(layer));
+                        delete activeSimulationLayers[id];
                     }
 
                     // Prevent re-sync
@@ -1013,7 +1480,7 @@
             formData.append('longitude', coords.lng);
 
             try {
-                const response = await fetch('http://localhost:8000/api/report/submit', {
+                const response = await fetch(`${API_BASE}/api/report/submit`, {
                     method: 'POST',
                     body: formData
                 });
@@ -1130,7 +1597,7 @@
                 formData.append('longitude', coords.lng);
 
                 try {
-                    const response = await fetch('http://localhost:8000/api/report/submit', {
+                    const response = await fetch(`${API_BASE}/api/report/submit`, {
                         method: 'POST',
                         body: formData
                     });
@@ -1177,7 +1644,7 @@
         // Real-time Dashboard Update from FastAPI
         async function updateDashboardStats() {
             try {
-                const response = await fetch('http://localhost:8000/api/stats');
+                const response = await fetch(`${API_BASE}/api/stats`);
                 const data = await response.json();
 
                 // Update vehicle count
@@ -1246,6 +1713,71 @@
                     });
                 }
 
+                // Sync simulations from backend
+                if (data.simulations) {
+                    data.simulations.forEach(sim => {
+                        const identifier = sim.id;
+                        if (!displayedReports.has(identifier)) {
+                            displayedReports.add(identifier);
+
+                            // Parse affected radius from description if possible
+                            let radius = 1.5;
+                            const match = sim.description.match(/Affected (?:Area|Radius):\s*~?([\d.]+)\s*km/i);
+                            if (match) {
+                                radius = parseFloat(match[1]);
+                            }
+
+                            // Place Red Circle and Marker on Map
+                            const circle = L.circle(sim.coords, {
+                                color: '#ba1a1a',
+                                fillColor: '#ba1a1a',
+                                fillOpacity: 0.15,
+                                radius: radius * 1000,
+                                weight: 2,
+                                dashArray: '5, 5'
+                            }).addTo(map);
+
+                            const marker = L.marker(sim.coords, {
+                                icon: getIncidentIcon(sim.type, sim.severity)
+                            }).addTo(map)
+                                .bindPopup(`<b>${sim.type}</b><br>${sim.description}`);
+
+                            activeSimulationLayers[sim.id] = [circle, marker];
+                            prependIncidentCard({
+                                id: sim.id,
+                                type: sim.type,
+                                severity: sim.severity,
+                                location: sim.location,
+                                description: sim.description,
+                                coords: sim.coords
+                            });
+                        }
+                    });
+                }
+
+                // Detect and remove deleted items from screen
+                const activeReportIds = new Set(data.citizen_reports.map(r => r.id || (r.coords.join(',') + '_' + r.type)));
+                const activeSimIds = new Set(data.simulations.map(s => s.id));
+
+                displayedReports.forEach(id => {
+                    const isReport = !id.startsWith('sim_');
+                    if (isReport && !activeReportIds.has(id)) {
+                        displayedReports.delete(id);
+                        if (activeMarkers[id]) {
+                            map.removeLayer(activeMarkers[id]);
+                            delete activeMarkers[id];
+                        }
+                        removeIncidentCardFromDOM(id);
+                    } else if (!isReport && !activeSimIds.has(id)) {
+                        displayedReports.delete(id);
+                        if (activeSimulationLayers[id]) {
+                            activeSimulationLayers[id].forEach(layer => map.removeLayer(layer));
+                            delete activeSimulationLayers[id];
+                        }
+                        removeIncidentCardFromDOM(id);
+                    }
+                });
+
             } catch (err) {
                 // Silently fail if backend not running
             }
@@ -1253,7 +1785,7 @@
 
         // Initialize WebSocket for alerts
         function setupAlerts() {
-            const socket = new WebSocket('ws://localhost:8000/ws/alerts');
+            const socket = new WebSocket(`${WS_BASE}/ws/alerts`);
             socket.onmessage = function (event) {
                 const alert = JSON.parse(event.data);
                 showToast(`AI Detected ${alert.type} at ${alert.location}`, 'error');
@@ -1439,7 +1971,18 @@
                         const h4 = card.querySelector('h4');
                         const type = h4 ? h4.innerText.split(':')[0] : 'hazard';
 
-                        hazards.push({ coords: [lat, lng], severity, type });
+                        // Parse custom radius
+                        let radius = 250; // default 250m
+                        const pEl = card.querySelector('p');
+                        if (pEl) {
+                            const descText = pEl.innerText;
+                            const radiusMatch = descText.match(/Affected (?:Area|Radius):\s*~?([\d.]+)\s*km/i);
+                            if (radiusMatch) {
+                                radius = parseFloat(radiusMatch[1]) * 1000; // convert to meters
+                            }
+                        }
+
+                        hazards.push({ coords: [lat, lng], severity, type, radius });
                     }
                 }
             });
@@ -1463,9 +2006,9 @@
 
                 hazards.forEach(hazard => {
                     const distToEdge = distanceToSegment(hazard.coords, uCoords, vCoords);
-                    if (distToEdge < 250) { // Avoid anything within 250 meters
+                    if (distToEdge < hazard.radius) { // Avoid anything within custom hazard radius
                         let severityPenalty = 1000;
-                        if (hazard.severity === 'critical' || hazard.severity === 'high') {
+                        if (hazard.severity === 'critical' || hazard.severity === 'high' || hazard.severity === 'congested') {
                             severityPenalty = 1000000; // Block completely
                         } else if (hazard.severity === 'medium') {
                             severityPenalty = 8000; // Severe delay penalty
@@ -1556,7 +2099,7 @@
                 ? (calculateDistance(startCoords, destCoords) / 1000).toFixed(2)
                 : (distances[destNodeId] / 1000).toFixed(2);
 
-            showToast(`Safe route found: ${totalDistanceKm} km. Dijkstra bypassed active hazards!`, "success");
+            showToast(`Safe route found: ${totalDistanceKm} km. Avoiding active hazards.`, "success");
         }
 
         // Bind Find Route click handler
@@ -1566,35 +2109,69 @@
                 const startInput = document.getElementById('route-start');
                 const destInput = document.getElementById('route-destination');
 
-                const startStr = startInput ? startInput.value : "";
-                const destStr = destInput ? destInput.value : "";
+                // Try to use data-lat/data-lon from autocomplete first
+                let resolvedStart = null;
+                let resolvedDest = null;
 
-                if (!startStr) {
+                const sLat = startInput ? startInput.getAttribute('data-lat') : null;
+                const sLon = startInput ? startInput.getAttribute('data-lon') : null;
+                if (sLat && sLon) {
+                    resolvedStart = [parseFloat(sLat), parseFloat(sLon)];
+                } else if (startInput && startInput.value) {
+                    // Check if it looks like GPS lock value
+                    const coordMatch = startInput.value.match(/\((-?[\d.]+),\s*(-?[\d.]+)\)/);
+                    if (coordMatch) {
+                        resolvedStart = [parseFloat(coordMatch[1]), parseFloat(coordMatch[2])];
+                    } else {
+                        resolvedStart = await resolveLocationToCoords(startInput.value);
+                    }
+                }
+
+                const dLat = destInput ? destInput.getAttribute('data-lat') : null;
+                const dLon = destInput ? destInput.getAttribute('data-lon') : null;
+                if (dLat && dLon) {
+                    resolvedDest = [parseFloat(dLat), parseFloat(dLon)];
+                } else if (destInput && destInput.value) {
+                    resolvedDest = await resolveLocationToCoords(destInput.value);
+                }
+
+                if (!startInput || !startInput.value) {
                     showToast("Please enter a starting location.", "error");
                     return;
                 }
-
-                if (!destStr) {
+                if (!destInput || !destInput.value) {
                     showToast("Please enter a destination.", "error");
                     return;
                 }
-
-                showToast("Resolving locations and calculating safe path...", "success");
-
-                const resolvedStart = await resolveLocationToCoords(startStr);
-                const resolvedDest = await resolveLocationToCoords(destStr);
-
                 if (!resolvedStart) {
-                    showToast("Could not resolve starting location.", "error");
+                    showToast("Could not resolve starting location. Try typing more detail.", "error");
                     return;
                 }
-
                 if (!resolvedDest) {
-                    showToast("Could not resolve destination.", "error");
+                    showToast("Could not resolve destination. Try typing more detail.", "error");
                     return;
                 }
 
+                showToast("Calculating safest route, avoiding active hazards...", "success");
                 findSafeRoute(resolvedStart, resolvedDest);
+            });
+        }
+
+        // Clear Route button
+        const btnClearRoute = document.getElementById('btn-clear-route');
+        if (btnClearRoute) {
+            btnClearRoute.addEventListener('click', () => {
+                if (routePolyline) {
+                    map.removeLayer(routePolyline);
+                    routePolyline = null;
+                }
+                routeMarkers.forEach(m => map.removeLayer(m));
+                routeMarkers = [];
+                const startInput = document.getElementById('route-start');
+                const destInput = document.getElementById('route-destination');
+                if (startInput) { startInput.removeAttribute('data-lat'); startInput.removeAttribute('data-lon'); }
+                if (destInput) { destInput.value = ''; destInput.removeAttribute('data-lat'); destInput.removeAttribute('data-lon'); }
+                showToast("Route cleared from map.", "success");
             });
         }
 
