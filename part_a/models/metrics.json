@@ -1,0 +1,39 @@
+{
+  "rows": 1000,
+  "columns": [
+    "event_type",
+    "location",
+    "road_issue",
+    "hour_of_day",
+    "day_of_week",
+    "is_weekend",
+    "expected_crowd",
+    "congestion_level",
+    "delay_minutes",
+    "affected_radius_km",
+    "risk_score",
+    "event_type_enc",
+    "location_enc",
+    "road_issue_enc",
+    "is_peak_hour",
+    "is_morning_peak",
+    "is_evening_peak",
+    "crowd_normalized"
+  ],
+  "feature_columns": [
+    "event_type_enc",
+    "location_enc",
+    "road_issue_enc",
+    "hour_of_day",
+    "day_of_week",
+    "is_weekend",
+    "is_peak_hour",
+    "crowd_normalized"
+  ],
+  "congestion_accuracy": 0.94,
+  "delay_mae": 4.991225,
+  "radius_mae": 0.43840999999999963,
+  "risk_mae": 9.2312,
+  "raw_data_path": "d:\\miscellaneous\\Flipkart\\part_a\\data\\raw\\traffic_events.csv",
+  "processed_path": "D:\\miscellaneous\\Flipkart\\part_a\\data\\processed\\traffic_events_processed.csv"
+}

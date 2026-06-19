@@ -432,6 +432,17 @@
                     </select>
                 </div>
                 <div>
+                    <label class="block text-label-md font-bold text-on-surface-variant mb-xs">Road Issue from Citizen Report</label>
+                    <select id="sim-road-issue"
+                        class="w-full rounded-lg border-outline-variant bg-surface-container-low text-body-md py-sm">
+                        <option value="Potholes">Potholes</option>
+                        <option value="Waterlogging">Waterlogging</option>
+                        <option value="Fallen Trees">Fallen Trees</option>
+                        <option value="Accidents">Accidents</option>
+                        <option value="Broken Signals">Broken Signals</option>
+                    </select>
+                </div>
+                <div>
                     <label class="block text-label-md font-bold text-on-surface-variant mb-xs">Location</label>
                     <select id="sim-location"
                         class="w-full rounded-lg border-outline-variant bg-surface-container-low text-body-md py-sm">
@@ -474,9 +485,8 @@
             <button id="btn-close-results" class="absolute top-md right-md text-outline hover:text-on-surface">
                 <span class="material-symbols-outlined">close</span>
             </button>
-            <h3 class="text-headline-sm font-bold text-primary mb-xs" id="res-title">Simulation Forecast Results</h3>
-            <p class="text-label-md text-on-surface-variant mb-md" id="res-subtitle">Results from Traffic Intelligence
-                API</p>
+            <h3 class="text-headline-sm font-bold text-primary mb-xs" id="res-title">AI Predictor Results</h3>
+            <p class="text-label-md text-on-surface-variant mb-md" id="res-subtitle">Results from AI Predictor API</p>
 
             <div class="space-y-md text-body-md">
                 <div class="grid grid-cols-2 gap-md">
@@ -535,6 +545,7 @@
         var simulationLayers = [];
         var displayedReports = new Set();
         var userCoords = [25.61591, 85.09529]; // Default Patna coordinates
+        let latestCitizenReport = null;
 
         // Initialize Leaflet Map centered on Patna (default fallback)
         var map = L.map('map', { zoomControl: false }).setView(userCoords, 13);
@@ -588,6 +599,9 @@
 
         // Add zoom control at bottom left
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+        // Populate event/location/road-issue options from Part A model
+        populatePredictorCategories();
 
         // Load real Google Maps Road tiles
         var googleStreets = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
@@ -654,6 +668,146 @@
             "Ward 4": [12.9800, 77.5900]
         };
 
+
+        const PREDICTOR_API_BASE_URL = 'http://localhost:8001';
+
+        async function populatePredictorCategories() {
+            try {
+                const res = await fetch(`${PREDICTOR_API_BASE_URL}/categories`);
+                if (!res.ok) throw new Error('Categories fetch failed');
+                const body = await res.json();
+                const evs = body.event_categories || [];
+                const locs = body.location_categories || [];
+                const issues = body.road_issue_categories || [];
+
+                const evSelect = document.getElementById('sim-event-type');
+                const locSelect = document.getElementById('sim-location');
+                const issueSelect = document.getElementById('sim-road-issue');
+
+                // Clear existing options
+                if (evSelect) evSelect.innerHTML = '';
+                if (locSelect) locSelect.innerHTML = '';
+                if (issueSelect) issueSelect.innerHTML = '';
+
+                evs.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v; opt.text = v; evSelect.appendChild(opt);
+                });
+                locs.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v; opt.text = v; locSelect.appendChild(opt);
+                });
+                issues.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v; opt.text = v; issueSelect.appendChild(opt);
+                });
+            } catch (err) {
+                console.warn('Could not load Part A categories:', err);
+                // keep existing static fallbacks if present
+            }
+        }
+
+        function getCurrentDayInfo() {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            return {
+                day_of_week: dayOfWeek,
+                is_weekend: dayOfWeek === 0 || dayOfWeek === 6
+            };
+        }
+
+        function buildPredictorPayload(eventType, location, roadIssue, crowdSize, time) {
+            const [hourString] = String(time || "17:00").split(":");
+            const hourOfDay = Number.parseInt(hourString, 10);
+            const dayInfo = getCurrentDayInfo();
+
+            return {
+                event_type: eventType,
+                location: location,
+                road_issue: roadIssue,
+                hour_of_day: Number.isFinite(hourOfDay) ? hourOfDay : 17,
+                day_of_week: dayInfo.day_of_week,
+                is_weekend: dayInfo.is_weekend ? 1 : 0,
+                expected_crowd: crowdSize
+            };
+        }
+
+        function normalizePredictorResult(result, eventType, location) {
+            return {
+                congestion: result.congestion_level || "Low",
+                delay_minutes: result.delay_minutes || 0,
+                radius_km: result.affected_radius_km || 0,
+                risk: result.risk_score || 0,
+                recommendations: {
+                    police: result.resources?.police ?? 0,
+                    barricades: result.resources?.barricades ?? 0,
+                    ambulances: result.resources?.ambulance ?? 0,
+                    marshals: result.resources?.marshals ?? 0,
+                    diversion_route: result.resources?.diversion || "None"
+                },
+                coords: LOCATION_COORDS[location] || [12.9716, 77.5946],
+                event_type: eventType,
+                location: location,
+                alternative_route: result.alternative_route || null
+            };
+        }
+
+        function getCurrentSystemTimeValue() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        function getDefaultPredictorLocation() {
+            const reportLocation = latestCitizenReport?.location;
+            if (reportLocation && Object.prototype.hasOwnProperty.call(LOCATION_COORDS, reportLocation)) {
+                return reportLocation;
+            }
+
+            if (userCoords && Array.isArray(userCoords)) {
+                let nearestLocation = 'MG Road Junction';
+                let nearestDistance = Number.POSITIVE_INFINITY;
+                for (const [locationName, coords] of Object.entries(LOCATION_COORDS)) {
+                    const distance = Math.hypot(coords[0] - userCoords[0], coords[1] - userCoords[1]);
+                    if (distance < nearestDistance) {
+                        nearestDistance = distance;
+                        nearestLocation = locationName;
+                    }
+                }
+                return nearestLocation;
+            }
+
+            return 'MG Road Junction';
+        }
+
+        function getDefaultPredictorRoadIssue() {
+            const reportType = latestCitizenReport?.type || '';
+            const normalizedType = reportType.toLowerCase();
+            if (normalizedType.includes('pothole')) return 'Potholes';
+            if (normalizedType.includes('water')) return 'Waterlogging';
+            if (normalizedType.includes('tree') || normalizedType.includes('debris')) return 'Fallen Trees';
+            if (normalizedType.includes('accident') || normalizedType.includes('crash')) return 'Accidents';
+            if (normalizedType.includes('signal') || normalizedType.includes('light')) return 'Broken Signals';
+            return 'Potholes';
+        }
+
+        function syncPredictorDefaults() {
+            const locationEl = document.getElementById('sim-location');
+            const roadIssueEl = document.getElementById('sim-road-issue');
+            const timeEl = document.getElementById('sim-time');
+
+            if (locationEl) {
+                locationEl.value = getDefaultPredictorLocation();
+            }
+            if (roadIssueEl) {
+                roadIssueEl.value = getDefaultPredictorRoadIssue();
+            }
+            if (timeEl) {
+                timeEl.value = getCurrentSystemTimeValue();
+            }
+        }
+
         // Populate initial static markers on map (Removed mock data - only showing actual data now)
         var initialIncidents = [];
 
@@ -689,6 +843,7 @@
 
         btnNewSimulation.addEventListener('click', (e) => {
             e.preventDefault();
+            syncPredictorDefaults();
             simulationModal.classList.remove('hidden');
         });
 
@@ -704,14 +859,18 @@
             simulationResultsModal.classList.add('hidden');
         });
 
+        syncPredictorDefaults();
+
         // Simulation Form Submission (Prediction Backend)
         simulationForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const event_type = document.getElementById('sim-event-type').value;
+            const road_issue = document.getElementById('sim-road-issue').value;
             const location = document.getElementById('sim-location').value;
             const crowd_size = parseInt(document.getElementById('sim-crowd').value) || 1000;
             const time = document.getElementById('sim-time').value;
+            const partAPayload = buildPredictorPayload(event_type, location, road_issue, crowd_size, time);
 
             // Show loading state
             const submitBtn = simulationForm.querySelector('button[type="submit"]');
@@ -719,21 +878,41 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin">cyclone</span> Simulating...`;
 
+            let result = null;
+            let resultSource = "Traffic Intelligence API";
+
             try {
-                const response = await fetch('http://localhost:8000/api/simulation/predict', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ event_type, location, crowd_size, time })
-                });
+                try {
+                    const response = await fetch(`${PREDICTOR_API_BASE_URL}/predict`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(partAPayload)
+                    });
 
-                if (!response.ok) throw new Error("Simulation endpoint failed");
+                    if (!response.ok) throw new Error("Part A prediction endpoint failed");
 
-                const result = await response.json();
+                    result = normalizePredictorResult(await response.json(), event_type, location);
+                    resultSource = "AI Predictor API";
+                } catch (partAError) {
+                    console.error("Predictor error: ", partAError);
+
+                    const response = await fetch('http://localhost:8000/api/simulation/predict', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ event_type, location, crowd_size, time })
+                    });
+
+                    if (!response.ok) throw new Error("Simulation endpoint failed");
+
+                    result = await response.json();
+                    resultSource = "Traffic Intelligence API";
+                }
 
                 // Close input modal
                 simulationModal.classList.add('hidden');
 
                 // Populate results modal
+                document.getElementById('res-subtitle').innerText = `Results from ${resultSource}`;
                 document.getElementById('res-congestion').innerText = result.congestion;
                 document.getElementById('res-delay').innerText = result.delay_minutes + " mins";
                 document.getElementById('res-radius').innerText = result.radius_km + " km";
@@ -772,14 +951,16 @@
                 }).addTo(map);
                 simulationLayers.push(zoneCircle);
 
-                // 2. Draw Green Diversion Polyline Route (Dijkstra Alternative Route)
-                var diversionPath = L.polyline(result.alternative_route, {
-                    color: '#006c47',
-                    weight: 6,
-                    opacity: 0.85,
-                    lineJoin: 'round'
-                }).addTo(map);
-                simulationLayers.push(diversionPath);
+                // 2. Draw Green Diversion Polyline Route when provided by the backend
+                if (Array.isArray(result.alternative_route) && result.alternative_route.length > 1) {
+                    var diversionPath = L.polyline(result.alternative_route, {
+                        color: '#006c47',
+                        weight: 6,
+                        opacity: 0.85,
+                        lineJoin: 'round'
+                    }).addTo(map);
+                    simulationLayers.push(diversionPath);
+                }
 
                 // 3. Add Simulated Blockage Marker
                 var blockMarker = L.marker(coords).addTo(map)
@@ -795,7 +976,7 @@
                     type: `SIMULATION: ${result.event_type}`,
                     severity: result.risk > 75 ? 'CRITICAL' : 'CONGESTED',
                     location: `${result.location} (Simulated Zone)`,
-                    description: `Affected Area: ~${result.radius_km}km radius. Expected delay: ${result.delay_minutes} min. Diverting via Route B.`,
+                    description: `Affected Area: ~${result.radius_km}km radius. Expected delay: ${result.delay_minutes} min. Diverting via ${result.recommendations.diversion_route}.`,
                     time_ago: "Just now",
                     coords: coords
                 });
@@ -808,6 +989,7 @@
 
                 // Offline fallback
                 simulationModal.classList.add('hidden');
+                document.getElementById('res-subtitle').innerText = "Results from local fallback simulation";
                 document.getElementById('res-congestion').innerText = "Heavy";
                 document.getElementById('res-delay').innerText = "25 mins";
                 document.getElementById('res-radius').innerText = "1.5 km";
@@ -1179,6 +1361,10 @@
             try {
                 const response = await fetch('http://localhost:8000/api/stats');
                 const data = await response.json();
+
+                latestCitizenReport = Array.isArray(data.citizen_reports) && data.citizen_reports.length > 0
+                    ? data.citizen_reports[0]
+                    : null;
 
                 // Update vehicle count
                 const countEl = document.getElementById('ai-vehicle-count');

@@ -305,6 +305,44 @@
                 </div>
             </div>
         </section>
+        <!-- AI Predictor -->
+        <section class="py-xl px-margin-desktop bg-surface-container-lowest border-y border-outline-variant">
+            <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-lg items-stretch">
+                <div class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm">
+                    <span class="text-label-md font-label-md text-secondary uppercase tracking-widest mb-sm block">AI
+                        Predictor</span>
+                    <h2 class="font-headline-md text-headline-md text-on-surface mb-md">Trained prediction API for
+                        event traffic planning</h2>
+                    <p class="text-body-md text-on-surface-variant leading-relaxed mb-lg">
+                        The website now uses the AI predictor for forecast runs. The modal sends event type,
+                        location, hour, weekday, weekend flag, road issue, and crowd size to the FastAPI `/predict`
+                        endpoint, then renders congestion, delay, radius, risk, and staffing recommendations back in the command
+                        center.
+                    </p>
+                    <div class="flex flex-wrap gap-md">
+                        <a href="command.html"
+                            class="inline-flex items-center gap-xs bg-primary text-on-primary px-lg py-sm rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity">
+                            Open Forecast Modal
+                        </a>
+                        <a href="technology.html"
+                            class="inline-flex items-center gap-xs border border-outline-variant text-on-surface px-lg py-sm rounded-lg font-label-md text-label-md hover:bg-surface-container transition-colors">
+                            View Platform Stack
+                        </a>
+                    </div>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-md">
+                    <div class="bg-surface p-lg rounded-xl border border-outline-variant">
+                        <div class="flex items-center gap-sm mb-sm text-primary">
+                            <span class="material-symbols-outlined">api</span>
+                            <span class="font-label-md text-label-md uppercase tracking-widest">Endpoint</span>
+                        </div>
+                        <h3 class="font-headline-sm text-headline-sm text-on-surface mb-xs">POST /predict</h3>
+                        <p class="text-body-md text-on-surface-variant">Returns congestion, delay, radius, risk, and
+                            resource guidance.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
         <!-- Platform Features Section -->
         <section class="py-xl px-margin-desktop bg-surface-container-low">
             <div class="max-w-7xl mx-auto">
