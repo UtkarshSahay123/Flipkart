@@ -449,6 +449,10 @@ async def submit_report(
             if not ret:
                 break
                 
+            if os.environ.get("RENDER"):
+                best_frame = frame
+                break
+
             try:
                 rdd_model = get_yolo_rdd()
                 coco_model = get_yolo_coco()
@@ -490,18 +494,23 @@ async def submit_report(
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
         if img is not None:
-            try:
-                rdd_model = get_yolo_rdd()
-                coco_model = get_yolo_coco()
-                img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                
-                rdd_res = rdd_model.predict(img_rgb, conf=0.20, verbose=False)
-                coco_res = coco_model.predict(img_rgb, conf=0.20, classes=[2, 3, 5, 7], verbose=False)
-                
-                pothole_count = sum(1 for box in rdd_res[0].boxes.cpu().numpy() if int(box.cls[0]) == 3)
-                vehicle_count = len(coco_res[0].boxes)
-            except Exception as e:
-                print(f"Error running YOLO on image: {e}")
+            pothole_count = 0
+            vehicle_count = 0
+            
+            # Skip YOLO entirely on Render free tier to prevent 512MB RAM Out-Of-Memory crashes
+            if not os.environ.get("RENDER"):
+                try:
+                    rdd_model = get_yolo_rdd()
+                    coco_model = get_yolo_coco()
+                    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                    
+                    rdd_res = rdd_model.predict(img_rgb, conf=0.20, verbose=False)
+                    coco_res = coco_model.predict(img_rgb, conf=0.20, classes=[2, 3, 5, 7], verbose=False)
+                    
+                    pothole_count = sum(1 for box in rdd_res[0].boxes.cpu().numpy() if int(box.cls[0]) == 3)
+                    vehicle_count = len(coco_res[0].boxes)
+                except Exception as e:
+                    print(f"Error running YOLO on image: {e}")
             
             try:
                 analyzer = get_analyzer()
