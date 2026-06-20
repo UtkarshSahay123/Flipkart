@@ -794,9 +794,9 @@
     </div>
     <script>
         // Auto-detect API base URLs
-        const API_BASE = 'https://flipkart-06iz.onrender.com';
-        // WebSocket setup for real-time alerts
-        const WS_BASE = 'wss://flipkart-06iz.onrender.com';
+        const isLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        const API_BASE = isLocal ? 'http://localhost:8001' : 'https://flipkart-06iz.onrender.com';
+        const WS_BASE = isLocal ? 'ws://localhost:8001' : 'wss://flipkart-06iz.onrender.com';
 
         // Map items tracking
         var activeMarkers = {};

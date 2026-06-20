@@ -68,7 +68,7 @@ Respond ONLY in the following strict JSON format — no extra text:
   "overall_risk": "<safe | low | moderate | high | critical>",
   "requires_immediate_action": <true | false>,
   "scene_summary": "<overall 1-sentence summary of the road scene>",
-  "estimated_vehicle_count": <integer estimate of vehicles visible>
+  "estimated_vehicle_count": <Mandatory integer. Guess the number of vehicles. If you see traffic, put a number > 5 (e.g., 10, 25, 50). Do NOT put 0 if cars are visible.>
 }
 
 Only include categories in the 'detections' list where hazard is actually detected (detected=true). Do NOT include categories where detected=false.
