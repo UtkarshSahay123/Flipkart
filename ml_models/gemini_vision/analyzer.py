@@ -51,7 +51,7 @@ You are an expert traffic surveillance AI. Analyze this road/traffic image and d
 4. **Broken / Damaged Signal** - Traffic signals that are damaged, tilted, off, or malfunctioning
 5. **Accident Scene** - Vehicle collision, overturned vehicles, damaged vehicles, or accident aftermath
 6. **Pothole** - Any potholes, deep road cracks, or severe road surface damage that can cause vehicle damage or accidents
-7. **Traffic Jam** - Severe traffic congestion, standstill traffic, or very high vehicle density
+7. **Traffic Jam** - Any traffic congestion, many vehicles on the road, standstill traffic, or high vehicle density
 
 Respond ONLY in the following strict JSON format — no extra text:
 {

@@ -559,14 +559,18 @@ async def submit_report(
         incident_type = main_alert["type"]
         severity = main_alert["severity"]
         description = main_alert["description"]
+        if vehicle_count > 0:
+            description += f" Estimated vehicle count: {vehicle_count}."
     elif pothole_count > 0:
-        incident_type = "Potholes Detected"
-        severity = "high" if pothole_count > 3 else "medium"
-        description = f"Detected {pothole_count} potholes on the road surface."
-    elif vehicle_count > 15:
+        incident_type = "Pothole / Road Damage"
+        severity = "medium"
+        description = f"Detected {pothole_count} severe road damage instances."
+    elif vehicle_count > 5:
         incident_type = "Traffic Congestion"
-        severity = "high"
-        description = f"High vehicle count ({vehicle_count}) detected."
+        severity = "medium"
+        description = f"Traffic congestion detected. Estimated {vehicle_count} vehicles in the area."
+    else:
+        pass
 
     new_report = {
         "id": f"rep_{random.randint(100000, 999999)}",
