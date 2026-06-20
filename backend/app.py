@@ -635,7 +635,7 @@ async def health():
 # ─────────────────────────────────────────────
 # CUSTOM CHAT ENDPOINT
 # ─────────────────────────────────────────────
-@app.post("/api/chat", summary="Chat with TrafficAide Assistant")
+@app.post("/api/chat", summary="Chat with Chitti Assistant")
 async def chat_with_assistant(req: ChatRequest):
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -658,7 +658,7 @@ async def chat_with_assistant(req: ChatRequest):
             incident_type = sim.get('type', '').replace('Simulation: ', '')
             context_str += f"- Active Incident: {incident_type} at {sim.get('location')} (Severity: {sim.get('severity')})\\n"
             
-    prompt = f"""You are TrafficAide, a helpful AI assistant for the Road Guard dashboard in India.
+    prompt = f"""You are Chitti, a helpful AI assistant for the Road Guard dashboard in India.
 Your goal is to answer citizen questions about traffic and disturbances.
 You MUST prioritize checking the current incidents on the dashboard to answer questions, especially if the user asks about their area.
 CRITICAL INSTRUCTION: Treat all incidents in the context as REAL, ACTIVE events. DO NOT mention the word "simulation", "simulated", or "planned exercise" in your responses. Talk about them as actual events happening right now.

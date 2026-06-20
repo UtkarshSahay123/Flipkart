@@ -457,14 +457,13 @@
             </p>
         </div>
     </footer>
-    <!-- FAB to launch TrafficAide AI Assistant -->
-    <button id="trafficaide-fab" onclick="openTrafficAide()"
+    <!-- FAB to launch TrafficAide AI Assistant --    <button id="trafficaide-fab" onclick="openTrafficAide()"
         class="fixed bottom-lg right-lg w-16 h-16 bg-error text-on-error rounded-full shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-[60] group">
         <span class="material-symbols-outlined text-[32px]" data-icon="smart_toy"
             style="font-variation-settings: 'FILL' 1;">smart_toy</span>
         <span
             class="absolute right-full mr-md px-md py-sm bg-inverse-surface text-inverse-on-surface rounded font-label-md text-label-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            Ask TrafficAide
+            Ask Chitti
         </span>
     </button>
 
@@ -478,7 +477,7 @@
                 <div class="flex items-center gap-sm">
                     <span class="material-symbols-outlined text-primary dark:text-primary-fixed">smart_toy</span>
                     <span class="font-headline-sm text-headline-sm text-primary dark:text-primary-fixed"
-                        style="font-size: 16px;">TrafficAide Assistant</span>
+                        style="font-size: 16px;">Chitti Assistant</span>
                 </div>
                 <div class="flex items-center gap-xs">
                     <a id="trafficaide-newtab-link"
@@ -507,7 +506,7 @@
                         </div>
                         <div
                             class="bg-surface-container-high text-on-surface p-sm rounded-lg rounded-tl-none font-body-md text-body-md">
-                            Hello! I'm TrafficAide. I can answer questions about current incidents, road conditions, and
+                            Hello! I'm Chitti. I can answer questions about current incidents, road conditions, and
                             traffic in your area. How can I help?
                         </div>
                     </div>
@@ -598,7 +597,7 @@
             container.scrollTop = container.scrollHeight;
 
             try {
-                const response = await fetch(`${API_BASE}/api/chat`, {
+                const response = await fetch(\`\${API_BASE}/api/chat\`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
