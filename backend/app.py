@@ -485,6 +485,10 @@ async def submit_report(
                     analyzer = get_analyzer()
                     analysis_result = analyzer.analyze_image(gemini_bytes)
                     alerts = analyzer.get_alerts(analysis_result)
+                    
+                    gemini_vc = analysis_result.get("estimated_vehicle_count", 0)
+                    if isinstance(gemini_vc, int) and gemini_vc > vehicle_count:
+                        vehicle_count = gemini_vc
                 except Exception as e:
                     print(f"Error running Gemini on video keyframe: {e}")
                     analysis_result = {"error": str(e)}
@@ -516,6 +520,10 @@ async def submit_report(
                 analyzer = get_analyzer()
                 analysis_result = analyzer.analyze_image(file_bytes)
                 alerts = analyzer.get_alerts(analysis_result)
+                
+                gemini_vc = analysis_result.get("estimated_vehicle_count", 0)
+                if isinstance(gemini_vc, int) and gemini_vc > vehicle_count:
+                    vehicle_count = gemini_vc
             except Exception as e:
                 print(f"Error running Gemini on image: {e}")
                 analysis_result = {"error": str(e)}

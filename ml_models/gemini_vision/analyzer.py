@@ -38,6 +38,7 @@ HAZARD_CATEGORIES = [
     "broken_signal",
     "accident_scene",
     "pothole",
+    "traffic_jam",
 ]
 
 # Structured prompt for Gemini
@@ -50,12 +51,13 @@ You are an expert traffic surveillance AI. Analyze this road/traffic image and d
 4. **Broken / Damaged Signal** - Traffic signals that are damaged, tilted, off, or malfunctioning
 5. **Accident Scene** - Vehicle collision, overturned vehicles, damaged vehicles, or accident aftermath
 6. **Pothole** - Any potholes, deep road cracks, or severe road surface damage that can cause vehicle damage or accidents
+7. **Traffic Jam** - Severe traffic congestion, standstill traffic, or very high vehicle density
 
 Respond ONLY in the following strict JSON format — no extra text:
 {
   "detections": [
     {
-      "category": "<one of: fallen_tree | flood | road_debris | broken_signal | accident_scene | pothole>",
+      "category": "<one of: fallen_tree | flood | road_debris | broken_signal | accident_scene | pothole | traffic_jam>",
       "detected": <true | false>,
       "confidence": <0.0 to 1.0>,
       "severity": "<low | medium | high | critical>",
@@ -65,7 +67,8 @@ Respond ONLY in the following strict JSON format — no extra text:
   ],
   "overall_risk": "<safe | low | moderate | high | critical>",
   "requires_immediate_action": <true | false>,
-  "scene_summary": "<overall 1-sentence summary of the road scene>"
+  "scene_summary": "<overall 1-sentence summary of the road scene>",
+  "estimated_vehicle_count": <integer estimate of vehicles visible>
 }
 
 Only include categories in the 'detections' list where hazard is actually detected (detected=true). Do NOT include categories where detected=false.
