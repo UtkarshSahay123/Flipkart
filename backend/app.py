@@ -297,7 +297,7 @@ async def _require_admin_request(request: Request):
 
     def load_profile():
         try:
-            with urlopen(upstream_request, timeout=10) as upstream:
+            with urlopen(upstream_request, timeout=65) as upstream:
                 return upstream.status, json.loads(upstream.read())
         except HTTPError as error:
             return error.code, None
@@ -327,7 +327,7 @@ async def proxy_admin_auth(auth_path: str, request: Request):
 
     def send_request():
         try:
-            with urlopen(upstream_request, timeout=15) as upstream:
+            with urlopen(upstream_request, timeout=65) as upstream:
                 return upstream.status, upstream.read(), upstream.headers.get("Content-Type", "text/plain")
         except HTTPError as error:
             return error.code, error.read(), error.headers.get("Content-Type", "text/plain")
@@ -352,7 +352,7 @@ async def proxy_organization_portal(portal_path: str, request: Request):
 
     def send_request():
         try:
-            with urlopen(upstream_request, timeout=15) as upstream:
+            with urlopen(upstream_request, timeout=65) as upstream:
                 return upstream.status, upstream.read(), upstream.headers.get("Content-Type", "application/json")
         except HTTPError as error:
             return error.code, error.read(), error.headers.get("Content-Type", "application/json")
@@ -373,7 +373,7 @@ async def _proxy_spring_api(path: str, request: Request):
     upstream_request = URLRequest(target, data=(await request.body()) or None, headers=headers, method=request.method)
     def send_request():
         try:
-            with urlopen(upstream_request, timeout=15) as upstream:
+            with urlopen(upstream_request, timeout=65) as upstream:
                 return upstream.status, upstream.read(), upstream.headers.get("Content-Type", "application/json")
         except HTTPError as error:
             return error.code, error.read(), error.headers.get("Content-Type", "application/json")
