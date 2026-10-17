@@ -1,0 +1,49 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#003d9b" />
+    <meta name="description" content="Road Guard municipal traffic and road hazard command platform." />
+    <link rel="icon" type="image/svg+xml" href="./shield-logo.svg" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>Road Guard App</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-bar">
+        <a class="brand" href="/" target="roadguard-site" aria-label="Road Guard home">
+          <img src="./shield-logo.svg" alt="" />
+          <span>Road Guard</span>
+        </a>
+        <div class="app-actions">
+          <span class="connection-state" id="connection-state"><i></i><span>Connecting</span></span>
+          <button class="install-button" id="install-button" type="button" hidden>Install app</button>
+          <button class="reload-button" id="reload-button" type="button" aria-label="Reload website" title="Reload website">&#8635;</button>
+        </div>
+      </header>
+
+      <main class="site-frame-wrap">
+        <iframe
+          id="roadguard-site"
+          name="roadguard-site"
+          src="/"
+          title="Road Guard website"
+          allow="geolocation; camera; microphone; clipboard-read; clipboard-write"
+          referrerpolicy="strict-origin-when-cross-origin"
+        ></iframe>
+        <section class="loading-screen" id="loading-screen" aria-live="polite">
+          <img src="./shield-logo.svg" alt="Road Guard" />
+          <h1>Road Guard</h1>
+          <p>Opening your command network&#8230;</p>
+          <span class="loader" aria-hidden="true"></span>
+        </section>
+        <div class="offline-notice" id="offline-notice" role="status" hidden>
+          You&rsquo;re offline. Reconnect to use live reports, maps, and account features.
+        </div>
+      </main>
+    </div>
+    <script src="./app.js" defer></script>
+  </body>
+</html>

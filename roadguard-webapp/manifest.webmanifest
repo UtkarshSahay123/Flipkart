@@ -1,0 +1,15 @@
+{
+  "id": "/webapp/",
+  "name": "Road Guard Municipal Command Platform",
+  "short_name": "Road Guard",
+  "description": "Road Guard municipal traffic and road hazard command platform.",
+  "start_url": "/webapp/",
+  "scope": "/webapp/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#003d9b",
+  "background_color": "#f4f7fc",
+  "icons": [
+    { "src": "./shield-logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

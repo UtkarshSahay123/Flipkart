@@ -1,6 +1,15 @@
 .venv/
+.trafficenv/
 .vscode/
+.vercel/
+node_modules/
+**/node_modules/
+**/dist/
+**/build/
 **/__pycache__/
+*.py[cod]
+*.log
+backend/*.log
 temp_potholes/
 stats_out.txt
 *.csv
@@ -17,3 +26,10 @@ stats_out.txt
 
 Flipkart-master/
 Flipkart-ai-model-integration-samarth/
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+**/target/

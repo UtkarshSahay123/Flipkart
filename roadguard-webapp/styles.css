@@ -1,0 +1,75 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f4f7fc;
+  color: #0a2342;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* { box-sizing: border-box; }
+html, body, .app-shell { width: 100%; height: 100%; min-height: 100%; margin: 0; }
+body { overflow: hidden; }
+.app-shell { display: flex; flex-direction: column; min-height: 100dvh; }
+.app-bar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 0 0 58px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+  background: #fff;
+  border-bottom: 1px solid #dce4f0;
+  box-shadow: 0 2px 8px rgb(13 42 84 / 7%);
+}
+.brand { display: inline-flex; align-items: center; gap: 9px; color: #003d9b; font-size: 17px; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.brand img { display: block; width: 31px; height: 31px; }
+.app-actions { display: inline-flex; align-items: center; gap: 10px; }
+.connection-state { display: inline-flex; align-items: center; gap: 6px; color: #52627a; font-size: 12px; white-space: nowrap; }
+.connection-state i { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; }
+.connection-state.online i { background: #10a875; }
+.connection-state.offline i { background: #dc2626; }
+.install-button, .reload-button { min-height: 36px; border: 1px solid #d6e0ef; border-radius: 9px; background: #f7f9fd; color: #0755c9; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.install-button { padding: 0 13px; }
+.reload-button { width: 38px; font-size: 24px; line-height: 1; }
+.install-button:hover, .reload-button:hover { background: #edf4ff; }
+.site-frame-wrap { position: relative; flex: 1 1 auto; min-height: 0; background: #f4f7fc; }
+#roadguard-site { display: block; width: 100%; height: 100%; border: 0; background: #f4f7fc; }
+.loading-screen { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; background: #f4f7fc; text-align: center; transition: opacity .25s ease, visibility .25s ease; }
+.loading-screen img { width: 72px; height: 72px; filter: drop-shadow(0 7px 14px rgb(0 61 155 / 15%)); animation: breathe 1.4s ease-in-out infinite; }
+.loading-screen h1 { margin: 4px 0 0; color: #003d9b; font-size: 24px; }
+.loading-screen p { margin: 0; color: #52627a; font-size: 14px; }
+.loading-screen.done { visibility: hidden; opacity: 0; pointer-events: none; }
+.loader { width: 26px; height: 26px; margin-top: 8px; border: 3px solid #cfe0fa; border-top-color: #0755c9; border-radius: 50%; animation: spin .8s linear infinite; }
+.offline-notice { position: absolute; right: 14px; bottom: 14px; left: 14px; z-index: 3; padding: 12px 14px; border: 1px solid #f5d08a; border-radius: 10px; background: #fff8e8; color: #754b00; font-size: 13px; line-height: 1.45; box-shadow: 0 4px 18px rgb(25 43 68 / 12%); }
+.offline-notice[hidden], .install-button[hidden] { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes breathe { 50% { transform: translateY(-3px) scale(1.035); } }
+
+@media (max-width: 480px) {
+  .app-bar { flex-basis: 52px; padding-right: max(10px, env(safe-area-inset-right)); padding-left: max(12px, env(safe-area-inset-left)); }
+  .brand { gap: 7px; font-size: 15px; }
+  .brand img { width: 28px; height: 28px; }
+  .app-actions { gap: 7px; }
+  .connection-state { font-size: 11px; }
+  .install-button { min-height: 34px; padding: 0 9px; font-size: 12px; }
+  .reload-button { width: 34px; min-height: 34px; }
+  .loading-screen img { width: 64px; height: 64px; }
+}
+
+@media (max-width: 380px) {
+  .app-bar { gap: 6px; padding-right: max(8px, env(safe-area-inset-right)); padding-left: max(8px, env(safe-area-inset-left)); }
+  .brand { gap: 5px; font-size: 14px; }
+  .brand img { width: 26px; height: 26px; }
+  .connection-state span { display: none; }
+  .install-button { min-height: 32px; padding: 0 7px; font-size: 11px; }
+  .reload-button { width: 32px; min-height: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
