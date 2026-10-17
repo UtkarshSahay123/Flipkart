@@ -10,4 +10,4 @@ RUN useradd --system --uid 10001 --create-home roadguard
 COPY --from=build /build/target/roadguard-admin-backend-*.jar /app/roadguard.jar
 USER 10001
 EXPOSE 8083
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/roadguard.jar"]
+ENTRYPOINT ["java", "-XX:+UseSerialGC", "-XX:MaxRAMPercentage=40.0", "-XX:MaxMetaspaceSize=128m", "-XX:ReservedCodeCacheSize=32m", "-XX:MaxDirectMemorySize=32m", "-Xss512k", "-jar", "/app/roadguard.jar"]

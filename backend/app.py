@@ -21,7 +21,6 @@ from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-import google.generativeai as genai
 from pydantic import BaseModel, Field
 from urllib.error import URLError, HTTPError
 from urllib.request import Request as URLRequest, urlopen
@@ -2016,10 +2015,6 @@ async def chat_with_assistant(req: ChatRequest):
     if not os.environ.get("GEMINI_API_KEY"):
         return {"reply": _chitti_local_reply(req.message, context)}
 
-    api_key = os.environ.get("GEMINI_API_KEY")
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.5-flash')
-    
     context_str = json.dumps(context, ensure_ascii=False, default=str)[:80000]
     history_str = json.dumps((req.history or [])[-10:], ensure_ascii=False, default=str)[:12000]
     prompt = f"""You are Chitti, the RoadGuard municipal operations memory agent.
@@ -2035,6 +2030,11 @@ RECENT CONVERSATION (JSON):
 ADMIN QUESTION: {req.message}
 """
     try:
+        # Load the Gemini SDK only on requests that actually need the model.
+        import google.generativeai as genai
+        api_key = os.environ.get("GEMINI_API_KEY")
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-2.5-flash')
         response = model.generate_content(prompt)
         if response.text:
             return {"reply": response.text}

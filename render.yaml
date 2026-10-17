@@ -14,7 +14,7 @@ services:
       - key: SPRING_DATASOURCE_PASSWORD
         sync: false
       - key: DB_POOL_MAX_SIZE
-        value: "8"
+        value: "4"
       - key: ROADGUARD_PYTHON_API_BASE_URL
         value: https://flipkart-06iz.onrender.com
       - key: APP_CORS_ALLOWED_ORIGINS
@@ -30,7 +30,7 @@ services:
     env: python
     branch: master
     buildCommand: pip install -r backend/requirements.txt
-    startCommand: uvicorn backend.app:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn backend.app:app --host 0.0.0.0 --port $PORT --workers 1 --limit-concurrency 20 --timeout-keep-alive 5
     healthCheckPath: /health
     envVars:
       - key: APP_ENV
