@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="stylesheet" href="/responsive.css"/>
+<title>Road Guard | Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f0f4ff;
+  --bg2:#ffffff;
+  --bg3:#f5f7ff;
+  --accent:#1a56db;
+  --accent2:#1e40af;
+  --accent-light:#eff6ff;
+  --accent-dim:rgba(26,86,219,0.1);
+  --accent-glow:rgba(26,86,219,0.18);
+  --text:#111928;
+  --text2:#4b5563;
+  --text3:#9ca3af;
+  --border:#e5e7eb;
+  --border2:#d1d5db;
+  --red:#e02424;
+  --green:#057a55;
+}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+  display:flex;flex-direction:column;
+}
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.9rem 2rem;
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 1px 3px rgba(0,0,0,0.06);
+}
+.nav-brand{
+  display:flex;align-items:center;gap:8px;
+  font-size:1rem;font-weight:700;
+  color:var(--accent2);text-decoration:none;
+}
+.nav-brand .material-icons-round{color:var(--accent);font-size:1.3rem}
+.nav-links{display:flex;gap:1.5rem;align-items:center}
+.nav-links a{color:var(--text2);font-size:0.85rem;text-decoration:none;font-weight:500;transition:color 0.2s;}
+.nav-links a:hover{color:var(--accent)}
+
+.bg-pattern{
+  position:fixed;inset:0;
+  background-image:radial-gradient(circle at 20% 50%,rgba(26,86,219,0.06) 0%,transparent 50%),
+    radial-gradient(circle at 80% 20%,rgba(26,86,219,0.04) 0%,transparent 50%);
+  pointer-events:none;
+}
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:3rem 1rem;position:relative;}
+
+.card{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  width:100%;max-width:420px;
+  position:relative;z-index:1;
+  overflow:hidden;
+  box-shadow:0 4px 24px rgba(26,86,219,0.08);
+}
+.card-top-bar{height:4px;background:linear-gradient(90deg,var(--accent),#3b82f6);}
+
+.card-header{padding:1.75rem 1.75rem 1.25rem;border-bottom:1px solid var(--border);}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--accent-dim);
+  border:1px solid rgba(26,86,219,0.2);
+  border-radius:20px;padding:3px 10px;
+  font-size:0.7rem;color:var(--accent);
+  letter-spacing:0.06em;text-transform:uppercase;
+  margin-bottom:1rem;font-weight:600;
+}
+.badge .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:blink 1.8s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+h1{font-size:1.4rem;font-weight:700;color:var(--text);margin-bottom:0.25rem;}
+.sub{font-size:0.83rem;color:var(--text2);}
+
+.card-body{padding:1.5rem 1.75rem 1.75rem;}
+.field{margin-bottom:1.1rem;}
+label{display:block;font-size:0.78rem;font-weight:600;color:var(--text);margin-bottom:6px;}
+.iw{position:relative;}
+.iw .ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:17px;color:var(--text3);pointer-events:none;}
+input[type=email],input[type=password],input[type=text]{
+  width:100%;
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-radius:8px;
+  color:var(--text);
+  font-size:0.88rem;font-family:'Inter',sans-serif;
+  padding:10px 12px 10px 38px;
+  outline:none;
+  transition:border-color 0.15s,box-shadow 0.15s,background 0.15s;
+}
+input:focus{background:#fff;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+input::placeholder{color:var(--text3);}
+.eye-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);display:flex;}
+.eye-btn:hover{color:var(--accent);}
+
+.forgot{text-align:right;margin-top:5px;}
+.forgot a{font-size:0.78rem;color:var(--accent);text-decoration:none;font-weight:500;}
+.forgot a:hover{text-decoration:underline;}
+.reset-panel{display:none;margin:1rem 0;padding:1rem;background:var(--bg3);border:1px solid var(--border);border-radius:8px}
+
+.otp-box{
+  display:none;background:var(--accent-light);
+  border:1px solid rgba(26,86,219,0.2);
+  border-radius:8px;padding:1rem;margin-bottom:1.1rem;
+}
+.otp-note{display:flex;align-items:center;gap:7px;font-size:0.78rem;color:var(--accent2);margin-bottom:0.9rem;font-weight:500;}
+.otp-note .material-icons-round{font-size:16px;}
+.otp-row{display:flex;gap:8px;}
+.otp-row input{width:42px;height:46px;text-align:center;font-size:1.1rem;font-weight:700;padding:0;border-radius:8px;}
+
+.btn{
+  width:100%;background:var(--accent);color:#fff;
+  font-weight:600;font-size:0.9rem;
+  border:none;border-radius:8px;padding:12px;cursor:pointer;
+  font-family:'Inter',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:background 0.2s,transform 0.1s,box-shadow 0.2s;
+  box-shadow:0 2px 8px rgba(26,86,219,0.25);
+}
+.btn:hover{background:var(--accent2);box-shadow:0 4px 12px rgba(26,86,219,0.35);}
+.btn:active{transform:scale(0.99);}
+.btn.loading{opacity:0.65;pointer-events:none;}
+
+.divider{display:flex;align-items:center;gap:10px;margin:1.1rem 0;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.divider span{font-size:0.75rem;color:var(--text3);}
+
+.btn-google{
+  width:100%;background:transparent;
+  color:var(--text2);font-size:0.87rem;
+  border:1px solid var(--border2);border-radius:8px;
+  padding:10px;cursor:pointer;font-family:'Inter',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:border-color 0.15s,background 0.15s;font-weight:500;
+}
+.btn-google:hover{border-color:var(--accent);background:var(--accent-light);color:var(--accent2);}
+
+.link-row{text-align:center;margin-top:1.25rem;font-size:0.82rem;color:var(--text2);}
+.link-row a{color:var(--accent);text-decoration:none;font-weight:600;}
+.link-row a:hover{text-decoration:underline;}
+
+footer{text-align:center;padding:1rem;font-size:0.75rem;color:var(--text3);border-top:1px solid var(--border);background:var(--bg2);}
+</style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+<nav>
+  <a href="../../index.html" class="nav-brand">
+    <img src="../../shield-logo.svg" alt="" width="22" height="22">
+    Road Guard
+  </a>
+  <div class="nav-links">
+    <a href="../../index.html">Home</a>
+    <a href="../../technology.html">Technology</a>
+    <a href="../../about.html">About</a>
+    <a href="../../command.html"><span class="material-icons-round" style="font-size:0.95rem;vertical-align:-3px">monitor_heart</span> Command Centre</a>
+  </div>
+</nav>
+
+<main>
+  <div class="card">
+    <div class="card-top-bar"></div>
+    <div class="card-header">
+      <div class="badge"><div class="dot"></div>Secure Portal</div>
+      <h1>Sign In</h1>
+      <p class="sub">Access your municipal command dashboard</p>
+    </div>
+    <div class="card-body">
+      <div class="field">
+          <label>Email</label>
+        <div class="iw">
+          <span class="material-icons-round ico">person_outline</span>
+          <input type="email" id="email" placeholder="name@organization.gov" autocomplete="email" maxlength="254" required/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <div class="iw">
+          <span class="material-icons-round ico">lock_outline</span>
+          <input type="password" id="pw" placeholder="Enter your password"/>
+          <button class="eye-btn" type="button" onclick="toggleEye('pw',this)">
+            <span class="material-icons-round" style="font-size:17px">visibility_off</span>
+          </button>
+        </div>
+        <div class="forgot"><a href="#" onclick="showReset(event)">Forgot password?</a></div>
+      </div>
+
+      <div class="reset-panel" id="reset-panel">
+        <p style="font-size:.8rem;color:var(--text2);margin-bottom:.8rem">Reset your password using a code sent to your account email.</p>
+        <div class="field"><label>Email</label><div class="iw"><span class="material-icons-round ico">mail_outline</span><input type="email" id="reset-email" placeholder="Account email" autocomplete="email"/></div></div>
+        <button type="button" class="btn" id="send-reset-otp" onclick="sendResetOtp()">Send verification code</button>
+        <div id="reset-fields" style="display:none;margin-top:1rem">
+          <div class="field"><label>Verification code</label><div class="iw"><span class="material-icons-round ico">pin</span><input type="text" id="reset-otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="6-digit code" oninput="this.value=this.value.replace(/\D/g,'').slice(0,6)"/></div></div>
+          <div class="field"><label>New password</label><div class="iw"><span class="material-icons-round ico">lock_outline</span><input type="password" id="reset-password" minlength="8" maxlength="100" placeholder="At least 8 characters"/></div></div>
+          <button type="button" class="btn" onclick="resetPassword()">Update password</button>
+        </div>
+      </div>
+
+      <p id="signin-error" role="alert" style="display:none;color:#b91c1c;font-size:.82rem;margin:.75rem 0"></p>
+
+      <button class="btn" id="mainbtn" onclick="handleSignin()">
+        <span class="material-icons-round" style="font-size:17px">login</span>
+        <span id="btntxt">Sign In</span>
+      </button>
+      <div class="link-row">No account? <a href="/admin/signup.html">Create one &rarr;</a></div>
+    </div>
+  </div>
+</main>
+
+<footer>© 2026 SUVS · Road Guard Platform · All rights reserved.</footer>
+
+<script>
+const ADMIN_DASHBOARD_URL='/admin/issues';
+function toggleEye(id,btn){
+  const i=document.getElementById(id);const ic=btn.querySelector('.material-icons-round');
+  i.type=i.type==='password'?'text':'password';ic.textContent=i.type==='password'?'visibility_off':'visibility';
+}
+async function handleSignin(){
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('pw').value;
+  const button=document.getElementById('mainbtn');
+  const label=document.getElementById('btntxt');
+  const errorBox=document.getElementById('signin-error');
+  errorBox.style.display='none';
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length>254){errorBox.textContent='Enter a valid email address.';errorBox.style.display='block';return;}
+  if(!password || password.length>100){errorBox.textContent='Enter a valid password.';errorBox.style.display='block';return;}
+  button.disabled=true;
+  button.classList.add('loading');
+  label.textContent='Signing in...';
+  try {
+    const response=await fetch('/api/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username:email,password})
+    });
+    if(!response.ok) {
+      const body=await response.text();
+      let message=body;try{message=JSON.parse(body).message||body;}catch{}
+      throw new Error(message || 'Username or password is incorrect.');
+    }
+    const account=await response.json();
+    sessionStorage.setItem('roadguard.auth',JSON.stringify({username:email,password,role:account.role,accountId:account.accountId,organizationId:account.organizationId,name:account.name}));
+    window.location.href=account.role==='EMPLOYEE'?'/employee':ADMIN_DASHBOARD_URL;
+  } catch(error) {
+    errorBox.textContent=error.message || 'Unable to sign in. Check that the admin backend is running.';
+    errorBox.style.display='block';
+    label.textContent='Sign In';
+  } finally {
+    button.disabled=false;
+    button.classList.remove('loading');
+  }
+}
+function showReset(event){event.preventDefault();const panel=document.getElementById('reset-panel');panel.style.display=panel.style.display==='block'?'none':'block';const loginEmail=document.getElementById('email').value.trim();if(loginEmail.includes('@'))document.getElementById('reset-email').value=loginEmail;}
+async function sendResetOtp(){
+  const email=document.getElementById('reset-email').value.trim();const button=document.getElementById('send-reset-otp');const errorBox=document.getElementById('signin-error');errorBox.style.display='none';
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254){errorBox.textContent='Enter a valid account email.';errorBox.style.display='block';return;}
+  button.disabled=true;button.textContent='Sending...';
+  try{const response=await fetch('/api/auth/password/otp/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});const data=await response.json();if(!response.ok)throw new Error(data.message||'Unable to send verification code');document.getElementById('reset-fields').style.display='block';errorBox.style.color='#057a55';errorBox.textContent=data.message;errorBox.style.display='block';}
+  catch(error){errorBox.style.color='#b91c1c';errorBox.textContent=error.message;errorBox.style.display='block';}
+  finally{button.disabled=false;button.textContent='Resend verification code';}
+}
+async function resetPassword(){
+  const errorBox=document.getElementById('signin-error');errorBox.style.color='#b91c1c';errorBox.style.display='none';
+  const email=document.getElementById('reset-email').value.trim();const otp=document.getElementById('reset-otp').value.trim();const password=document.getElementById('reset-password').value;
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254){errorBox.textContent='Enter a valid account email.';errorBox.style.display='block';return;}
+  if(!/^\d{6}$/.test(otp)){errorBox.textContent='Enter the 6-digit verification code.';errorBox.style.display='block';return;}
+  if(password.length<8||password.length>100){errorBox.textContent='Password must be between 8 and 100 characters.';errorBox.style.display='block';return;}
+  try{const response=await fetch('/api/auth/password/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,otp,newPassword:password})});const data=await response.json();if(!response.ok)throw new Error(data.message||'Unable to reset password');errorBox.style.color='#057a55';errorBox.textContent=data.message;errorBox.style.display='block';document.getElementById('reset-fields').style.display='none';}
+  catch(error){errorBox.style.color='#b91c1c';errorBox.textContent=error.message;errorBox.style.display='block';}
+}
+</script>
+<script src="/site-chitti.js?v=bug-dialog-v5"></script>
+</body>
+</html>

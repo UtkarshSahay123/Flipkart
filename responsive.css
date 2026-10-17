@@ -1,0 +1,13 @@
+/* Shared guardrails for the static RoadGuard pages at phone and tablet widths. */
+*, *::before, *::after { box-sizing: border-box; }
+html { width: 100%; max-width: 100%; -webkit-text-size-adjust: 100%; }
+body { min-width: 320px; max-width: 100%; }
+img, video, iframe, canvas { max-width: 100%; }
+input, select, textarea, button { max-width: 100%; }
+pre, code { overflow-wrap: anywhere; }
+
+@media (max-width: 767px) {
+  body { overflow-x: clip; }
+  main, header, footer, section, nav { min-width: 0; }
+  .leaflet-container { min-height: 280px; }
+}

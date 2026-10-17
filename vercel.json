@@ -1,4 +1,9 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci --prefix roadguard-admin/dashboard",
+  "buildCommand": "npm run build",
+  "outputDirectory": "vercel-dist",
   "rewrites": [
     {
       "source": "/api/:path*",
@@ -7,6 +12,14 @@
     {
       "source": "/auth/:path*",
       "destination": "https://flipkart-06iz.onrender.com/auth/:path*"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/admin/ui/index.html"
+    },
+    {
+      "source": "/employee",
+      "destination": "/admin/ui/index.html"
     }
   ],
   "headers": [

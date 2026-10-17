@@ -6,6 +6,7 @@ node_modules/
 **/node_modules/
 **/dist/
 **/build/
+/vercel-dist/
 **/__pycache__/
 *.py[cod]
 *.log

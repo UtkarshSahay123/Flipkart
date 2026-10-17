@@ -1,0 +1,7 @@
+{
+  "name": "road-guard-vercel-site",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix roadguard-admin/dashboard run build && node scripts/prepare-vercel-output.mjs"
+  }
+}

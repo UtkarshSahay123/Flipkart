@@ -4,6 +4,8 @@
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <link rel="icon" type="image/svg+xml" href="/shield-logo.svg">
+    <link rel="stylesheet" href="/responsive.css">
     <title>About Us | Road Guard</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
@@ -117,7 +119,7 @@
     <header
         class="bg-surface-lowest dark:bg-inverse-surface border-b border-outline-variant dark:border-outline flex flex-col md:flex-row justify-between items-center w-full px-margin-desktop py-2 md:h-16 h-auto gap-4 md:gap-0 max-w-full sticky top-0 z-50">
         <a href="index.html" class="flex items-center gap-base hover:opacity-90 transition-opacity">
-            <span class="material-symbols-outlined text-primary text-headline-sm" data-icon="security">security</span>
+            <img src="/shield-logo.svg" alt="" class="h-6 w-6" />
             <span class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">Road Guard</span>
         </a>
         <nav class="flex flex-wrap justify-center items-center gap-md md:gap-xl h-full">
@@ -128,12 +130,94 @@
             <a class="text-primary dark:text-inverse-primary font-bold border-b-2 border-primary dark:border-inverse-primary pb-1 font-body-md text-body-md"
                 href="about.html">About</a>
         </nav>
-        <div class="flex items-center gap-md">
+        <div class="relative flex items-center gap-3">
+            <a class="inline-flex items-center gap-xs px-lg py-sm rounded-lg bg-primary-container text-on-primary font-label-md text-label-md hover:bg-primary transition-colors cursor-pointer active:opacity-80"
+                href="command.html">Command Centre</a>
 
-            <font color="white">
-                <a class="inline-flex items-center gap-xs px-lg py-sm rounded-lg bg-primary-container text-on-primary font-label-md text-label-md hover:bg-primary transition-colors cursor-pointer active:opacity-80"
-                    href="command.html">Command Centre</a>
-            </font>
+            <!-- Profile Avatar Dropdown Trigger -->
+                <div class="relative" id="profile-dropdown-container">
+                    <button id="profile-menu-button" type="button" onclick="toggleProfileDropdown(event)"
+                        class="flex items-center gap-2 p-1.5 pr-3 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary shadow-sm hover:shadow group cursor-pointer"
+                        aria-expanded="false" aria-haspopup="true" title="Admin Profile & Portal Access">
+                        <div class="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-primary/40 group-hover:ring-primary transition-all">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
+                                alt="Profile Avatar"
+                                class="w-full h-full object-cover"
+                                onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80';" />
+                            <span class="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 border border-white rounded-full"></span>
+                        </div>
+                        <div class="flex flex-col text-left leading-none">
+                            <span class="text-xs font-bold text-on-surface flex items-center gap-0.5">
+                                Admin Portal
+                                <span class="material-symbols-outlined text-[16px] text-primary transition-transform group-hover:translate-y-0.5 duration-200">expand_more</span>
+                            </span>
+                            <span class="text-[10px] text-on-surface-variant font-medium">Dashboard & Auth</span>
+                        </div>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div id="profile-dropdown-menu"
+                        class="hidden absolute right-0 mt-2 w-72 origin-top-right rounded-2xl bg-white dark:bg-on-background shadow-2xl border border-outline-variant/70 py-2 z-50 transition-all">
+                        <!-- Profile Header Info -->
+                        <div class="px-4 py-3 border-b border-outline-variant/50 flex items-center gap-3 bg-surface-container-low/50 rounded-t-2xl">
+                            <div class="relative w-10 h-10 rounded-full overflow-hidden ring-2 ring-primary/50 shrink-0">
+                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
+                                    alt="Admin Profile"
+                                    class="w-full h-full object-cover" />
+                                <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                            </div>
+                            <div class="overflow-hidden">
+                                <p class="text-xs font-bold text-on-surface truncate flex items-center gap-1">
+                                    Municipal Admin
+                                    <span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1;">verified</span>
+                                </p>
+                                <p class="text-[11px] text-on-surface-variant truncate">admin@roadguard.gov.in</p>
+                                <span class="inline-block mt-1 px-1.5 py-0.5 bg-primary/10 text-primary text-[9px] font-bold rounded">Active Session</span>
+                            </div>
+                        </div>
+
+                        <!-- Menu Options (Only Login & Signup) -->
+                        <div class="p-1 space-y-1">
+                            <a href="/admin/signin.html" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-primary/10 hover:text-primary transition-all group">
+                                <div class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                                    <span class="material-symbols-outlined text-[18px]">person</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-bold">Admin Sign In</div>
+                                    <div class="text-[10px] text-on-surface-variant font-normal">Open issue dashboard</div>
+                                </div>
+                                <span class="material-symbols-outlined text-[16px] text-outline opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    function toggleProfileDropdown(e) {
+                        if (e) e.stopPropagation();
+                        var menu = document.getElementById('profile-dropdown-menu');
+                        var btn = document.getElementById('profile-menu-button');
+                        if (menu) {
+                            var isHidden = menu.classList.contains('hidden');
+                            if (isHidden) {
+                                menu.classList.remove('hidden');
+                                if (btn) btn.setAttribute('aria-expanded', 'true');
+                            } else {
+                                menu.classList.add('hidden');
+                                if (btn) btn.setAttribute('aria-expanded', 'false');
+                            }
+                        }
+                    }
+                    document.addEventListener('click', function(e) {
+                        var menu = document.getElementById('profile-dropdown-menu');
+                        var btn = document.getElementById('profile-menu-button');
+                        if (menu && !menu.classList.contains('hidden')) {
+                            if (!menu.contains(e.target) && (!btn || !btn.contains(e.target))) {
+                                menu.classList.add('hidden');
+                                if (btn) btn.setAttribute('aria-expanded', 'false');
+                            }
+                        }
+                    });
+                </script>
         </div>
     </header>
     <main class="w-full">
@@ -240,7 +324,7 @@
                     class="font-body-lg text-body-lg text-on-primary-container max-w-3xl mx-auto mb-xl leading-relaxed">
                     <font color = "black">
                         Road Guard transforms traffic management by forecasting congestion before it occurs. By combining live traffic feeds, historical patterns, and AI-powered incident analysis, we help authorities deploy the right resources at the right place and the right time.
-                    </font>    
+                    </font>
                 </div>
 
         </section>
@@ -290,7 +374,7 @@
         class="bg-surface-container-low dark:bg-on-background w-full bottom-0 border-t border-outline-variant dark:border-outline">
         <div class="flex flex-col items-center justify-center gap-xs py-xl">
             <div class="flex items-center gap-sm">
-                <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">security</span>
+                <img src="/shield-logo.svg" alt="" class="h-6 w-6" />
                 <span class="font-headline-sm text-headline-sm text-primary dark:text-primary-fixed">Road Guard</span>
             </div>
             <p class="text-on-surface-variant dark:text-outline-variant font-body-md text-body-md text-center mt-xs">
@@ -324,6 +408,7 @@
     </script>
 
 
+    <script src="/site-chitti.js?v=bug-dialog-v5"></script>
 </body>
 
 </html>

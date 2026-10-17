@@ -5,6 +5,8 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <link rel="icon" type="image/svg+xml" href="/shield-logo.svg" />
+    <link rel="stylesheet" href="/responsive.css" />
     <title>Road Guard | Municipal Command Console</title>
     <!-- Material Symbols -->
     <link
@@ -163,8 +165,7 @@
         <div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop py-md max-w-full mx-auto gap-4 md:gap-0">
             <!-- Brand Logo -->
             <a href="index.html" class="flex items-center gap-sm hover:opacity-90 transition-opacity">
-                <span class="material-symbols-outlined text-primary"
-                    style="font-variation-settings: 'FILL' 1;">security</span>
+                <img src="/shield-logo.svg" alt="" class="h-6 w-6" />
                 <span class="text-headline-sm font-headline-sm text-primary dark:text-primary-fixed">Road Guard</span>
             </a>
             <!-- Navigation Links -->
@@ -182,11 +183,92 @@
                     Command Centre
                 </a>
             </nav>
-            <!-- Actions -->
-            <div class="flex items-center gap-md">
-                <div class="flex items-center gap-sm text-primary">
+            <!-- Actions & Profile Navigation -->
+            <div class="relative flex items-center gap-3">
+                <!-- Profile Avatar Dropdown Trigger -->
+                <div class="relative" id="profile-dropdown-container">
+                    <button id="profile-menu-button" type="button" onclick="toggleProfileDropdown(event)"
+                        class="flex items-center gap-2 p-1.5 pr-3 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary shadow-sm hover:shadow group cursor-pointer"
+                        aria-expanded="false" aria-haspopup="true" title="Admin Profile & Portal Access">
+                        <div class="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-primary/40 group-hover:ring-primary transition-all">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
+                                alt="Profile Avatar"
+                                class="w-full h-full object-cover"
+                                onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80';" />
+                            <span class="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 border border-white rounded-full"></span>
+                        </div>
+                        <div class="flex flex-col text-left leading-none">
+                            <span class="text-xs font-bold text-on-surface flex items-center gap-0.5">
+                                Admin Portal
+                                <span class="material-symbols-outlined text-[16px] text-primary transition-transform group-hover:translate-y-0.5 duration-200">expand_more</span>
+                            </span>
+                            <span class="text-[10px] text-on-surface-variant font-medium">Dashboard & Auth</span>
+                        </div>
+                    </button>
 
+                    <!-- Dropdown Menu -->
+                    <div id="profile-dropdown-menu"
+                        class="hidden absolute right-0 mt-2 w-72 origin-top-right rounded-2xl bg-white dark:bg-on-background shadow-2xl border border-outline-variant/70 py-2 z-50 transition-all">
+                        <!-- Profile Header Info -->
+                        <div class="px-4 py-3 border-b border-outline-variant/50 flex items-center gap-3 bg-surface-container-low/50 rounded-t-2xl">
+                            <div class="relative w-10 h-10 rounded-full overflow-hidden ring-2 ring-primary/50 shrink-0">
+                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
+                                    alt="Admin Profile"
+                                    class="w-full h-full object-cover" />
+                                <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                            </div>
+                            <div class="overflow-hidden">
+                                <p class="text-xs font-bold text-on-surface truncate flex items-center gap-1">
+                                    Municipal Admin
+                                    <span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1;">verified</span>
+                                </p>
+                                <p class="text-[11px] text-on-surface-variant truncate">admin@roadguard.gov.in</p>
+                                <span class="inline-block mt-1 px-1.5 py-0.5 bg-primary/10 text-primary text-[9px] font-bold rounded">Active Session</span>
+                            </div>
+                        </div>
+
+                        <!-- Menu Options (Only Login & Signup) -->
+                        <div class="p-1 space-y-1">
+                            <a href="/admin/signin.html" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-on-surface hover:bg-primary/10 hover:text-primary transition-all group">
+                                <div class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                                    <span class="material-symbols-outlined text-[18px]">person</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-bold">Admin Sign In</div>
+                                    <div class="text-[10px] text-on-surface-variant font-normal">Open issue dashboard</div>
+                                </div>
+                                <span class="material-symbols-outlined text-[16px] text-outline opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
+                <script>
+                    function toggleProfileDropdown(e) {
+                        if (e) e.stopPropagation();
+                        var menu = document.getElementById('profile-dropdown-menu');
+                        var btn = document.getElementById('profile-menu-button');
+                        if (menu) {
+                            var isHidden = menu.classList.contains('hidden');
+                            if (isHidden) {
+                                menu.classList.remove('hidden');
+                                if (btn) btn.setAttribute('aria-expanded', 'true');
+                            } else {
+                                menu.classList.add('hidden');
+                                if (btn) btn.setAttribute('aria-expanded', 'false');
+                            }
+                        }
+                    }
+                    document.addEventListener('click', function(e) {
+                        var menu = document.getElementById('profile-dropdown-menu');
+                        var btn = document.getElementById('profile-menu-button');
+                        if (menu && !menu.classList.contains('hidden')) {
+                            if (!menu.contains(e.target) && (!btn || !btn.contains(e.target))) {
+                                menu.classList.add('hidden');
+                                if (btn) btn.setAttribute('aria-expanded', 'false');
+                            }
+                        }
+                    });
+                </script>
             </div>
         </div>
     </header>
@@ -449,7 +531,7 @@
         class="bg-surface-container-low dark:bg-on-background w-full bottom-0 border-t border-outline-variant dark:border-outline">
         <div class="flex flex-col items-center justify-center gap-xs py-xl">
             <div class="flex items-center gap-sm">
-                <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">security</span>
+                <img src="/shield-logo.svg" alt="" class="h-6 w-6" />
                 <span class="font-headline-sm text-headline-sm text-primary dark:text-primary-fixed">Road Guard</span>
             </div>
             <p class="text-on-surface-variant dark:text-outline-variant font-body-md text-body-md text-center mt-xs">
@@ -645,8 +727,12 @@
         });
 
         // ── Live Incident Table ──────────────────────────────────────────
-        // Auto-detect: relative when served via http server, absolute as fallback
-        const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8001' : 'https://flipkart-06iz.onrender.com';
+        // Local static servers are separate from the API. Use the app's
+        // single-entry backend port for local browser development.
+        const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname) || window.location.protocol === 'file:';
+        const API_BASE = isLocalHost
+            ? `http://${['localhost', '127.0.0.1'].includes(window.location.hostname) ? window.location.hostname : 'localhost'}:8001`
+            : window.location.origin;
         const API = `${API_BASE}/api/stats`;
         const geocodeCache = {};   // coords string → human name
 
@@ -691,6 +777,10 @@
             }
         }
 
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+        }
+
         function buildRow(item, index, locationDisplay) {
             const meta = severityMeta(item.severity);
             const id = (item.id || `INC-${String(index + 1).padStart(3, '0')}`).toUpperCase()
@@ -702,18 +792,18 @@
                 ? `${item.vehicle_count} detected`
                 : (item.recommendations ? `${item.recommendations.police || 0} police` : '—');
             return `
-            <tr class="zebra-row" data-row-id="${id}">
-                <td class="px-lg py-md font-data-mono text-data-mono text-[11px]">${id}</td>
-                <td class="px-lg py-md font-body-md text-body-md font-semibold" title="${rawLoc}">
-                    <span class="loc-cell">${display}</span>
+            <tr class="zebra-row" data-row-id="${escapeHtml(id)}">
+                <td class="px-lg py-md font-data-mono text-data-mono text-[11px]">${escapeHtml(id)}</td>
+                <td class="px-lg py-md font-body-md text-body-md font-semibold" title="${escapeHtml(rawLoc)}">
+                    <span class="loc-cell">${escapeHtml(display)}</span>
                 </td>
-                <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant">${type}</td>
+                <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant">${escapeHtml(type)}</td>
                 <td class="px-lg py-md">
                     <span class="inline-flex items-center gap-xs px-md py-xs ${meta.badge} rounded-full font-label-md text-label-md">
-                        <span class="material-symbols-outlined text-[14px]">${meta.icon}</span> ${meta.label}
+                        <span class="material-symbols-outlined text-[14px]">${escapeHtml(meta.icon)}</span> ${escapeHtml(meta.label)}
                     </span>
                 </td>
-                <td class="px-lg py-md text-on-surface-variant font-data-mono">${vehicles}</td>
+                <td class="px-lg py-md text-on-surface-variant font-data-mono">${escapeHtml(vehicles)}</td>
             </tr>`;
         }
 
@@ -723,8 +813,16 @@
                 if (!res.ok) throw new Error('API error');
                 const data = await res.json();
 
-                const reports = data.citizen_reports || [];
-                const sims = data.simulations || [];
+                // This feed is for live/unresolved incidents. Resolved reports stay
+                // in the database and admin history, but leave the public live feed.
+                const reports = (data.citizen_reports || []).filter(report =>
+                    String(report.status || '').trim().toLowerCase() !== 'resolved'
+                );
+                // Road-closure simulations follow the linked issue lifecycle too;
+                // once resolved, they leave the live home feed just like reports.
+                const sims = (data.simulations || []).filter(simulation =>
+                    String(simulation.status || '').trim().toLowerCase() !== 'resolved'
+                );
                 const rows = [...reports, ...sims];
 
                 const tbody = document.getElementById('live-table-body');
@@ -768,7 +866,7 @@
         }
 
         refreshTable();
-        setInterval(refreshTable, 10000);
+        setInterval(refreshTable, 5000);
 
         // Fetch User Location and update Current Sector display
         if (navigator.geolocation) {
@@ -798,6 +896,7 @@
             );
         }
     </script>
+    <script src="/site-chitti.js?v=bug-dialog-v5"></script>
 </body>
 
 </html>
