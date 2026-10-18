@@ -27,12 +27,16 @@ export function startSessionActivityMonitor() {
   sessionStorage.setItem(LAST_REFRESH_KEY, String(lastRefresh));
 
   const markActivity = () => {
-    lastActivity = Date.now();
+    const activityAt = Date.now();
+    if (activityAt - lastActivity < 1000) return;
+    lastActivity = activityAt;
     sessionStorage.setItem(LAST_ACTIVITY_KEY, String(lastActivity));
   };
 
   const interval = window.setInterval(async () => {
     const current = Date.now();
+    const storedActivity = Number(sessionStorage.getItem(LAST_ACTIVITY_KEY)) || lastActivity;
+    if (storedActivity > lastActivity) lastActivity = storedActivity;
     if (current - lastActivity >= IDLE_TIMEOUT_MS) {
       window.clearInterval(interval);
       endSession();
@@ -50,15 +54,18 @@ export function startSessionActivityMonitor() {
         headers: { Authorization: `Bearer ${currentAuth.accessToken}` }
       });
       if (response.status === 401) {
-        endSession();
-        window.location.replace('/admin/signin.html');
+        const latestAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
+        if (latestAuth?.accessToken === currentAuth.accessToken) {
+          endSession();
+          window.location.replace('/admin/signin.html');
+        }
         return;
       }
       if (!response.ok) return;
       const result = await response.json();
       if (!result?.accessToken) return;
       const latestAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
-      if (!latestAuth) return;
+      if (!latestAuth || latestAuth.accessToken !== currentAuth.accessToken) return;
       sessionStorage.setItem('roadguard.auth', JSON.stringify({ ...latestAuth, accessToken: result.accessToken }));
       lastRefresh = Date.now();
       sessionStorage.setItem(LAST_REFRESH_KEY, String(lastRefresh));
@@ -69,7 +76,7 @@ export function startSessionActivityMonitor() {
     }
   }, 5_000);
 
-  const events = ['pointerdown', 'keydown', 'scroll', 'touchstart'];
+  const events = ['pointerdown', 'pointermove', 'keydown', 'scroll', 'touchstart'];
   events.forEach(eventName => window.addEventListener(eventName, markActivity, { passive: true }));
   return () => {
     window.clearInterval(interval);
@@ -89,6 +96,7 @@ export function authHeaders(initial = {}) {
 }
 
 export async function portalApi(path, options = {}) {
+  const requestAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
   const headers = authHeaders(options.headers || {});
   if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   const response = await fetch(`/api/portal${path}`, { ...options, headers });
@@ -96,8 +104,11 @@ export async function portalApi(path, options = {}) {
   let data;
   try { data = text ? JSON.parse(text) : null; } catch { data = { message: text }; }
   if (response.status === 401) {
-    sessionStorage.removeItem('roadguard.auth');
-    window.location.replace('/admin/signin.html');
+    const latestAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
+    if (latestAuth?.accessToken === requestAuth?.accessToken) {
+      sessionStorage.removeItem('roadguard.auth');
+      window.location.replace('/admin/signin.html');
+    }
   }
   if (!response.ok) throw new Error(data?.message || data?.detail || `Request failed (${response.status})`);
   return data;

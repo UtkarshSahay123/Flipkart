@@ -253,9 +253,10 @@ async function handleSignin(){
     }
     const account=await response.json();
     if(!account.accessToken)throw new Error('Sign-in could not be completed. Please try again.');
+    const signedInAt=Date.now();
     sessionStorage.setItem('roadguard.auth',JSON.stringify({accessToken:account.accessToken,username:email,role:account.role,accountId:account.accountId,organizationId:account.organizationId,name:account.name}));
-    sessionStorage.setItem('roadguard.lastActivity',String(Date.now()));
-    sessionStorage.setItem('roadguard.lastTokenRefresh',String(Date.now()));
+    sessionStorage.setItem('roadguard.lastActivity',String(signedInAt));
+    sessionStorage.setItem('roadguard.lastTokenRefresh',String(signedInAt));
     window.location.href=account.role==='EMPLOYEE'?'/employee':ADMIN_DASHBOARD_URL;
   } catch(error) {
     errorBox.textContent=error.message || 'Unable to sign in. Check that the admin backend is running.';

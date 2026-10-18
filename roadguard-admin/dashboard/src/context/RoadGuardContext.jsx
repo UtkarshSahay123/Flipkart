@@ -520,7 +520,7 @@ export const RoadGuardProvider = ({ children }) => {
 
   const syncOrganizationData = useCallback(async () => {
     const auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
-    if (!auth?.username) { organizationProfileCache.current = { value: null, updatedAt: 0 }; setEmployees([]); setAccessRoles([]); setEmployeeTransferRequests([]); setTasks([]); setTaskHistoryEvents([]); setOrganizationProfile(null); setSystemNotifications([]); setAuditLogs([]); return; }
+    if (!auth?.username || auth.role === 'EMPLOYEE') { organizationProfileCache.current = { value: null, updatedAt: 0 }; setEmployees([]); setAccessRoles([]); setEmployeeTransferRequests([]); setTasks([]); setTaskHistoryEvents([]); setOrganizationProfile(null); setSystemNotifications([]); setAuditLogs([]); return; }
     try {
       const refreshProfile = !organizationProfileCache.current.value || Date.now() - organizationProfileCache.current.updatedAt >= 60000;
       const [profileResponse, serverTasks, alerts] = await Promise.all([
