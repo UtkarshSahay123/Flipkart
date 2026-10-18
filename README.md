@@ -415,7 +415,7 @@ Flipkart/
 | Service | Platform | Config |
 |---|---|---|
 | Frontend + admin UI | **Vercel** | `vercel.json` (rewrites `/api` and `/auth` to the API) |
-| Python API | **Render** (Python) | `render.yaml` → `road-guard-backend` |
+| Python API | **Render** (Docker) | `render.yaml` → `road-guard-backend` (Docker image builds the admin dashboard) |
 | Spring org API | **Render** (Docker) | `render.yaml` → `road-guard-org-api` |
 | Database | **Neon PostgreSQL** | `DATABASE_URL` / `SPRING_DATASOURCE_*` |
 

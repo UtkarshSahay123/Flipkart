@@ -31,10 +31,10 @@ services:
         value: RoadGuard
   - type: web
     name: road-guard-backend
-    env: python
+    env: docker
     branch: master
-    buildCommand: pip install -r backend/requirements.txt
-    startCommand: uvicorn backend.app:app --host 0.0.0.0 --port $PORT --workers 1 --limit-concurrency 20 --timeout-keep-alive 5
+    dockerContext: .
+    dockerfilePath: ./backend/Dockerfile
     healthCheckPath: /health
     envVars:
       - key: APP_ENV
