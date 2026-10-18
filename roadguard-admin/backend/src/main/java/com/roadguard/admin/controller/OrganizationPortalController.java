@@ -945,6 +945,7 @@ public class OrganizationPortalController {
     }
 
     @GetMapping("/tasks/status-board")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> organizationTaskStatusBoard() {
         Admin user = current();
         if (orgId(user) == null) return ResponseEntity.ok(List.of());
