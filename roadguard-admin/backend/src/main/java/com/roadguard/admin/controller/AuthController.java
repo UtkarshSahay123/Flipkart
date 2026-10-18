@@ -91,6 +91,24 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Signed out"));
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshAccessToken(HttpServletRequest request) {
+        String authorization = request.getHeader("Authorization");
+        if (authorization == null || !authorization.regionMatches(true, 0, "Bearer ", 0, 7))
+            return ResponseEntity.status(401).body(Map.of("message", "Sign in again to continue"));
+        try {
+            String username = accessTokens.subject(authorization.substring(7).trim());
+            Admin account = adminRepository.findByEmail(normalizeEmail(username)).orElse(null);
+            if (account == null || !account.isEnabled()
+                    || ("EMPLOYEE".equals(account.getRole()) && !account.isApproved()))
+                return ResponseEntity.status(401).body(Map.of("message", "Your account can no longer sign in"));
+            return ResponseEntity.ok(Map.of("accessToken", accessTokens.create(username),
+                    "expiresIn", accessTokens.ttlSeconds()));
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException ex) {
+            return ResponseEntity.status(401).body(Map.of("message", "Your session expired. Sign in again."));
+        }
+    }
+
     @PostMapping("/password/otp/send")
     public ResponseEntity<?> sendPasswordOtp(@RequestBody PasswordOtpRequest request, HttpServletRequest httpRequest) {
         if (request == null || !isValidEmail(request.getEmail()))

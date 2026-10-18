@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { Sidebar } from '../components/common/Sidebar';
 import { Topbar } from '../components/common/Topbar';
 import { Toast } from '../components/common/Toast';
+import { startSessionActivityMonitor } from '../lib/portalApi';
 
 export const AdminLayout = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ export const AdminLayout = () => {
       navigate('/admin/signin.html', { replace: true });
     }
     else if (auth.role === 'EMPLOYEE') navigate('/employee', { replace: true });
+    if (auth?.accessToken && auth.role !== 'EMPLOYEE') return startSessionActivityMonitor();
   }, [navigate]);
 
   return (

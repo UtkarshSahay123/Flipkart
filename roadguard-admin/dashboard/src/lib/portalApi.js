@@ -10,6 +10,73 @@ export function endSession() {
   }
 }
 
+const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+const TOKEN_REFRESH_MS = 5 * 60 * 1000;
+const LAST_ACTIVITY_KEY = 'roadguard.lastActivity';
+const LAST_REFRESH_KEY = 'roadguard.lastTokenRefresh';
+
+export function startSessionActivityMonitor() {
+  const auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
+  if (!auth?.accessToken) return () => {};
+
+  const now = Date.now();
+  let lastActivity = Number(sessionStorage.getItem(LAST_ACTIVITY_KEY)) || now;
+  let lastRefresh = Number(sessionStorage.getItem(LAST_REFRESH_KEY)) || now;
+  let refreshInFlight = false;
+  sessionStorage.setItem(LAST_ACTIVITY_KEY, String(lastActivity));
+  sessionStorage.setItem(LAST_REFRESH_KEY, String(lastRefresh));
+
+  const markActivity = () => {
+    lastActivity = Date.now();
+    sessionStorage.setItem(LAST_ACTIVITY_KEY, String(lastActivity));
+  };
+
+  const interval = window.setInterval(async () => {
+    const current = Date.now();
+    if (current - lastActivity >= IDLE_TIMEOUT_MS) {
+      window.clearInterval(interval);
+      endSession();
+      window.location.replace('/admin/signin.html');
+      return;
+    }
+    if (document.visibilityState === 'hidden' || current - lastRefresh < TOKEN_REFRESH_MS || refreshInFlight) return;
+
+    const currentAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
+    if (!currentAuth?.accessToken) return;
+    refreshInFlight = true;
+    try {
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${currentAuth.accessToken}` }
+      });
+      if (response.status === 401) {
+        endSession();
+        window.location.replace('/admin/signin.html');
+        return;
+      }
+      if (!response.ok) return;
+      const result = await response.json();
+      if (!result?.accessToken) return;
+      const latestAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
+      if (!latestAuth) return;
+      sessionStorage.setItem('roadguard.auth', JSON.stringify({ ...latestAuth, accessToken: result.accessToken }));
+      lastRefresh = Date.now();
+      sessionStorage.setItem(LAST_REFRESH_KEY, String(lastRefresh));
+    } catch {
+      // Keep the current session on transient network errors and retry later.
+    } finally {
+      refreshInFlight = false;
+    }
+  }, 5_000);
+
+  const events = ['pointerdown', 'keydown', 'scroll', 'touchstart'];
+  events.forEach(eventName => window.addEventListener(eventName, markActivity, { passive: true }));
+  return () => {
+    window.clearInterval(interval);
+    events.forEach(eventName => window.removeEventListener(eventName, markActivity));
+  };
+}
+
 export function authHeaders(initial = {}) {
   const auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
   if (!auth?.accessToken) {

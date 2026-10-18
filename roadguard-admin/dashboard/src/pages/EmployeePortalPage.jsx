@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Activity, CalendarClock, CheckCircle2, ClipboardList, Clock3, ExternalLink, Image as ImageIcon, MapPin, RefreshCw, Search, Upload, UserRound, UsersRound } from 'lucide-react';
-import { endSession, portalApi } from '../lib/portalApi';
+import { endSession, portalApi, startSessionActivityMonitor } from '../lib/portalApi';
 import { ProfileAvatar } from '../components/common/ProfileAvatar';
 import { AccountSecurityPanel } from '../components/common/AccountSecurityPanel';
 
@@ -77,9 +77,10 @@ export function EmployeePortalPage() {
     const auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
     if (!auth?.accessToken) { sessionStorage.removeItem('roadguard.auth'); window.location.replace('/admin/signin.html'); return; }
     if (auth.role !== 'EMPLOYEE') { window.location.replace('/admin/issues'); return; }
+    const stopSessionMonitor = startSessionActivityMonitor();
     refresh();
     const timer = setInterval(() => refresh(true), 5000);
-    return () => clearInterval(timer);
+    return () => { clearInterval(timer); stopSessionMonitor(); };
   }, [refresh]);
 
   useEffect(() => {
