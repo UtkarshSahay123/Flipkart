@@ -34,7 +34,7 @@
       <div class="prompts"></div>
       <form><input aria-label="Ask Chitti" placeholder="Ask about road issues..." autocomplete="off" required><button type="submit">Send</button></form>
     </section>
-    <div class="bug-backdrop" role="presentation"><section class="bug-dialog" role="dialog" aria-modal="true" aria-labelledby="bug-title"><header class="bug-head"><strong id="bug-title">Report a bug</strong><button type="button" aria-label="Close report form">×</button></header><p class="bug-intro">Tell us what went wrong. The current page is attached automatically.</p><form class="bug-form"><label>Title<input name="title" maxlength="160" required placeholder="Short summary"></label><label>What happened?<textarea name="description" minlength="10" maxlength="6000" required placeholder="Steps to reproduce, what you expected, what you saw"></textarea></label><label>Severity<select name="severity"><option value="MEDIUM" selected>MEDIUM</option><option value="LOW">LOW</option><option value="HIGH">HIGH</option><option value="CRITICAL">CRITICAL</option></select></label><div class="bug-actions"><button class="bug-cancel" type="button">Cancel</button><button class="bug-submit" type="submit">Submit report</button></div></form><p class="bug-status" aria-live="polite"></p></section></div>`;
+    <div class="bug-backdrop" role="presentation"><section class="bug-dialog" role="dialog" aria-modal="true" aria-labelledby="bug-title"><header class="bug-head"><strong id="bug-title">Report a bug</strong><button type="button" aria-label="Close report form">×</button></header><p class="bug-intro">Tell us what went wrong. The current page is attached automatically.</p><form class="bug-form"><label>Title<input name="title" minlength="3" maxlength="160" required placeholder="Short summary"></label><label>What happened?<textarea name="description" minlength="10" maxlength="6000" required placeholder="Steps to reproduce, what you expected, what you saw"></textarea></label><label>Severity<select name="severity"><option value="MEDIUM" selected>MEDIUM</option><option value="LOW">LOW</option><option value="HIGH">HIGH</option><option value="CRITICAL">CRITICAL</option></select></label><div class="bug-actions"><button class="bug-cancel" type="button">Cancel</button><button class="bug-submit" type="submit">Submit report</button></div></form><p class="bug-status" aria-live="polite"></p></section></div>`;
   const $ = selector => shadow.querySelector(selector);
   const launcher = $('.launcher'), panel = $('.panel'), messagesNode = $('.messages'), input = $('input');
   const bugBackdrop = $('.bug-backdrop'), bugForm = $('.bug-form'), bugStatus = $('.bug-status');
@@ -129,12 +129,21 @@
   bugForm.addEventListener('submit', async event => {
     event.preventDefault();
     const submit = $('.bug-submit'), values = Object.fromEntries(new FormData(bugForm).entries());
+    values.title = String(values.title || '').trim();
+    values.description = String(values.description || '').trim();
+    if (values.title.length < 3) { bugStatus.textContent = 'Please enter a title with at least 3 characters.'; return; }
+    if (values.description.length < 10) { bugStatus.textContent = 'Please describe what happened in at least 10 characters.'; return; }
     submit.disabled = true; submit.textContent = 'Sending…'; bugStatus.textContent = 'Sending your report…';
     try {
       const response = await fetch(`${apiBase}/api/bug-reports`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...values, page_url: location.href, user_agent: navigator.userAgent }) });
+        body: JSON.stringify({ ...values, page_url: location.href.slice(0, 1000), user_agent: navigator.userAgent.slice(0, 500) }) });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.detail || 'Could not send your report. Please try again.');
+      if (!response.ok) {
+        const detail = Array.isArray(result.detail)
+          ? result.detail.map(item => `${item.loc?.slice(-1)[0] || 'Field'}: ${item.msg}`).join(' ')
+          : result.detail;
+        throw new Error(detail || 'Could not send your report. Please try again.');
+      }
       bugStatus.textContent = 'Thanks. Your report was sent to the Road Guard team.'; bugForm.reset();
     } catch (error) { bugStatus.textContent = error.message || 'Could not send your report. Please try again.'; }
     finally { submit.disabled = false; submit.textContent = 'Send report'; }
