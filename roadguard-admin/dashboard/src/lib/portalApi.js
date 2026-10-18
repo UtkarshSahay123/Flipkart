@@ -15,6 +15,35 @@ const TOKEN_REFRESH_MS = 5 * 60 * 1000;
 const LAST_ACTIVITY_KEY = 'roadguard.lastActivity';
 const LAST_REFRESH_KEY = 'roadguard.lastTokenRefresh';
 
+async function refreshSessionToken(expectedToken) {
+  const currentAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
+  if (!currentAuth?.accessToken) return { auth: null, invalid: true };
+  if (currentAuth.accessToken !== expectedToken) return { auth: currentAuth, invalid: false };
+
+  try {
+    const response = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${expectedToken}` }
+    });
+    if (response.status === 401) return { auth: null, invalid: true };
+    if (!response.ok) return { auth: currentAuth, invalid: false };
+
+    const result = await response.json();
+    if (!result?.accessToken) return { auth: currentAuth, invalid: false };
+    const latestAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
+    if (!latestAuth) return { auth: null, invalid: true };
+    if (latestAuth.accessToken !== expectedToken) return { auth: latestAuth, invalid: false };
+
+    const refreshedAuth = { ...latestAuth, accessToken: result.accessToken };
+    sessionStorage.setItem('roadguard.auth', JSON.stringify(refreshedAuth));
+    const refreshedAt = Date.now();
+    sessionStorage.setItem(LAST_REFRESH_KEY, String(refreshedAt));
+    return { auth: refreshedAuth, invalid: false };
+  } catch {
+    return { auth: currentAuth, invalid: false };
+  }
+}
+
 export function startSessionActivityMonitor() {
   const auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
   if (!auth?.accessToken) return () => {};
@@ -49,26 +78,16 @@ export function startSessionActivityMonitor() {
     if (!currentAuth?.accessToken) return;
     refreshInFlight = true;
     try {
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${currentAuth.accessToken}` }
-      });
-      if (response.status === 401) {
+      const result = await refreshSessionToken(currentAuth.accessToken);
+      if (result.auth?.accessToken) {
+        lastRefresh = Number(sessionStorage.getItem(LAST_REFRESH_KEY)) || lastRefresh;
+      } else if (result.invalid) {
         const latestAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
         if (latestAuth?.accessToken === currentAuth.accessToken) {
           endSession();
           window.location.replace('/admin/signin.html');
         }
-        return;
       }
-      if (!response.ok) return;
-      const result = await response.json();
-      if (!result?.accessToken) return;
-      const latestAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
-      if (!latestAuth || latestAuth.accessToken !== currentAuth.accessToken) return;
-      sessionStorage.setItem('roadguard.auth', JSON.stringify({ ...latestAuth, accessToken: result.accessToken }));
-      lastRefresh = Date.now();
-      sessionStorage.setItem(LAST_REFRESH_KEY, String(lastRefresh));
     } catch {
       // Keep the current session on transient network errors and retry later.
     } finally {
@@ -99,13 +118,34 @@ export async function portalApi(path, options = {}) {
   const requestAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
   const headers = authHeaders(options.headers || {});
   if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-  const response = await fetch(`/api/portal${path}`, { ...options, headers });
+  const requestOptions = { ...options, headers };
+  let response = await fetch(`/api/portal${path}`, requestOptions);
+  let responseAuthToken = requestAuth?.accessToken;
+  let authInvalid = false;
+  if (response.status === 401 && requestAuth?.accessToken) {
+    const refreshed = await refreshSessionToken(requestAuth.accessToken);
+    if (refreshed.auth?.accessToken && refreshed.auth.accessToken !== requestAuth.accessToken) {
+      const retryHeaders = new Headers(options.headers || {});
+      retryHeaders.set('Authorization', `Bearer ${refreshed.auth.accessToken}`);
+      if (options.body && !retryHeaders.has('Content-Type')) retryHeaders.set('Content-Type', 'application/json');
+      response = await fetch(`/api/portal${path}`, { ...options, headers: retryHeaders });
+      responseAuthToken = refreshed.auth.accessToken;
+      authInvalid = response.status === 401;
+    } else if (refreshed.invalid) {
+      authInvalid = true;
+      const latestAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
+      if (latestAuth?.accessToken === requestAuth.accessToken) {
+        sessionStorage.removeItem('roadguard.auth');
+        window.location.replace('/admin/signin.html');
+      }
+    }
+  }
   const text = await response.text();
   let data;
   try { data = text ? JSON.parse(text) : null; } catch { data = { message: text }; }
-  if (response.status === 401) {
+  if (response.status === 401 && authInvalid) {
     const latestAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
-    if (latestAuth?.accessToken === requestAuth?.accessToken) {
+    if (latestAuth?.accessToken === responseAuthToken) {
       sessionStorage.removeItem('roadguard.auth');
       window.location.replace('/admin/signin.html');
     }
