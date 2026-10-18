@@ -471,6 +471,7 @@ public class OrganizationPortalController {
     }
 
     @GetMapping("/tasks/my-tasks")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> myTasks() {
         Admin user = current();
         if (!"EMPLOYEE".equals(user.getRole())) return ResponseEntity.status(403).body(Map.of("message", "Employee access required"));
@@ -556,6 +557,7 @@ public class OrganizationPortalController {
     }
 
     @GetMapping("/departments/{id}/tasks")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> departmentTasks(@PathVariable Long id) {
         Admin user = current();
         Department department = departments.findByIdAndOrganizationId(id, orgId(user)).orElse(null);
