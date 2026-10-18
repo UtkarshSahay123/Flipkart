@@ -1225,11 +1225,20 @@
                                 try {
                                     const place = item.point
                                         ? { point: item.point }
-                                        : await fetch(`${API_BASE}/api/maps/place/${encodeURIComponent(item.placeId)}`).then(async result => {
-                                            const payload = await result.json();
-                                            if (!result.ok) throw new Error(payload.detail || 'Could not resolve that place.');
-                                            return payload;
-                                        });
+                                        : await (async () => {
+                                            try {
+                                                const details = await fetch(`${API_BASE}/api/maps/place/${encodeURIComponent(item.placeId)}`);
+                                                const payload = await details.json();
+                                                if (!details.ok) throw new Error(payload.detail || 'Could not resolve that place.');
+                                                return payload;
+                                            } catch {
+                                                const params = new URLSearchParams({ q: item.label });
+                                                const fallback = await fetch(`${API_BASE}/api/maps/resolve?${params}`);
+                                                const payload = await fallback.json();
+                                                if (!fallback.ok) throw new Error(payload.detail || 'Could not resolve that place.');
+                                                return payload;
+                                            }
+                                        })();
                                     if (input.value.trim() !== item.label) return;
                                     input.dataset.lat = String(place.point[0]);
                                     input.dataset.lon = String(place.point[1]);
@@ -1248,7 +1257,7 @@
                             hideSuggestions();
                         }
                     }
-                }, 300);
+                }, 500);
             });
 
             input.addEventListener('blur', () => {

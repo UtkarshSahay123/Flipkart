@@ -200,33 +200,45 @@ def _google_places_autocomplete(query: str, lat: Optional[float], lng: Optional[
         for p in payload.get("suggestions", []) if p.get("placePrediction")
     ]
 
-def _nominatim_locations(query: str, lat: Optional[float], lng: Optional[float], limit: int = 5):
-    params = {
-        "format": "jsonv2", "addressdetails": "1", "limit": str(limit),
-        "countrycodes": "in", "accept-language": "en",
-    }
-    if re.fullmatch(r"\d{6}", query):
-        params["postalcode"] = query
-    else:
-        params["q"] = query
+def _photon_locations(query: str, lat: Optional[float], lng: Optional[float], limit: int = 5):
+    params = {"q": query, "limit": str(limit), "lang": "en", "countrycode": "IN"}
     if lat is not None and lng is not None:
-        params["viewbox"] = f"{lng - 0.25},{lat + 0.25},{lng + 0.25},{lat - 0.25}"
+        params.update({"lat": str(lat), "lon": str(lng), "zoom": "12"})
     request = URLRequest(
-        "https://nominatim.openstreetmap.org/search?" + urllib.parse.urlencode(params),
+        "https://photon.komoot.io/api/?" + urllib.parse.urlencode(params),
         headers={"User-Agent": "RoadGuard/1.0 (Command Center location search)"},
     )
     with urlopen(request, timeout=8) as response:
-        results = json.loads(response.read())
-    def relevance(result):
-        if lat is None or lng is None:
-            return -float(result.get("importance", 0))
-        distance = _route_distance_m([lat, lng], [float(result["lat"]), float(result["lon"])])
-        return distance / 10000 - float(result.get("importance", 0)) * 8
-    results.sort(key=relevance)
-    return [
-        {"label": item.get("display_name", query), "point": [float(item["lat"]), float(item["lon"])]}
-        for item in results if item.get("lat") is not None and item.get("lon") is not None
-    ]
+        payload = json.loads(response.read())
+
+    suggestions = []
+    seen = set()
+    for feature in payload.get("features", []):
+        properties = feature.get("properties") or {}
+        coordinates = (feature.get("geometry") or {}).get("coordinates") or []
+        if len(coordinates) < 2:
+            continue
+        country_code = properties.get("countrycode")
+        if country_code and country_code.upper() != "IN":
+            continue
+        street = " ".join(part for part in (properties.get("housenumber"), properties.get("street")) if part)
+        address_parts = [
+            properties.get("name"), street, properties.get("district"),
+            properties.get("city"), properties.get("county"), properties.get("state"),
+            properties.get("postcode"), properties.get("country"),
+        ]
+        label_parts = []
+        for part in address_parts:
+            if part and part.casefold() not in {existing.casefold() for existing in label_parts}:
+                label_parts.append(part)
+        label = ", ".join(label_parts) or query
+        point = [float(coordinates[1]), float(coordinates[0])]
+        identity = (label.casefold(), point[0], point[1])
+        if identity in seen:
+            continue
+        seen.add(identity)
+        suggestions.append({"label": label, "point": point})
+    return suggestions
 
 def _google_place_location(place_id: str):
     api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
@@ -253,16 +265,19 @@ async def map_suggestions(q: str = Query(min_length=3, max_length=200), lat: Opt
     if cached and cached[0] > time.time():
         return {"suggestions": cached[1]}
     try:
-        if re.fullmatch(r"\d{6}", q.strip()):
-            suggestions = await asyncio.to_thread(_nominatim_locations, q.strip(), lat, lng, 5)
-        else:
-            suggestions = await asyncio.to_thread(_google_places_autocomplete, q.strip(), lat, lng)
-        if suggestions is None or (not suggestions and not re.fullmatch(r"\d{6}", q.strip())):
-            suggestions = await asyncio.to_thread(_nominatim_locations, q.strip(), lat, lng, 8)
-            suggestions = suggestions[:5]
+        query = q.strip()
+        suggestions = None
+        if not re.fullmatch(r"\d{6}", query):
+            try:
+                suggestions = await asyncio.to_thread(_google_places_autocomplete, query, lat, lng)
+            except (HTTPError, URLError, TimeoutError, OSError, ValueError) as provider_error:
+                logger.warning("Google Places autocomplete failed; falling back to Photon: %s", provider_error)
+        if not suggestions:
+            suggestions = await asyncio.to_thread(_photon_locations, query, lat, lng, 5)
         _place_cache[cache_key] = (time.time() + 300, suggestions)
         return {"suggestions": suggestions}
-    except (HTTPError, URLError, TimeoutError, ValueError) as error:
+    except (HTTPError, URLError, TimeoutError, OSError, ValueError) as error:
+        logger.warning("Photon location suggestions failed (%s).", type(error).__name__)
         raise HTTPException(status_code=502, detail="Location search is temporarily unavailable.") from error
 
 @app.get("/api/maps/resolve", summary="Resolve a typed location or Indian PIN code")
@@ -270,18 +285,22 @@ async def resolve_map_location(q: str = Query(min_length=3, max_length=200), lat
     query = q.strip()
     try:
         if not re.fullmatch(r"\d{6}", query) and os.environ.get("GOOGLE_MAPS_API_KEY"):
-            predictions = await asyncio.to_thread(_google_places_autocomplete, query, lat, lng)
-            if predictions:
-                resolved = await asyncio.to_thread(_google_place_location, predictions[0]["placeId"])
-                if resolved:
-                    return resolved
-        matches = await asyncio.to_thread(_nominatim_locations, query, lat, lng, 1)
+            try:
+                predictions = await asyncio.to_thread(_google_places_autocomplete, query, lat, lng)
+                if predictions and predictions[0].get("placeId"):
+                    resolved = await asyncio.to_thread(_google_place_location, predictions[0]["placeId"])
+                    if resolved:
+                        return resolved
+            except (HTTPError, URLError, TimeoutError, OSError, ValueError, KeyError) as provider_error:
+                logger.warning("Google Places location resolution failed; falling back to Photon: %s", provider_error)
+        matches = await asyncio.to_thread(_photon_locations, query, lat, lng, 1)
         if matches:
             return matches[0]
         raise HTTPException(status_code=404, detail="No matching location was found. Choose a suggestion or enter a more specific address.")
     except HTTPException:
         raise
-    except (HTTPError, URLError, TimeoutError, ValueError, KeyError) as error:
+    except (HTTPError, URLError, TimeoutError, OSError, ValueError, KeyError) as error:
+        logger.warning("Photon location lookup failed (%s).", type(error).__name__)
         raise HTTPException(status_code=502, detail="Location lookup is temporarily unavailable.") from error
 
 @app.get("/api/maps/place/{place_id}", summary="Resolve a Google place prediction")
