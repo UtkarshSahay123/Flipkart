@@ -10,9 +10,7 @@ import math
 import re
 import urllib.parse
 import time
-import smtplib
 import xml.etree.ElementTree as ET
-from email.message import EmailMessage
 from pathlib import Path
 
 from fastapi import FastAPI, WebSocket, HTTPException, UploadFile, File, Form, Request
@@ -1019,18 +1017,14 @@ def _send_bug_report_email(report: BugReportRequest):
     if env_file.exists():
         for raw_line in env_file.read_text(encoding="utf-8").splitlines():
             key, separator, value = raw_line.partition("=")
-            if separator and key.strip() in {"MAIL_HOST", "MAIL_PORT", "MAIL_USERNAME", "MAIL_PASSWORD"}:
+            if separator and key.strip() in {"BREVO_API_KEY", "BREVO_SENDER_EMAIL", "BREVO_SENDER_NAME"}:
                 os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
-    host = os.environ.get("MAIL_HOST", "smtp.gmail.com")
-    username, password = os.environ.get("MAIL_USERNAME", ""), os.environ.get("MAIL_PASSWORD", "")
-    if not username or not password:
-        raise RuntimeError("Email delivery is not configured")
-    message = EmailMessage()
-    message["From"] = username
-    message["To"] = "utkarshsahaygaming15@gmail.com"
+    api_key = os.environ.get("BREVO_API_KEY", "")
+    sender_email = os.environ.get("BREVO_SENDER_EMAIL", "")
+    if not api_key or not sender_email:
+        raise RuntimeError("Brevo email delivery is not configured")
     safe_title = " ".join(report.title.splitlines()).strip()
-    message["Subject"] = f"Road Guard bug report [{report.severity}]: {safe_title}"
-    message.set_content(
+    text_content = (
         f"A visitor submitted a Road Guard website report.\n\n"
         f"Title: {safe_title}\n"
         f"Severity: {report.severity}\n"
@@ -1038,10 +1032,23 @@ def _send_bug_report_email(report: BugReportRequest):
         f"Browser: {report.user_agent.strip() or 'Not provided'}\n\n"
         f"Description:\n{report.description.strip()}\n"
     )
-    with smtplib.SMTP(host, int(os.environ.get("MAIL_PORT", "587")), timeout=20) as smtp:
-        smtp.starttls()
-        smtp.login(username, password)
-        smtp.send_message(message)
+    payload = {
+        "sender": {
+            "name": os.environ.get("BREVO_SENDER_NAME", "RoadGuard"),
+            "email": sender_email,
+        },
+        "to": [{"email": "utkarshsahaygaming15@gmail.com"}],
+        "subject": f"Road Guard bug report [{report.severity}]: {safe_title}",
+        "textContent": text_content,
+    }
+    request = URLRequest(
+        "https://api.brevo.com/v3/smtp/email",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"api-key": api_key, "Content-Type": "application/json", "Accept": "application/json"},
+        method="POST",
+    )
+    with urlopen(request, timeout=20):
+        pass
 
 
 @app.post("/api/bug-reports", summary="Save and email a website bug report to Road Guard")

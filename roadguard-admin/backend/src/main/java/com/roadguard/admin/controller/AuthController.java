@@ -16,7 +16,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.mail.MailException;
+import org.springframework.web.client.RestClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -83,7 +83,7 @@ public class AuthController {
         if (account != null) {
             String code = passwordOtpService.issue(account.getEmail(), "RESET");
             try { emailService.sendOtpEmail(account.getEmail(), code); }
-            catch (MailException | IllegalStateException ex) {
+            catch (RestClientException | IllegalStateException ex) {
                 passwordOtpService.clear(account.getEmail(), "RESET");
                 logger.error("Password reset OTP delivery failed", ex);
                 return ResponseEntity.internalServerError().body(Map.of("message", "Unable to send verification code"));
@@ -128,7 +128,7 @@ public class AuthController {
             emailService.sendOtpEmail(request.getEmail(), otp);
             otpChallenges.put(normalizeEmail(request.getEmail()), new OtpChallenge(otp, Instant.now().plusSeconds(OTP_TTL_SECONDS)));
             return ResponseEntity.ok("OTP sent");
-        } catch (MailException | IllegalStateException ex) {
+        } catch (RestClientException | IllegalStateException ex) {
             logger.error("OTP email delivery failed", ex);
             return ResponseEntity.internalServerError().body("Unable to send OTP. Check the admin mail configuration.");
         }

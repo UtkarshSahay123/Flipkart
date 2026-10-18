@@ -251,7 +251,7 @@ public class OrganizationPortalController {
         try {
             emailService.sendOtpEmail(user.getEmail(), code);
             return ResponseEntity.ok(Map.of("message", "Verification code sent to your account email"));
-        } catch (org.springframework.mail.MailException | IllegalStateException ex) {
+        } catch (org.springframework.web.client.RestClientException | IllegalStateException ex) {
             passwordOtps.clear(user.getEmail(), "CHANGE");
             return ResponseEntity.internalServerError().body(Map.of("message", "Unable to send verification code"));
         }
