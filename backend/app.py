@@ -200,6 +200,52 @@ def _google_places_autocomplete(query: str, lat: Optional[float], lng: Optional[
         for p in payload.get("suggestions", []) if p.get("placePrediction")
     ]
 
+def _nominatim_locations(query: str, lat: Optional[float], lng: Optional[float], limit: int = 5):
+    params = {
+        "format": "jsonv2", "addressdetails": "1", "limit": str(limit),
+        "countrycodes": "in", "accept-language": "en",
+    }
+    if re.fullmatch(r"\d{6}", query):
+        params["postalcode"] = query
+    else:
+        params["q"] = query
+    if lat is not None and lng is not None:
+        params["viewbox"] = f"{lng - 0.25},{lat + 0.25},{lng + 0.25},{lat - 0.25}"
+    request = URLRequest(
+        "https://nominatim.openstreetmap.org/search?" + urllib.parse.urlencode(params),
+        headers={"User-Agent": "RoadGuard/1.0 (Command Center location search)"},
+    )
+    with urlopen(request, timeout=8) as response:
+        results = json.loads(response.read())
+    def relevance(result):
+        if lat is None or lng is None:
+            return -float(result.get("importance", 0))
+        distance = _route_distance_m([lat, lng], [float(result["lat"]), float(result["lon"])])
+        return distance / 10000 - float(result.get("importance", 0)) * 8
+    results.sort(key=relevance)
+    return [
+        {"label": item.get("display_name", query), "point": [float(item["lat"]), float(item["lon"])]}
+        for item in results if item.get("lat") is not None and item.get("lon") is not None
+    ]
+
+def _google_place_location(place_id: str):
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
+    if not api_key:
+        return None
+    request = URLRequest(
+        f"https://places.googleapis.com/v1/places/{urllib.parse.quote(place_id, safe='')}",
+        headers={"X-Goog-Api-Key": api_key, "X-Goog-FieldMask": "location,formattedAddress"},
+    )
+    with urlopen(request, timeout=8) as response:
+        place = json.loads(response.read())
+    location = place.get("location") or {}
+    if "latitude" not in location or "longitude" not in location:
+        return None
+    return {
+        "label": place.get("formattedAddress", ""),
+        "point": [float(location["latitude"]), float(location["longitude"])],
+    }
+
 @app.get("/api/maps/suggestions", summary="Suggest map destinations near the user")
 async def map_suggestions(q: str = Query(min_length=3, max_length=200), lat: Optional[float] = None, lng: Optional[float] = None):
     cache_key = (q.strip().casefold(), round(lat, 3) if lat is not None else None, round(lng, 3) if lng is not None else None)
@@ -207,47 +253,48 @@ async def map_suggestions(q: str = Query(min_length=3, max_length=200), lat: Opt
     if cached and cached[0] > time.time():
         return {"suggestions": cached[1]}
     try:
-        suggestions = await asyncio.to_thread(_google_places_autocomplete, q.strip(), lat, lng)
-        if suggestions is None:
-            params = {"format": "jsonv2", "addressdetails": "1", "limit": "8", "countrycodes": "in", "accept-language": "en", "q": q.strip()}
-            if lat is not None and lng is not None:
-                # A moderate viewport biases results without hiding valid destinations.
-                params["viewbox"] = f"{lng - 0.25},{lat + 0.25},{lng + 0.25},{lat - 0.25}"
-            request = URLRequest(
-                "https://nominatim.openstreetmap.org/search?" + urllib.parse.urlencode(params),
-                headers={"User-Agent": "RoadGuard/1.0 (Live map location suggestions)"},
-            )
-            def search_nominatim():
-                with urlopen(request, timeout=8) as response:
-                    return json.loads(response.read())
-            matches = await asyncio.to_thread(search_nominatim)
-            def proximity(result):
-                if lat is None or lng is None: return 0
-                return _route_distance_m([lat, lng], [float(result["lat"]), float(result["lon"])])
-            # Keep geocoder relevance in the ranking while giving nearby matches
-            # a useful boost; distance alone can promote an unrelated local result.
-            matches.sort(key=lambda item: proximity(item) / 10000 - float(item.get("importance", 0)) * 8)
-            suggestions = [{"label": item["display_name"], "point": [float(item["lat"]), float(item["lon"])]} for item in matches[:5]]
+        if re.fullmatch(r"\d{6}", q.strip()):
+            suggestions = await asyncio.to_thread(_nominatim_locations, q.strip(), lat, lng, 5)
+        else:
+            suggestions = await asyncio.to_thread(_google_places_autocomplete, q.strip(), lat, lng)
+        if suggestions is None or (not suggestions and not re.fullmatch(r"\d{6}", q.strip())):
+            suggestions = await asyncio.to_thread(_nominatim_locations, q.strip(), lat, lng, 8)
+            suggestions = suggestions[:5]
         _place_cache[cache_key] = (time.time() + 300, suggestions)
         return {"suggestions": suggestions}
     except (HTTPError, URLError, TimeoutError, ValueError) as error:
         raise HTTPException(status_code=502, detail="Location search is temporarily unavailable.") from error
 
+@app.get("/api/maps/resolve", summary="Resolve a typed location or Indian PIN code")
+async def resolve_map_location(q: str = Query(min_length=3, max_length=200), lat: Optional[float] = None, lng: Optional[float] = None):
+    query = q.strip()
+    try:
+        if not re.fullmatch(r"\d{6}", query) and os.environ.get("GOOGLE_MAPS_API_KEY"):
+            predictions = await asyncio.to_thread(_google_places_autocomplete, query, lat, lng)
+            if predictions:
+                resolved = await asyncio.to_thread(_google_place_location, predictions[0]["placeId"])
+                if resolved:
+                    return resolved
+        matches = await asyncio.to_thread(_nominatim_locations, query, lat, lng, 1)
+        if matches:
+            return matches[0]
+        raise HTTPException(status_code=404, detail="No matching location was found. Choose a suggestion or enter a more specific address.")
+    except HTTPException:
+        raise
+    except (HTTPError, URLError, TimeoutError, ValueError, KeyError) as error:
+        raise HTTPException(status_code=502, detail="Location lookup is temporarily unavailable.") from error
+
 @app.get("/api/maps/place/{place_id}", summary="Resolve a Google place prediction")
 async def map_place_details(place_id: str):
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
-    if not api_key:
+    if not os.environ.get("GOOGLE_MAPS_API_KEY"):
         raise HTTPException(status_code=404, detail="Google Places is not configured.")
-    request = URLRequest(
-        f"https://places.googleapis.com/v1/places/{urllib.parse.quote(place_id, safe='')}",
-        headers={"X-Goog-Api-Key": api_key, "X-Goog-FieldMask": "location,formattedAddress"},
-    )
     try:
-        def get_details():
-            with urlopen(request, timeout=8) as response:
-                return json.loads(response.read())
-        place = await asyncio.to_thread(get_details)
-        return {"label": place.get("formattedAddress", ""), "point": [place["location"]["latitude"], place["location"]["longitude"]]}
+        place = await asyncio.to_thread(_google_place_location, place_id)
+        if not place:
+            raise HTTPException(status_code=404, detail="The selected place has no mapped coordinates.")
+        return place
+    except HTTPException:
+        raise
     except (HTTPError, URLError, TimeoutError, KeyError, ValueError) as error:
         raise HTTPException(status_code=502, detail="Could not resolve the selected place.") from error
 

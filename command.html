@@ -155,9 +155,11 @@
                     <div class="relative">
                         <input type="text" id="route-start"
                             class="w-full rounded-lg border border-outline-variant bg-surface-container-low text-[11px] py-xs pl-7 pr-xs text-on-surface"
-                            placeholder="Enter start location or lat, lng..." value="Detecting location...">
+                            placeholder="Enter start location, PIN code or lat, lng..." value="Detecting location..." autocomplete="off">
                         <span
                             class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-primary text-[12px]">my_location</span>
+                            <div id="route-start-suggestions" role="listbox" aria-label="Starting location suggestions"
+                                class="absolute left-0 right-0 top-full bg-white border border-outline-variant rounded-lg shadow-lg z-[1000] max-h-48 overflow-y-auto hidden"></div>
                     </div>
                 </div>
                 <div>
@@ -165,9 +167,11 @@
                     <div class="relative">
                         <input type="text" id="route-destination"
                             class="w-full rounded-lg border border-outline-variant bg-surface-container-low text-[11px] py-xs pl-7 pr-xs text-on-surface"
-                            placeholder="Enter destination or lat, lng...">
+                            placeholder="Enter destination, PIN code or lat, lng..." autocomplete="off">
                         <span
                             class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-primary text-[12px]">location_on</span>
+                            <div id="route-destination-suggestions" role="listbox" aria-label="Destination suggestions"
+                                class="absolute left-0 right-0 top-full bg-white border border-outline-variant rounded-lg shadow-lg z-[1000] max-h-48 overflow-y-auto hidden"></div>
                     </div>
                 </div>
                 <button id="btn-find-route"
@@ -601,7 +605,7 @@
                                     class="text-error text-[10px]">*</span>
                             </label>
                             <input type="text" id="sim-start-point" required
-                                placeholder="Enter start location or lat, lng..." autocomplete="off"
+                                placeholder="Enter start location, PIN code or lat, lng..." autocomplete="off"
                                 class="p-xs border border-outline-variant rounded-lg bg-surface-container-low text-body-md text-on-surface outline-none focus:border-primary">
                             <span class="text-[10px] text-on-surface-variant leading-tight">Event starting intersection
                                 or coordinate</span>
@@ -618,7 +622,7 @@
                                 <span class="material-symbols-outlined text-[14px]">location_on</span> End Point <span
                                     class="text-on-surface-variant text-[10px] font-normal">(optional)</span>
                             </label>
-                            <input type="text" id="sim-end-point" placeholder="Enter end location or lat, lng..."
+                            <input type="text" id="sim-end-point" placeholder="Enter end location, PIN code or lat, lng..."
                                 autocomplete="off"
                                 class="p-xs border border-outline-variant rounded-lg bg-surface-container-low text-body-md text-on-surface outline-none focus:border-primary">
                             <span class="text-[10px] text-on-surface-variant leading-tight">Event ending intersection or
@@ -1169,57 +1173,87 @@
             const input = document.getElementById(inputId);
             const suggestionsContainer = document.getElementById(suggestionsId);
             let debounceTimer;
+            let activeRequest;
+            let requestId = 0;
+
+            const hideSuggestions = () => suggestionsContainer.classList.add('hidden');
+            const clearResolvedPoint = () => {
+                input.removeAttribute('data-lat');
+                input.removeAttribute('data-lon');
+            };
 
             input.addEventListener('input', () => {
                 clearTimeout(debounceTimer);
+                if (activeRequest) activeRequest.abort();
+                clearResolvedPoint();
                 const query = input.value.trim();
 
                 if (query.length < 3) {
                     suggestionsContainer.innerHTML = '';
-                    suggestionsContainer.classList.add('hidden');
+                    hideSuggestions();
                     return;
                 }
 
                 debounceTimer = setTimeout(async () => {
+                    const currentRequestId = ++requestId;
+                    activeRequest = new AbortController();
                     try {
-                        let url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}`;
+                        const params = new URLSearchParams({ q: query });
                         if (userCoords && userCoords.length === 2) {
-                            url += `&lat=${userCoords[0]}&lon=${userCoords[1]}`;
+                            params.set('lat', userCoords[0]);
+                            params.set('lng', userCoords[1]);
                         }
-                        const response = await fetch(url, {
-                            headers: { 'User-Agent': 'AegisTrafficControl/1.0' }
+                        const response = await fetch(`${API_BASE}/api/maps/suggestions?${params}`, {
+                            signal: activeRequest.signal,
                         });
-                        if (!response.ok) throw new Error("Search failed");
+                        if (!response.ok) throw new Error("Location suggestions are unavailable.");
                         const data = await response.json();
+                        if (currentRequestId !== requestId || input.value.trim() !== query) return;
 
-                        suggestionsContainer.innerHTML = '';
-                        if (data && data.length > 0) {
-                            data.forEach(item => {
-                                const div = document.createElement('div');
-                                div.className = "p-xs hover:bg-primary-container/10 cursor-pointer text-body-md text-on-surface border-b border-outline-variant/30 last:border-b-0";
-                                div.innerText = item.display_name;
-                                div.addEventListener('mousedown', (e) => {
-                                    e.preventDefault();
-                                    input.value = item.display_name;
-                                    input.setAttribute('data-lat', item.lat);
-                                    input.setAttribute('data-lon', item.lon);
-                                    suggestionsContainer.classList.add('hidden');
-                                });
-                                suggestionsContainer.appendChild(div);
+                        const items = data?.suggestions || [];
+                        suggestionsContainer.replaceChildren();
+                        items.forEach(item => {
+                            const option = document.createElement('button');
+                            option.type = 'button';
+                            option.setAttribute('role', 'option');
+                            option.className = "block w-full p-xs text-left hover:bg-primary-container/10 cursor-pointer text-body-md text-on-surface border-b border-outline-variant/30 last:border-b-0";
+                            option.textContent = item.label;
+                            option.addEventListener('mousedown', async event => {
+                                event.preventDefault();
+                                input.value = item.label;
+                                hideSuggestions();
+                                try {
+                                    const place = item.point
+                                        ? { point: item.point }
+                                        : await fetch(`${API_BASE}/api/maps/place/${encodeURIComponent(item.placeId)}`).then(async result => {
+                                            const payload = await result.json();
+                                            if (!result.ok) throw new Error(payload.detail || 'Could not resolve that place.');
+                                            return payload;
+                                        });
+                                    if (input.value.trim() !== item.label) return;
+                                    input.dataset.lat = String(place.point[0]);
+                                    input.dataset.lon = String(place.point[1]);
+                                } catch (error) {
+                                    clearResolvedPoint();
+                                    showToast(error.message || 'Could not resolve that place.', 'error');
+                                }
                             });
-                            suggestionsContainer.classList.remove('hidden');
-                        } else {
-                            suggestionsContainer.classList.add('hidden');
-                        }
+                            suggestionsContainer.appendChild(option);
+                        });
+                        if (items.length) suggestionsContainer.classList.remove('hidden');
+                        else hideSuggestions();
                     } catch (err) {
-                        console.error("Autocomplete error: ", err);
+                        if (err.name !== 'AbortError') {
+                            console.error("Location suggestion error: ", err);
+                            hideSuggestions();
+                        }
                     }
-                }, 400);
+                }, 300);
             });
 
             input.addEventListener('blur', () => {
                 setTimeout(() => {
-                    suggestionsContainer.classList.add('hidden');
+                    hideSuggestions();
                 }, 200);
             });
 
@@ -1233,6 +1267,8 @@
         // Initialize autocompletes
         setupAutocomplete('sim-start-point', 'sim-start-suggestions');
         setupAutocomplete('sim-end-point', 'sim-end-suggestions');
+        setupAutocomplete('route-start', 'route-start-suggestions');
+        setupAutocomplete('route-destination', 'route-destination-suggestions');
 
         // Tab Toggle Navigation
         const tabIncidents = document.getElementById('tab-incidents');
@@ -2147,10 +2183,14 @@
             if (match) return [Number(match[1]), Number(match[2])];
             if (/gps lock|detecting location/i.test(value) && userCoords?.length === 2) return userCoords;
             try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(value)}`);
-                if (!response.ok) return null;
-                const results = await response.json();
-                return results.length ? [Number(results[0].lat), Number(results[0].lon)] : null;
+                const params = new URLSearchParams({ q: value });
+                if (userCoords?.length === 2) {
+                    params.set('lat', userCoords[0]);
+                    params.set('lng', userCoords[1]);
+                }
+                const response = await fetch(`${API_BASE}/api/maps/resolve?${params}`);
+                const result = await response.json();
+                return response.ok && Array.isArray(result.point) ? result.point.map(Number) : null;
             } catch (error) {
                 console.error('Location lookup failed:', error);
                 return null;

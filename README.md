@@ -92,6 +92,7 @@ Indian cities lose **hours of productivity, fuel and lives** to traffic that aut
 - Colour-coded priority markers & **red congestion zones**
 - Road closures, citizen reports and camera alerts in one view
 - **Google Places** destination search with live suggestions
+- Search locations by name or six-digit Indian PIN code in the Command Center route finder
 
 </td>
 <td width="50%" valign="top">
