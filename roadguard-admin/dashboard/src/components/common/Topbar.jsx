@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useRoadGuard } from '../../context/RoadGuardContext';
 import { ProfileAvatar } from './ProfileAvatar';
+import { endSession } from '../../lib/portalApi';
 import {
   Menu,
   Bell,
@@ -232,9 +233,9 @@ export const Topbar = ({ openMobileMenu, isCollapsed }) => {
 
               <div className="border-t border-slate-100 py-1">
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     setShowProfileMenu(false);
-                    sessionStorage.removeItem('roadguard.auth');
+                    await endSession();
                     window.location.href = '/admin/signin.html';
                   }}
                   className="flex items-center gap-2.5 px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 font-semibold w-full text-left"

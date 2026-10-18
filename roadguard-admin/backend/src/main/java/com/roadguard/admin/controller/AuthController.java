@@ -8,6 +8,8 @@ import com.roadguard.admin.repository.DepartmentRepository;
 import com.roadguard.admin.Department;
 import com.roadguard.admin.service.EmailService;
 import com.roadguard.admin.service.PasswordOtpService;
+import com.roadguard.admin.service.AccessTokenService;
+import com.roadguard.admin.service.BurstRateLimiter;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -21,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.dao.DataIntegrityViolationException;
+import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -70,14 +73,30 @@ public class AuthController {
     private PasswordOtpService passwordOtpService;
 
     @Autowired
+    private AccessTokenService accessTokens;
+
+    @Autowired
+    private BurstRateLimiter rateLimiter;
+
+    @Autowired
     private Environment environment;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        String authorization = request.getHeader("Authorization");
+        if (authorization != null && authorization.regionMatches(true, 0, "Bearer ", 0, 7))
+            accessTokens.revoke(authorization.substring(7).trim());
+        return ResponseEntity.ok(Map.of("message", "Signed out"));
+    }
+
     @PostMapping("/password/otp/send")
-    public ResponseEntity<?> sendPasswordOtp(@RequestBody PasswordOtpRequest request) {
+    public ResponseEntity<?> sendPasswordOtp(@RequestBody PasswordOtpRequest request, HttpServletRequest httpRequest) {
         if (request == null || !isValidEmail(request.getEmail()))
             return ResponseEntity.badRequest().body(Map.of("message", "Enter a valid email address"));
+        if (!allowOtpSend(httpRequest, request.getEmail(), "reset"))
+            return ResponseEntity.status(429).body(Map.of("message", "Too many verification requests. Please wait before trying again."));
         Admin account = adminRepository.findByEmail(normalizeEmail(request.getEmail())).orElse(null);
         // Keep the response identical whether or not the address has an account.
         if (account != null) {
@@ -93,10 +112,12 @@ public class AuthController {
     }
 
     @PostMapping("/password/reset")
-    public ResponseEntity<?> resetPassword(@RequestBody PasswordResetRequest request) {
+    public ResponseEntity<?> resetPassword(@RequestBody PasswordResetRequest request, HttpServletRequest httpRequest) {
         if (request == null || !isValidEmail(request.getEmail()))
             return ResponseEntity.badRequest().body(Map.of("message", "Enter a valid email address"));
         String email = normalizeEmail(request.getEmail());
+        if (!allowOtpAttempt(httpRequest, email, "reset"))
+            return ResponseEntity.status(429).body(Map.of("message", "Too many verification attempts. Please wait before trying again."));
         if (request.getOtp() == null || !request.getOtp().matches("\\d{6}"))
             return ResponseEntity.badRequest().body(Map.of("message", "Verification code must contain exactly 6 digits"));
         Admin account = adminRepository.findByEmail(email).orElse(null);
@@ -110,10 +131,12 @@ public class AuthController {
     }
 
     @PostMapping("/otp/send")
-    public ResponseEntity<String> sendOtp(@RequestBody OtpRequest request) {
+    public ResponseEntity<String> sendOtp(@RequestBody OtpRequest request, HttpServletRequest httpRequest) {
         if (request == null || !isValidEmail(request.getEmail())) {
             return ResponseEntity.badRequest().body("Enter a valid email address");
         }
+        if (!allowOtpSend(httpRequest, request.getEmail(), "signup"))
+            return ResponseEntity.status(429).body("Too many verification requests. Please wait before trying again.");
         if (!isBlank(request.getOrganizationJoinCode())
                 && !request.getOrganizationJoinCode().trim().matches("[A-Za-z0-9]{10}"))
             return ResponseEntity.badRequest().body("Organization joining code must be 10 letters or numbers");
@@ -135,10 +158,12 @@ public class AuthController {
     }
 
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifySignupOtp(@RequestBody OtpVerificationRequest request) {
+    public ResponseEntity<?> verifySignupOtp(@RequestBody OtpVerificationRequest request, HttpServletRequest httpRequest) {
         if (request == null || !isValidEmail(request.getEmail()) || request.getOtp() == null || !request.getOtp().matches("\\d{6}"))
             return ResponseEntity.badRequest().body(Map.of("valid", false, "message", "Email and verification code are required"));
         String email = normalizeEmail(request.getEmail());
+        if (!allowOtpAttempt(httpRequest, email, "signup"))
+            return ResponseEntity.status(429).body(Map.of("valid", false, "message", "Too many verification attempts. Please wait before trying again."));
         OtpChallenge challenge = otpChallenges.get(email);
         boolean valid = challenge != null && Instant.now().isBefore(challenge.expiresAt()) && MessageDigest.isEqual(
                 challenge.code().getBytes(StandardCharsets.UTF_8), request.getOtp().getBytes(StandardCharsets.UTF_8));
@@ -165,11 +190,14 @@ public class AuthController {
     }
 
     @PostMapping({"/login", "/signin"})
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         if (request == null || !isValidEmail(request.getUsername()))
             return ResponseEntity.badRequest().body(Map.of("message", "Enter a valid email address to sign in"));
         if (isBlank(request.getPassword()) || request.getPassword().length() > 100)
             return ResponseEntity.badRequest().body(Map.of("message", "Enter a valid password"));
+        if (!rateLimiter.allow("login-ip:" + clientAddress(httpRequest), 30, 900)
+                || !rateLimiter.allow("login-email:" + normalizeEmail(request.getUsername()), 10, 900))
+            return ResponseEntity.status(429).body(Map.of("message", "Too many sign-in attempts. Please wait before trying again."));
         String email = normalizeEmail(request.getUsername());
         Admin account = adminRepository.findByEmail(email).orElse(null);
         if (account == null)
@@ -188,6 +216,8 @@ public class AuthController {
             String role = account == null || account.getRole() == null ? "ADMIN" : account.getRole();
             return ResponseEntity.ok(Map.of(
                     "message", "Login successful",
+                    "accessToken", accessTokens.create(authentication.getName()),
+                    "expiresIn", accessTokens.ttlSeconds(),
                     "role", role,
                     "accountId", account.getId(),
                     "organizationId", account.getOrganization() == null ? 0L : account.getOrganization().getId(),
@@ -198,7 +228,7 @@ public class AuthController {
     }
 
     @PostMapping({"/register", "/signup"})
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
         if (request == null || !isValidEmail(request.getEmail())) {
             return ResponseEntity.badRequest().body("Enter a valid email address");
         }
@@ -210,6 +240,8 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Choose a valid account type");
         }
         String email = normalizeEmail(request.getEmail());
+        if (!allowOtpAttempt(httpRequest, email, "signup"))
+            return ResponseEntity.status(429).body("Too many verification attempts. Please wait before trying again.");
         OtpChallenge challenge = otpChallenges.get(email);
         if (challenge == null || Instant.now().isAfter(challenge.expiresAt()) || !MessageDigest.isEqual(
                 challenge.code().getBytes(StandardCharsets.UTF_8), request.getOtp().getBytes(StandardCharsets.UTF_8))) {
@@ -333,7 +365,8 @@ public class AuthController {
             if (account == null) return ResponseEntity.status(404).body(Map.of("message", "Create a RoadGuard account with this email before signing in"));
             if ("EMPLOYEE".equals(account.getRole()) && !account.isApproved())
                 return ResponseEntity.status(403).body(Map.of("message", "Employee account is waiting for organization admin approval"));
-            return ResponseEntity.ok(Map.of("message", "Google sign-in successful", "role", account.getRole() == null ? "ADMIN" : account.getRole(),
+            return ResponseEntity.ok(Map.of("message", "Google sign-in successful", "accessToken", accessTokens.create(account.getUsername()),
+                    "expiresIn", accessTokens.ttlSeconds(), "role", account.getRole() == null ? "ADMIN" : account.getRole(),
                     "accountId", account.getId(), "organizationId", account.getOrganization() == null ? 0L : account.getOrganization().getId(),
                     "name", account.getFullName()));
         } catch (Exception ex) {
@@ -343,6 +376,18 @@ public class AuthController {
     }
 
     private static String normalizeEmail(String email) { return email.trim().toLowerCase(java.util.Locale.ROOT); }
+    private boolean allowOtpSend(HttpServletRequest request, String email, String purpose) {
+        return rateLimiter.allow("otp-ip:" + clientAddress(request), 8, 900)
+                && rateLimiter.allow("otp-email:" + purpose + ":" + normalizeEmail(email), 3, 900);
+    }
+    private boolean allowOtpAttempt(HttpServletRequest request, String email, String purpose) {
+        return rateLimiter.allow("otp-attempt-ip:" + clientAddress(request) + ":" + purpose, 12, 300)
+                && rateLimiter.allow("otp-attempt-email:" + purpose + ":" + email, 8, 300);
+    }
+    private static String clientAddress(HttpServletRequest request) {
+        String address = request.getRemoteAddr();
+        return address == null || address.isBlank() ? "unknown" : address;
+    }
     private static boolean isValidEmail(String email) {
         return email != null && email.length() <= 254
                 && email.matches("(?i)^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$");

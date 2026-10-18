@@ -1,6 +1,8 @@
 package com.roadguard.admin.config;
 
 import com.roadguard.admin.service.CustomUserDetailsService;
+import com.roadguard.admin.service.AccessTokenService;
+import com.roadguard.admin.security.BearerTokenFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,6 +14,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -23,12 +26,14 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
+    private final AccessTokenService accessTokenService;
 
     @Value("${APP_CORS_ALLOWED_ORIGINS:}")
     private String allowedOrigins;
 
-    public SecurityConfig(CustomUserDetailsService userDetailsService) {
+    public SecurityConfig(CustomUserDetailsService userDetailsService, AccessTokenService accessTokenService) {
         this.userDetailsService = userDetailsService;
+        this.accessTokenService = accessTokenService;
     }
 
     @Bean
@@ -42,7 +47,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .httpBasic(Customizer.withDefaults());
+            .httpBasic(Customizer.withDefaults())
+            .addFilterBefore(new BearerTokenFilter(accessTokenService, userDetailsService), BasicAuthenticationFilter.class);
         return http.build();
     }
 

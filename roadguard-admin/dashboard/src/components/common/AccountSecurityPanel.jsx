@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { KeyRound, LogOut, UserRound, Save } from 'lucide-react';
-import { portalApi } from '../../lib/portalApi';
+import { endSession, portalApi } from '../../lib/portalApi';
 
 export function AccountSecurityPanel({ username: initialUsername, onMessage = () => {}, showSignOut = true }) {
   const [username, setUsername] = useState(initialUsername || JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null')?.username || '');
@@ -15,10 +15,10 @@ export function AccountSecurityPanel({ username: initialUsername, onMessage = ()
     event.preventDefault(); setBusy(true);
     try {
       const result = await portalApi('/me/username', { method: 'PUT', body: JSON.stringify({ username: newUsername }) });
-      const auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
-      if (auth) sessionStorage.setItem('roadguard.auth', JSON.stringify({ ...auth, username: result.username }));
-      setUsername(result.username); setNewUsername(result.username); onMessage('Username updated.');
-      window.location.reload();
+      setUsername(result.username); setNewUsername(result.username);
+      await endSession();
+      onMessage('Username updated. Sign in again with your new username.');
+      window.location.replace('/admin/signin.html');
     } catch (error) { onMessage(error.message, 'error'); }
     finally { setBusy(false); }
   };
@@ -30,9 +30,9 @@ export function AccountSecurityPanel({ username: initialUsername, onMessage = ()
     try {
       if (!otpSent || !otp) { onMessage('Send and enter the email verification code first.', 'error'); return; }
       await portalApi('/me/password', { method: 'PUT', body: JSON.stringify({ otp, newPassword }) });
-      const auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
-      if (auth) sessionStorage.setItem('roadguard.auth', JSON.stringify({ ...auth, password: newPassword }));
-      setOtp(''); setOtpSent(false); setNewPassword(''); setConfirmPassword(''); onMessage('Password updated.');
+      await endSession();
+      onMessage('Password updated. Sign in again with your new password.');
+      window.location.replace('/admin/signin.html');
     } catch (error) { onMessage(error.message, 'error'); }
     finally { setBusy(false); }
   };
@@ -44,7 +44,7 @@ export function AccountSecurityPanel({ username: initialUsername, onMessage = ()
     finally { setBusy(false); }
   };
 
-  const signOut = () => { sessionStorage.removeItem('roadguard.auth'); window.location.replace('/admin/signin.html'); };
+  const signOut = async () => { await endSession(); window.location.replace('/admin/signin.html'); };
 
   return <section className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 space-y-6">
     <div><h2 className="font-bold text-lg flex items-center gap-2"><UserRound className="h-5 w-5 text-blue-700"/>Account access</h2><p className="text-sm text-slate-500 mt-1">Update the credentials you use to sign in.</p></div>

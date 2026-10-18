@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Activity, CalendarClock, CheckCircle2, ClipboardList, Clock3, ExternalLink, Image as ImageIcon, MapPin, RefreshCw, Search, Upload, UserRound, UsersRound } from 'lucide-react';
-import { portalApi } from '../lib/portalApi';
+import { endSession, portalApi } from '../lib/portalApi';
 import { ProfileAvatar } from '../components/common/ProfileAvatar';
 import { AccountSecurityPanel } from '../components/common/AccountSecurityPanel';
 
@@ -75,7 +75,7 @@ export function EmployeePortalPage() {
 
   useEffect(() => {
     const auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
-    if (!auth) { window.location.replace('/admin/signin.html'); return; }
+    if (!auth?.accessToken) { sessionStorage.removeItem('roadguard.auth'); window.location.replace('/admin/signin.html'); return; }
     if (auth.role !== 'EMPLOYEE') { window.location.replace('/admin/issues'); return; }
     refresh();
     const timer = setInterval(() => refresh(true), 5000);
@@ -194,7 +194,7 @@ export function EmployeePortalPage() {
     finally { setChangeBusy(false); }
   };
 
-  const logout = () => { sessionStorage.removeItem('roadguard.auth'); window.location.href = '/admin/signin.html'; };
+  const logout = async () => { await endSession(); window.location.href = '/admin/signin.html'; };
   const activeTasks = tasks.filter(t => !['Resolved', 'Cancelled'].includes(t.status));
   const canUpdateTasks = (profile?.permissions || []).includes('TASK_UPDATE');
   const canAssignTasks = (profile?.permissions || []).includes('TASK_ASSIGN');

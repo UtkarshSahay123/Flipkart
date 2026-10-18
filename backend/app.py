@@ -129,6 +129,29 @@ if trusted_hosts:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=trusted_hosts)
 
 MAX_REQUEST_BYTES = int(os.getenv("MAX_REQUEST_BYTES", str(50 * 1024 * 1024)))
+_public_rate_windows = {}
+_public_rate_checks = 0
+
+def enforce_public_rate_limit(request: Request, scope: str, limit: int, window_seconds: int):
+    """Apply a small in-process fixed-window limit to public, abuse-sensitive routes."""
+    global _public_rate_checks
+    client_ip = request.client.host if request.client and request.client.host else "unknown"
+    key = f"{scope}:{client_ip}"
+    now = time.monotonic()
+    started_at, count = _public_rate_windows.get(key, (now, 0))
+    if now - started_at >= window_seconds:
+        started_at, count = now, 0
+    if count >= limit:
+        retry_after = max(1, int(window_seconds - (now - started_at)))
+        raise HTTPException(status_code=429, detail="Too many requests. Please wait before trying again.",
+                            headers={"Retry-After": str(retry_after)})
+    _public_rate_windows[key] = (started_at, count + 1)
+    _public_rate_checks += 1
+    if _public_rate_checks % 256 == 0:
+        expired_before = now - window_seconds
+        for old_key, (old_started, _) in list(_public_rate_windows.items()):
+            if old_started < expired_before:
+                _public_rate_windows.pop(old_key, None)
 
 @app.middleware("http")
 async def add_security_headers_and_request_limits(request: Request, call_next):
@@ -285,7 +308,7 @@ def _spring_service_base() -> str:
 
 async def _require_admin_request(request: Request):
     authorization = request.headers.get("authorization", "")
-    if not authorization.lower().startswith("basic "):
+    if not (authorization.lower().startswith("basic ") or authorization.lower().startswith("bearer ")):
         raise HTTPException(status_code=401, detail="Admin sign-in is required.", headers={"WWW-Authenticate": "Basic"})
     upstream_request = URLRequest(
         f"{_spring_service_base()}/api/portal/me",
@@ -304,7 +327,7 @@ async def _require_admin_request(request: Request):
 
     status, profile = await asyncio.to_thread(load_profile)
     if status in {401, 403}:
-        raise HTTPException(status_code=401, detail="Admin sign-in is invalid or expired.", headers={"WWW-Authenticate": "Basic"})
+        raise HTTPException(status_code=401, detail="Admin sign-in is invalid or expired.", headers={"WWW-Authenticate": "Bearer"})
     if status != 200 or not isinstance(profile, dict):
         raise HTTPException(status_code=503, detail="Admin authorization is temporarily unavailable.")
     if str(profile.get("role", "")).upper() != "ADMIN":
@@ -321,6 +344,8 @@ async def proxy_admin_auth(auth_path: str, request: Request):
     headers = {}
     if request.headers.get("content-type"):
         headers["Content-Type"] = request.headers["content-type"]
+    if request.headers.get("authorization"):
+        headers["Authorization"] = request.headers["authorization"]
     upstream_request = URLRequest(target, data=body or None, headers=headers, method=request.method)
 
     def send_request():
@@ -1052,7 +1077,8 @@ def _send_bug_report_email(report: BugReportRequest):
 
 
 @app.post("/api/bug-reports", summary="Save and email a website bug report to Road Guard")
-async def submit_bug_report(report: BugReportRequest):
+async def submit_bug_report(report: BugReportRequest, request: Request):
+    enforce_public_rate_limit(request, "bug-report", 10, 60 * 60)
     report.severity = report.severity.strip().upper()
     if report.severity not in {"LOW", "MEDIUM", "HIGH", "CRITICAL"}:
         raise HTTPException(status_code=422, detail="Severity must be LOW, MEDIUM, HIGH, or CRITICAL.")
@@ -1807,7 +1833,8 @@ async def get_map_markers():
 
 
 @app.get("/api/system/events", summary="Get durable Road Guard activity events")
-async def get_system_events(limit: int = 200):
+async def get_system_events(request: Request, limit: int = 200):
+    await _require_admin_request(request)
     limit = max(1, min(int(limit), 500))
     with _issue_db() as conn:
         rows = conn.execute(

@@ -224,6 +224,7 @@ footer{text-align:center;padding:1rem;font-size:0.75rem;color:var(--text3);borde
 
 <script>
 const ADMIN_DASHBOARD_URL='/admin/issues';
+try{const prior=JSON.parse(sessionStorage.getItem('roadguard.auth')||'null');if(prior&&!prior.accessToken)sessionStorage.removeItem('roadguard.auth');}catch{sessionStorage.removeItem('roadguard.auth');}
 function toggleEye(id,btn){
   const i=document.getElementById(id);const ic=btn.querySelector('.material-icons-round');
   i.type=i.type==='password'?'text':'password';ic.textContent=i.type==='password'?'visibility_off':'visibility';
@@ -251,7 +252,8 @@ async function handleSignin(){
       throw new Error(message || 'Username or password is incorrect.');
     }
     const account=await response.json();
-    sessionStorage.setItem('roadguard.auth',JSON.stringify({username:email,password,role:account.role,accountId:account.accountId,organizationId:account.organizationId,name:account.name}));
+    if(!account.accessToken)throw new Error('Sign-in could not be completed. Please try again.');
+    sessionStorage.setItem('roadguard.auth',JSON.stringify({accessToken:account.accessToken,username:email,role:account.role,accountId:account.accountId,organizationId:account.organizationId,name:account.name}));
     window.location.href=account.role==='EMPLOYEE'?'/employee':ADMIN_DASHBOARD_URL;
   } catch(error) {
     errorBox.textContent=error.message || 'Unable to sign in. Check that the admin backend is running.';

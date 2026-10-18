@@ -17,6 +17,7 @@ Deploy the root `render.yaml` blueprint. It defines the Spring service from `roa
 - Spring service `SPRING_DATASOURCE_URL`: JDBC Neon URL, e.g. `jdbc:postgresql://HOST/DB?sslmode=require`.
 - Spring service `SPRING_DATASOURCE_USERNAME` and `SPRING_DATASOURCE_PASSWORD`: the Neon database role credentials.
 - Spring service `APP_CORS_ALLOWED_ORIGINS`: exact frontend origins only if the browser calls Spring directly. Normal frontend API requests should use the Vercel rewrite to the Python API.
+- Spring service `APP_JWT_SECRET`: a random base64-encoded value of at least 32 bytes (for example, generate one with `openssl rand -base64 32`). Keep it only in Render environment variables. If omitted, the service generates an in-memory key and restarts invalidate current sign-ins.
 - Mail credentials are optional environment variables (`MAIL_USERNAME`, `MAIL_PASSWORD`).
 - Spring service `GOOGLE_CLIENT_ID`: required only when Google sign-in is enabled.
 - The Spring service health check is `/actuator/health`; it is public and returns health status without component details.
@@ -40,7 +41,7 @@ Keep the Vercel frontend and API on HTTPS. Add each production frontend origin t
 
 1. Confirm Render and Vercel environment variables are set; never copy secret values into chat, source files, or build-time `VITE_*` variables.
 2. Set exact allowed origins and trusted hosts, then verify sign-in, reporting, maps, admin issue actions, employee task actions, password reset, and email delivery in staging.
-3. Configure provider-side rate limits/WAF for sign-in, OTP, report submission, uploads, and AI endpoints. The app-level request-size limit is 50 MiB; tune it only if the product needs larger video uploads.
+3. Configure provider-side rate limits/WAF for sign-in, OTP, report submission, uploads, and AI endpoints. The app includes basic in-process limits for sign-in, OTP, and bug reports; these reset on service restart and do not replace provider-side limits. The app-level request-size limit is 50 MiB; tune it only if the product needs larger video uploads.
 4. Enable MFA for Vercel, Render, and Neon accounts; restrict Neon IP/network access where supported; use a dedicated DB role and rotate credentials.
 5. Review any external map/AI/email key restrictions and billing limits. Keep Google browser keys referrer-restricted and server keys restricted to only the APIs they use.
 

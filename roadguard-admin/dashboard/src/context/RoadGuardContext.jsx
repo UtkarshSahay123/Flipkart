@@ -432,7 +432,7 @@ export const RoadGuardProvider = ({ children }) => {
         setCommandCenterSimulations(Array.isArray(stats.simulations) ? stats.simulations : []);
       }
       setIssuesLoaded(true);
-      fetch(`${API_BASE}/api/system/events?limit=200`)
+      fetch(`${API_BASE}/api/system/events?limit=200`, { headers: authHeaders() })
         .then(response => response.ok ? response.json() : [])
         .then(events => setIssueEventLogs(Array.isArray(events) ? events : []))
         .catch(() => setIssueEventLogs([]));

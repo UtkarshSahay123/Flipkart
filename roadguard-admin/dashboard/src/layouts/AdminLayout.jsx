@@ -11,7 +11,10 @@ export const AdminLayout = () => {
 
   useEffect(() => {
     const auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
-    if (!auth) navigate('/admin/signin.html', { replace: true });
+    if (!auth?.accessToken) {
+      sessionStorage.removeItem('roadguard.auth');
+      navigate('/admin/signin.html', { replace: true });
+    }
     else if (auth.role === 'EMPLOYEE') navigate('/employee', { replace: true });
   }, [navigate]);
 
