@@ -17,9 +17,12 @@ function fitWebsiteToAppFrame() {
       frameDocument.head.appendChild(responsiveStyle);
     }
     responsiveStyle.textContent = `
-      html, body { max-width: 100vw !important; overflow-x: hidden !important; }
+      *, *::before, *::after { box-sizing: border-box !important; }
+      html, body { width: 100% !important; max-width: 100vw !important; overflow-x: hidden !important; }
+      img, video, canvas, svg, iframe { max-width: 100%; }
       @media (max-width: 767px) {
         body { min-width: 0 !important; }
+        #root, #root > div { min-width: 0 !important; max-width: 100vw !important; }
         header { width: 100% !important; max-width: 100vw !important; }
         header > div { width: 100% !important; max-width: 100vw !important; padding-left: 12px !important; padding-right: 12px !important; }
         header nav { width: 100% !important; max-width: 100% !important; flex-wrap: wrap !important; justify-content: center !important; gap: 8px !important; }
@@ -27,7 +30,14 @@ function fitWebsiteToAppFrame() {
         #profile-dropdown-container { align-self: center !important; max-width: 100% !important; }
         #profile-menu-button { max-width: calc(100vw - 24px) !important; }
         #profile-dropdown-menu { left: 50% !important; right: auto !important; width: min(18rem, calc(100vw - 24px)) !important; transform: translateX(-50%) !important; }
-        main { width: 100% !important; max-width: 100vw !important; min-width: 0 !important; }
+        main { width: 100% !important; max-width: 100vw !important; min-width: 0 !important; padding-left: 12px !important; padding-right: 12px !important; }
+        main > *, main section, main article, main form { min-width: 0 !important; max-width: 100% !important; }
+        main .grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)) !important; }
+        main .flex { min-width: 0 !important; flex-wrap: wrap !important; }
+        main .flex > * { min-width: 0 !important; max-width: 100% !important; }
+        main table { display: block !important; width: 100% !important; max-width: 100% !important; overflow-x: auto !important; }
+        main input, main select, main textarea, main button { max-width: 100% !important; }
+        [role="dialog"] { width: auto !important; max-width: calc(100vw - 24px) !important; }
         .leaflet-container { width: 100% !important; max-width: 100% !important; }
       }
       @media (max-width: 380px) {
@@ -86,6 +96,8 @@ document.getElementById('reload-button').addEventListener('click', () => {
 
 window.addEventListener('online', setNetworkState);
 window.addEventListener('offline', setNetworkState);
+window.addEventListener('resize', fitWebsiteToAppFrame);
+window.visualViewport?.addEventListener('resize', fitWebsiteToAppFrame);
 setNetworkState();
 loadFallbackTimer = setTimeout(finishLoading, 12000);
 
