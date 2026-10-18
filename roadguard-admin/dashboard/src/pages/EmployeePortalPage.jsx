@@ -324,7 +324,11 @@ function DepartmentWorkspace({ profile, onMessage }) {
       setMembers(people); setTasks(assignments); setPending(requests);
     } catch (error) { onMessage(error.message, 'error'); }
   }, [profile.departmentId, canManage, onMessage]);
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    refresh();
+    const timer = setInterval(refresh, 5000);
+    return () => clearInterval(timer);
+  }, [refresh]);
   const assign = async event => {
     event.preventDefault();
     try { await portalApi(`/tasks/${taskId}/assign-member`, { method: 'POST', body: JSON.stringify({ employeeId: Number(memberId) }) }); onMessage('Task assigned to department member.', 'success'); setTaskId(''); setMemberId(''); refresh(); }

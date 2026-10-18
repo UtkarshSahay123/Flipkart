@@ -432,10 +432,15 @@ export const RoadGuardProvider = ({ children }) => {
         setCommandCenterSimulations(Array.isArray(stats.simulations) ? stats.simulations : []);
       }
       setIssuesLoaded(true);
-      fetch(`${API_BASE}/api/system/events?limit=200`, { headers: authHeaders() })
-        .then(response => response.ok ? response.json() : [])
-        .then(events => setIssueEventLogs(Array.isArray(events) ? events : []))
-        .catch(() => setIssueEventLogs([]));
+      const auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
+      if (auth?.role === 'ADMIN') {
+        fetch(`${API_BASE}/api/system/events?limit=200`, { headers: authHeaders() })
+          .then(response => response.ok ? response.json() : [])
+          .then(events => setIssueEventLogs(Array.isArray(events) ? events : []))
+          .catch(() => setIssueEventLogs([]));
+      } else {
+        setIssueEventLogs([]);
+      }
       const backendIssues = (data.issues || []).map(issue => ({
         // Map backend fields → admin dashboard schema
         id: issue.id,
