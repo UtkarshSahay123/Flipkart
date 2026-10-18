@@ -2290,16 +2290,27 @@
                 if (!response.ok) throw new Error(result.detail || 'No safe road route could be calculated.');
                 if (requestSequence !== routeRequestSequence) return;
 
+                const closureWarning = result.blocked_by_closure === true;
                 routePolyline = L.polyline(result.coordinates, {
-                    color: '#059669', weight: 6, opacity: 0.92, lineJoin: 'round', lineCap: 'round'
+                    color: closureWarning ? '#dc2626' : '#059669',
+                    weight: 6,
+                    opacity: 0.95,
+                    dashArray: closureWarning ? '10 8' : null,
+                    lineJoin: 'round', lineCap: 'round'
                 }).addTo(map);
                 const startMarker = L.marker(startCoords).addTo(map).bindPopup('<b>Start</b>');
                 const destinationMarker = L.marker(destCoords).addTo(map).bindPopup('<b>Destination</b>');
                 routeMarkers.push(startMarker, destinationMarker);
                 map.fitBounds(routePolyline.getBounds(), { padding: [50, 50] });
                 const steps = routeTurnInstructions(result.coordinates, startCoords, destCoords);
-                setRouteGuide('Route Guidance', `${(result.distance_m / 1000).toFixed(2)} km · avoiding ${result.avoided_issues} active reports. Follow the green route on the map.`, steps);
-                showToast(`${automaticUpdate ? 'Route updated' : 'Safe road route'}: ${(result.distance_m / 1000).toFixed(2)} km. Routing around ${result.avoided_issues} active reports.`, 'success');
+                if (closureWarning) {
+                    const warning = result.warning || 'This route passes too close to an active road closure and may be blocked. No safe route is available right now.';
+                    setRouteGuide('Route found — closure warning', `${(result.distance_m / 1000).toFixed(2)} km · ${warning} The dashed red path shows the available route.`, steps);
+                    showToast(warning, 'error');
+                } else {
+                    setRouteGuide('Route Guidance', `${(result.distance_m / 1000).toFixed(2)} km · avoiding ${result.avoided_issues} active reports. Follow the green route on the map.`, steps);
+                    showToast(`${automaticUpdate ? 'Route updated' : 'Safe road route'}: ${(result.distance_m / 1000).toFixed(2)} km. Routing around ${result.avoided_issues} active reports.`, 'success');
+                }
             } catch (error) {
                 if (requestSequence !== routeRequestSequence) return;
                 const message = error.name === 'AbortError'

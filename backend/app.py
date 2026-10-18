@@ -971,7 +971,7 @@ def _build_osm_route(start, destination):
             with urlopen(route_request, timeout=12) as response:
                 route_data = json.loads(response.read().decode("utf-8"))
             safe_routes = []
-            closure_blocked_routes = 0
+            closure_routes = []
             for route in route_data.get("routes", []):
                 coordinates = route.get("geometry", {}).get("coordinates", [])
                 if len(coordinates) < 2:
@@ -979,32 +979,42 @@ def _build_osm_route(start, destination):
                 geometry = [[float(lat), float(lon)] for lon, lat in coordinates]
                 hazard_cost = 0.0
                 blocked = False
+                closure_cost = 0.0
                 for coords, radius, is_closure, severity in hazards:
                     distance_to_report = min(
                         _point_segment_distance_m(coords, a, b) for a, b in zip(geometry, geometry[1:])
                     )
                     if is_closure and distance_to_report <= radius:
                         blocked = True
-                        break
+                        closure_cost += (radius - distance_to_report) * 10.0 + 10000.0
+                        continue
                     if distance_to_report < radius:
                         severity_factor = 4.0 if severity in {"high", "critical"} else 1.0
                         hazard_cost += (radius - distance_to_report) * severity_factor * 3.0
                 if blocked:
-                    closure_blocked_routes += 1
+                    closure_routes.append((closure_cost + hazard_cost + float(route.get("distance", 0)), route, geometry))
                     continue
                 safe_routes.append((float(route.get("distance", 0)) + hazard_cost, route, geometry))
 
-            if safe_routes:
-                _, selected_route, geometry = min(safe_routes, key=lambda item: item[0])
-                return {
+            def route_result(selected_route, geometry, *, blocked_by_closure=False):
+                result = {
                     "coordinates": geometry,
                     "distance_m": round(float(selected_route.get("distance", 0))),
                     "avoided_issues": len(hazards),
                     "algorithm": "OSRM with active-hazard screening",
                     "geometry_source": "OpenStreetMap road network",
+                    "blocked_by_closure": blocked_by_closure,
                 }
-            if closure_blocked_routes:
-                raise HTTPException(status_code=503, detail="Available route alternatives pass too close to an active road closure. No safe route is available right now.")
+                if blocked_by_closure:
+                    result["warning"] = "Available route alternatives pass too close to an active road closure. This route is shown for reference; it may be blocked. No safe route is available right now."
+                return result
+
+            if safe_routes:
+                _, selected_route, geometry = min(safe_routes, key=lambda item: item[0])
+                return route_result(selected_route, geometry)
+            if closure_routes:
+                _, selected_route, geometry = min(closure_routes, key=lambda item: item[0])
+                return route_result(selected_route, geometry, blocked_by_closure=True)
             provider_errors.append("router.project-osrm.org: no usable route alternatives returned")
         except HTTPException:
             raise
