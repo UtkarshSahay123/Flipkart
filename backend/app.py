@@ -436,12 +436,14 @@ async def proxy_admin_auth(auth_path: str, request: Request):
                 )
                 return error.code, b'{"message":"Authentication backend is temporarily unavailable."}', "application/json"
             return error.code, error.read(), error.headers.get("Content-Type", "text/plain")
-        except URLError as error:
+        except (URLError, TimeoutError, OSError) as error:
             logger.warning(
                 "Spring auth upstream connection failed for %s after %.2fs (%s)",
-                operation, time.monotonic() - started_at, str(error.reason)[:160],
+                operation, time.monotonic() - started_at,
+                str(getattr(error, "reason", error))[:160],
             )
-            return 502, b"Admin authentication service is not running on port 8083.", "text/plain"
+            status = 503 if operation == "readiness" else 502
+            return status, b'{"message":"Authentication backend is temporarily unavailable."}', "application/json"
 
     status, content, content_type = await asyncio.to_thread(send_request)
     return Response(content=content, status_code=status, headers={"Content-Type": content_type})

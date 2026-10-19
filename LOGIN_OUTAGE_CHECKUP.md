@@ -62,3 +62,9 @@ The historical Uvicorn lines only prove the Python API returned 502; they do not
 - The readiness route uses a 12-second upstream timeout per poll so a cold or unreachable Spring instance does not leave repeated proxy requests hanging for the full login timeout.
 
 The live checks confirm the services recover when Spring is available. They cannot verify a real account sign-in, and the cold-start path must be checked after these code changes are deployed. An always-on Spring plan is still required to eliminate Render cold starts entirely.
+
+### Follow-up from browser capture
+
+- The new sign-in page is deployed and polling `/api/auth/ready`, but the screenshot still shows failed readiness requests. A live check at that time found Python `/health` returning HTTP 200 while Spring `/actuator/health` timed out after 25 seconds.
+- That probe also exposed a Python proxy edge case: a socket timeout could escape the `URLError` handler and surface as HTTP 500. The auth proxy now catches timeout and socket errors too, logs the failure, and returns a retryable HTTP 503 from readiness (login requests get 502).
+- This makes the readiness polling report and retry upstream timeouts correctly. It cannot recover if the Spring service itself does not start or become reachable; persistent Spring health timeouts need the Spring service's Render logs and deployment status.
