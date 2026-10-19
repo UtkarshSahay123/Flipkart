@@ -260,10 +260,15 @@ async function handleSignin(){
   try {
     const response=await requestLoginWithRetry(email,password,()=>{label.textContent='Waking sign-in service...';});
     if(!response.ok) {
-      if([500,502,503,504].includes(response.status))throw new Error('The sign-in service is still starting. Please wait a minute and try again.');
+      if(response.status>=500)throw new Error('Backend server error. Please try again in a minute.');
       const body=await response.text();
-      let message=body;try{message=JSON.parse(body).message||body;}catch{}
-      throw new Error(message || 'Username or password is incorrect.');
+      let message='';
+      try{const data=JSON.parse(body);message=data.message||data.detail||data.error||'';}catch{}
+      const contentType=response.headers.get('content-type')||'';
+      if(!message&&(contentType.includes('text/html')||/^\s*<(?:!doctype\s+html|html|head|body)[\s>]/i.test(body)))
+        message='The server returned an unreadable response. Please try again.';
+      if(!message&&body&&!contentType.includes('text/html'))message=body.trim().slice(0,300);
+      throw new Error(message || (response.status===401?'Username or password is incorrect.':'Unable to sign in. Please try again.'));
     }
     const account=await response.json();
     if(!account.accessToken)throw new Error('Sign-in could not be completed. Please try again.');
