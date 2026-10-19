@@ -36,3 +36,29 @@ The Render dashboard and service plan are not accessible from this repository wo
 Retries make a cold start recover without asking the user to resubmit immediately, but code cannot keep a Render Free instance awake when Render spins it down. To remove cold-start delays, set the Spring authentication service to an always-on Render plan. That change can incur charges and must be made in the Render dashboard; it was not applied from this workspace.
 
 Reference: [Render Free web service behavior](https://render.com/docs/free).
+
+## Follow-up live check (2026-10-19 08:01 IST)
+
+- Python `/health`: HTTP 200 (0.42 seconds).
+- Spring `/actuator/health`: HTTP 200 (0.61 seconds).
+- Spring `/api/auth/login`, Python `/api/auth/login`, and Vercel `/api/auth/login`: HTTP 401 for a deliberately invalid probe account (all under 0.8 seconds). This is the expected authentication response and confirms that the login request currently reaches Spring through both routes. No real credentials were used.
+- Python `/api/stats`: HTTP 200 (0.96 seconds).
+- These checks were made while the services were warm. They confirm the current routes work; they do not rule out intermittent failures during a cold start or a database/startup problem.
+
+## Render logs access
+
+The public service URLs do not expose Render's private service logs, and no Render dashboard/API credentials are configured in this workspace. To identify a future 502 precisely, inspect both services in the Render Dashboard around the failure time:
+
+1. `flipkart-06iz` (Python API): check the request and response for `POST /api/auth/login`, including the upstream response or connection failure.
+2. `flipkart-springboot-webservice` (Spring API): check startup/readiness, database connection or pool errors, and the matching `POST /api/auth/login` request.
+
+The historical Uvicorn lines only prove the Python API returned 502; they do not include the Spring service's reason. If both services are healthy and the request still fails, the Spring service log at that exact timestamp is needed to distinguish a database/auth exception from a Render startup or routing failure.
+
+## Reproduction and follow-up fix (2026-10-19)
+
+- During a follow-up check, Python `/health` and `/api/stats` returned HTTP 200 while Spring `/actuator/health` timed out after 35 seconds. A later health check returned HTTP 200, and deliberately invalid login probes returned the expected HTTP 401 directly through Spring, through the Python proxy, and through Vercel. This reproduces the intermittent Spring availability pattern in the supplied Uvicorn logs.
+- The sign-in page now polls the Spring readiness endpoint through the Python API for up to two minutes before sending credentials. This prevents cold-start 502s from consuming the user's login attempts; if Spring does not become ready in that window, the page shows a short startup message.
+- The Python auth proxy now logs upstream 5xx responses and connection failures with the operation and elapsed time, without logging credentials or request bodies. This makes the next failure attributable in the Python service's Render logs.
+- The readiness route uses a 12-second upstream timeout per poll so a cold or unreachable Spring instance does not leave repeated proxy requests hanging for the full login timeout.
+
+The live checks confirm the services recover when Spring is available. They cannot verify a real account sign-in, and the cold-start path must be checked after these code changes are deployed. An always-on Spring plan is still required to eliminate Render cold starts entirely.

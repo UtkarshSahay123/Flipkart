@@ -403,7 +403,14 @@ async def _require_admin_request(request: Request):
 @app.api_route("/auth/{auth_path:path}", methods=["GET", "POST", "OPTIONS"], include_in_schema=False)
 @app.api_route("/api/auth/{auth_path:path}", methods=["GET", "POST", "OPTIONS"], summary="Proxy admin authentication")
 async def proxy_admin_auth(auth_path: str, request: Request):
-    target = f"{_spring_service_base()}/api/auth/{auth_path}"
+    # Wait for the Spring service to finish waking before the browser submits
+    # credentials. Its health endpoint is safe to expose through this same-origin
+    # proxy and avoids repeatedly sending login requests to a cold instance.
+    target = (
+        f"{_spring_service_base()}/actuator/health"
+        if auth_path == "ready" and request.method == "GET"
+        else f"{_spring_service_base()}/api/auth/{auth_path}"
+    )
     if request.url.query:
         target += f"?{request.url.query}"
     body = await request.body()
@@ -415,14 +422,25 @@ async def proxy_admin_auth(auth_path: str, request: Request):
     upstream_request = URLRequest(target, data=body or None, headers=headers, method=request.method)
 
     def send_request():
+        operation = "readiness" if auth_path == "ready" and request.method == "GET" else auth_path
+        started_at = time.monotonic()
         try:
-            with urlopen(upstream_request, timeout=65) as upstream:
+            timeout = 12 if auth_path == "ready" and request.method == "GET" else 65
+            with urlopen(upstream_request, timeout=timeout) as upstream:
                 return upstream.status, upstream.read(), upstream.headers.get("Content-Type", "text/plain")
         except HTTPError as error:
             if error.code >= 500:
+                logger.warning(
+                    "Spring auth upstream returned HTTP %s for %s after %.2fs",
+                    error.code, operation, time.monotonic() - started_at,
+                )
                 return error.code, b'{"message":"Authentication backend is temporarily unavailable."}', "application/json"
             return error.code, error.read(), error.headers.get("Content-Type", "text/plain")
-        except URLError:
+        except URLError as error:
+            logger.warning(
+                "Spring auth upstream connection failed for %s after %.2fs (%s)",
+                operation, time.monotonic() - started_at, str(error.reason)[:160],
+            )
             return 502, b"Admin authentication service is not running on port 8083.", "text/plain"
 
     status, content, content_type = await asyncio.to_thread(send_request)

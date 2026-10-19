@@ -229,21 +229,27 @@ function toggleEye(id,btn){
   const i=document.getElementById(id);const ic=btn.querySelector('.material-icons-round');
   i.type=i.type==='password'?'text':'password';ic.textContent=i.type==='password'?'visibility_off':'visibility';
 }
-const SIGNIN_RETRY_DELAYS=[5000,10000,15000,20000,25000,30000];
-async function requestLoginWithRetry(email,password,onRetry){
-  for(let attempt=0;attempt<=SIGNIN_RETRY_DELAYS.length;attempt++){
+async function waitForAuthBackend(onWaiting){
+  const deadline=Date.now()+120000;
+  while(Date.now()<deadline){
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),15000);
     try{
-      const response=await fetch('/api/auth/login',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({username:email,password})
-      });
-      if(![500,502,503,504].includes(response.status)||attempt===SIGNIN_RETRY_DELAYS.length)return response;
-    }catch(error){
-      if(attempt===SIGNIN_RETRY_DELAYS.length)throw new Error('The sign-in service is unavailable. Please try again in a few minutes.');
-    }
-    onRetry();
-    await new Promise(resolve=>setTimeout(resolve,SIGNIN_RETRY_DELAYS[attempt]));
+      const response=await fetch('/api/auth/ready',{method:'GET',cache:'no-store',signal:controller.signal});
+      if(response.ok)return;
+    }catch{}
+    finally{clearTimeout(timeout);}
+    if(Date.now()>=deadline)break;
+    onWaiting();
+    await new Promise(resolve=>setTimeout(resolve,5000));
   }
+  throw new Error('The sign-in service is still starting. Please try again in a few minutes.');
+}
+async function submitLogin(email,password){
+  return fetch('/api/auth/login',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({username:email,password})
+  });
 }
 async function handleSignin(){
   const email=document.getElementById('email').value.trim();
@@ -258,7 +264,10 @@ async function handleSignin(){
   button.classList.add('loading');
   label.textContent='Signing in...';
   try {
-    const response=await requestLoginWithRetry(email,password,()=>{label.textContent='Waking backend server (up to 2 minutes)...';});
+    label.textContent='Checking sign-in service...';
+    await waitForAuthBackend(()=>{label.textContent='Waking backend server (up to 2 minutes)...';});
+    label.textContent='Signing in...';
+    const response=await submitLogin(email,password);
     if(!response.ok) {
       if(response.status>=500)throw new Error('Backend server error. Please try again in a few minutes.');
       const body=await response.text();
