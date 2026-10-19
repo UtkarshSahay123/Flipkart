@@ -229,6 +229,22 @@ function toggleEye(id,btn){
   const i=document.getElementById(id);const ic=btn.querySelector('.material-icons-round');
   i.type=i.type==='password'?'text':'password';ic.textContent=i.type==='password'?'visibility_off':'visibility';
 }
+const SIGNIN_RETRY_DELAYS=[3000,6000,10000,15000,20000];
+async function requestLoginWithRetry(email,password,onRetry){
+  for(let attempt=0;attempt<=SIGNIN_RETRY_DELAYS.length;attempt++){
+    try{
+      const response=await fetch('/api/auth/login',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username:email,password})
+      });
+      if(![500,502,503,504].includes(response.status)||attempt===SIGNIN_RETRY_DELAYS.length)return response;
+    }catch(error){
+      if(attempt===SIGNIN_RETRY_DELAYS.length)throw new Error('The sign-in service is temporarily unavailable. Please wait a minute and try again.');
+    }
+    onRetry();
+    await new Promise(resolve=>setTimeout(resolve,SIGNIN_RETRY_DELAYS[attempt]));
+  }
+}
 async function handleSignin(){
   const email=document.getElementById('email').value.trim();
   const password=document.getElementById('pw').value;
@@ -242,11 +258,9 @@ async function handleSignin(){
   button.classList.add('loading');
   label.textContent='Signing in...';
   try {
-    const response=await fetch('/api/auth/login', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({username:email,password})
-    });
+    const response=await requestLoginWithRetry(email,password,()=>{label.textContent='Waking sign-in service...';});
     if(!response.ok) {
+      if([500,502,503,504].includes(response.status))throw new Error('The sign-in service is still starting. Please wait a minute and try again.');
       const body=await response.text();
       let message=body;try{message=JSON.parse(body).message||body;}catch{}
       throw new Error(message || 'Username or password is incorrect.');

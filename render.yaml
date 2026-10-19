@@ -42,7 +42,7 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: SPRING_API_BASE_URL
-        sync: false
+        value: https://flipkart-springboot-webservice.onrender.com
       - key: CORS_ALLOWED_ORIGINS
         sync: false
       - key: TRUSTED_HOSTS
