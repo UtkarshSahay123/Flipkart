@@ -425,7 +425,9 @@ async def proxy_admin_auth(auth_path: str, request: Request):
         operation = "readiness" if auth_path == "ready" and request.method == "GET" else auth_path
         started_at = time.monotonic()
         try:
-            timeout = 12 if auth_path == "ready" and request.method == "GET" else 65
+            # Give Render enough time to route through a cold Spring startup, while
+            # keeping the browser retry bounded and avoiding a pile-up of probes.
+            timeout = 20 if auth_path == "ready" and request.method == "GET" else 65
             with urlopen(upstream_request, timeout=timeout) as upstream:
                 return upstream.status, upstream.read(), upstream.headers.get("Content-Type", "text/plain")
         except HTTPError as error:

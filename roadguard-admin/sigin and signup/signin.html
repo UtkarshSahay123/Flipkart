@@ -230,10 +230,11 @@ function toggleEye(id,btn){
   i.type=i.type==='password'?'text':'password';ic.textContent=i.type==='password'?'visibility_off':'visibility';
 }
 async function waitForAuthBackend(onWaiting){
-  const deadline=Date.now()+120000;
+  const deadline=Date.now()+180000;
+  let retryDelay=3000;
   while(Date.now()<deadline){
     const controller=new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),15000);
+    const timeout=setTimeout(()=>controller.abort(),25000);
     try{
       const response=await fetch('/api/auth/ready',{method:'GET',cache:'no-store',signal:controller.signal});
       if(response.ok)return;
@@ -241,7 +242,10 @@ async function waitForAuthBackend(onWaiting){
     finally{clearTimeout(timeout);}
     if(Date.now()>=deadline)break;
     onWaiting();
-    await new Promise(resolve=>setTimeout(resolve,5000));
+    const remaining=deadline-Date.now();
+    if(remaining<=0)break;
+    await new Promise(resolve=>setTimeout(resolve,Math.min(retryDelay,remaining)));
+    retryDelay=Math.min(Math.round(retryDelay*1.7),15000);
   }
   throw new Error('The sign-in service is still starting. Please try again in a few minutes.');
 }
@@ -265,7 +269,7 @@ async function handleSignin(){
   label.textContent='Signing in...';
   try {
     label.textContent='Checking sign-in service...';
-    await waitForAuthBackend(()=>{label.textContent='Waking backend server (up to 2 minutes)...';});
+    await waitForAuthBackend(()=>{label.textContent='Waking backend server (up to 3 minutes)...';});
     label.textContent='Signing in...';
     const response=await submitLogin(email,password);
     if(!response.ok) {

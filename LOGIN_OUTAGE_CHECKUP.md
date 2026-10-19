@@ -54,6 +54,15 @@ The public service URLs do not expose Render's private service logs, and no Rend
 
 The historical Uvicorn lines only prove the Python API returned 502; they do not include the Spring service's reason. If both services are healthy and the request still fails, the Spring service log at that exact timestamp is needed to distinguish a database/auth exception from a Render startup or routing failure.
 
+## Follow-up reproduction and mitigation (2026-10-20)
+
+- The supplied browser console shows `GET /api/auth/ready` failing repeatedly with HTTP 502. These are small readiness GETs with no login payload, so splitting login packets cannot address this failure.
+- A live check found the Python API `/health` returning HTTP 200, its `/api/auth/ready` returning HTTP 502 in about 0.43 seconds, and the Spring `/actuator/health` endpoint timing out after 30 seconds. This confirms the failure is at the Spring dependency/readiness hop, not the browser or the size of the sign-in request. The short proxy 502 and the direct timeout can reflect different states while the Render service is starting; Render logs are needed to identify whether it is sleeping, restarting, or exhausting memory.
+- The earlier supplied Spring log did report `java.lang.OutOfMemoryError: Java heap space`, so limited memory is a credible risk, but this capture alone does not prove that the current 502 is caused by RAM. The browser's Permissions-Policy warnings are unrelated.
+- Sign-in readiness polling now allows up to three minutes, starts with a three-second interval, and backs off to at most 15 seconds. Each individual probe has a 25-second abort/connection timeout. This gives Render's documented cold-start window time to complete while avoiding a probe every five seconds throughout an outage.
+- Packet chunking was rejected: the readiness check sends no body, and login credentials are already a small JSON request. The safer operational choices are to keep Spring warm on a paid plan, or reduce its memory use and inspect/reduce high-allocation workloads; an upgrade is the dependable fix for both cold starts and a hard 512 MB limit. No plan change can be made from this repository.
+- Before selecting a JVM heap increase, inspect the Spring service's current Render plan and memory metrics. Its Docker image caps heap at 45% of detected RAM; raising that cap on a 512 MB instance may trade Java heap OOMs for a container-level OOM, so it should not be changed without measurements.
+
 ## Reproduction and follow-up fix (2026-10-19)
 
 - During a follow-up check, Python `/health` and `/api/stats` returned HTTP 200 while Spring `/actuator/health` timed out after 35 seconds. A later health check returned HTTP 200, and deliberately invalid login probes returned the expected HTTP 401 directly through Spring, through the Python proxy, and through Vercel. This reproduces the intermittent Spring availability pattern in the supplied Uvicorn logs.
