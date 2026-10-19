@@ -79,7 +79,7 @@ export function EmployeePortalPage() {
     if (auth.role !== 'EMPLOYEE') { window.location.replace('/admin/issues'); return; }
     const stopSessionMonitor = startSessionActivityMonitor();
     refresh();
-    const timer = setInterval(() => refresh(true), 5000);
+    const timer = setInterval(() => refresh(true), 30000);
     return () => { clearInterval(timer); stopSessionMonitor(); };
   }, [refresh]);
 
@@ -347,7 +347,7 @@ function DepartmentWorkspace({ profile, onMessage }) {
   }, [profile.departmentId, canManage, onMessage]);
   useEffect(() => {
     refresh();
-    const timer = setInterval(refresh, 5000);
+    const timer = setInterval(refresh, 30000);
     return () => clearInterval(timer);
   }, [refresh]);
   const assign = async event => {

@@ -63,6 +63,14 @@ The historical Uvicorn lines only prove the Python API returned 502; they do not
 
 The live checks confirm the services recover when Spring is available. They cannot verify a real account sign-in, and the cold-start path must be checked after these code changes are deployed. An always-on Spring plan is still required to eliminate Render cold starts entirely.
 
+## Spring heap exhaustion (2026-10-19)
+
+- The supplied Spring log identifies the immediate failure: `java.lang.OutOfMemoryError: Java heap space`. This explains why the employee portal can receive gateway errors while separate lightweight endpoints continue responding.
+- The employee dashboard was polling several endpoints every five seconds. Those endpoints loaded complete account entities, including base64 profile images, and task entities eagerly loaded complete assigned employee records. The task status endpoint then limited results in application memory after fetching them.
+- Employee dashboard polling is now every 30 seconds. Dashboard task reads use bounded SQL projections with a 500-row cap and select only display fields, avoiding eager account/profile-image materialization. Organization and department member lists also select only fields needed by the page. The subordinate list uses a recursive SQL query instead of loading every account and checking each manager chain in application code.
+- The scheduled reminder service now reads compact recipient fields directly from SQL instead of hydrating full account entities and their profile images.
+- Verification: a clean Maven compile and Vite production build both passed. The frontend build reports its existing large-chunk advisory. No production Render JVM metrics or heap dump were available, so this addresses the identified high-allocation paths but does not prove the service will never exhaust heap under larger traffic or data volumes. The Java heap percentage was left unchanged because the service's Render memory tier is not available from this workspace.
+
 ## Employee task assignment 401 investigation (2026-10-19)
 
 - The employee UI only shows the assignment form for a department head. The Spring endpoint also checks that role and returns HTTP 403 if the caller is not a head. The reported HTTP 401 occurs earlier in Spring Security, so it indicates the Bearer token was not accepted rather than a task/member validation failure.

@@ -476,7 +476,7 @@ public class OrganizationPortalController {
         Admin user = current();
         if (!"EMPLOYEE".equals(user.getRole())) return ResponseEntity.status(403).body(Map.of("message", "Employee access required"));
         if (orgId(user) == null) return ResponseEntity.ok(List.of());
-        return ResponseEntity.ok(taskDtos(tasks.findAllByEmployeeIdAndOrganizationIdOrderByCreatedAtDesc(user.getId(), orgId(user))));
+        return ResponseEntity.ok(taskRows("t.organization_id=? AND t.employee_id=?", List.of(orgId(user), user.getId()), 500));
     }
 
     @GetMapping("/me/subordinates")
@@ -486,11 +486,13 @@ public class OrganizationPortalController {
         if (!hasPermission(user, "TASK_ASSIGN")) return ResponseEntity.status(403).body(Map.of("message", "Your role does not allow task delegation"));
         Long organizationId = orgId(user);
         if (organizationId == null) return ResponseEntity.ok(List.of());
-        return ResponseEntity.ok(accounts.findAllByOrganizationIdOrderByFullName(organizationId).stream()
-                .filter(employee -> "EMPLOYEE".equals(employee.getRole()) && employee.isApproved()
-                        && !Boolean.FALSE.equals(employee.getAccountActive())
-                        && isBelow(user.getId(), employee.getId(), organizationId))
-                .map(OrganizationPortalController::employeeDto).toList());
+        List<Map<String, Object>> descendants = jdbc.queryForList("WITH RECURSIVE descendants(id) AS ("
+                + "SELECT id FROM admin_users WHERE manager_id=? AND organization_id=? AND role='EMPLOYEE' "
+                + "UNION SELECT u.id FROM admin_users u JOIN descendants d ON u.manager_id=d.id WHERE u.organization_id=? AND u.role='EMPLOYEE') "
+                + "SELECT u.id, u.full_name AS \"fullName\", u.designation FROM admin_users u JOIN descendants d ON d.id=u.id "
+                + "WHERE u.organization_id=? AND u.role='EMPLOYEE' AND u.approved IS TRUE AND u.account_active IS DISTINCT FROM FALSE ORDER BY u.full_name",
+                user.getId(), organizationId, organizationId, organizationId);
+        return ResponseEntity.ok(descendants);
     }
 
     @GetMapping("/departments")
@@ -550,10 +552,7 @@ public class OrganizationPortalController {
         if (department == null) return ResponseEntity.notFound().build();
         if (!"ADMIN".equals(user.getRole()) && (user.getDepartment() == null || !Objects.equals(user.getDepartment().getId(), id)))
             return ResponseEntity.status(403).body(Map.of("message", "You cannot view another department"));
-        return ResponseEntity.ok(accounts.findAllByOrganizationIdOrderByFullName(orgId(user)).stream()
-                .filter(a -> a.getDepartment() != null && Objects.equals(a.getDepartment().getId(), id))
-                .filter(a -> !"EMPLOYEE".equals(a.getRole()) || (a.isApproved() && !Boolean.FALSE.equals(a.getAccountActive())))
-                .map(OrganizationPortalController::memberDto).toList());
+        return ResponseEntity.ok(jdbc.queryForList("SELECT id, full_name AS name, email, COALESCE(authority_title, designation) AS designation, role, department_role AS \"departmentRole\", employee_id AS \"employeeId\" FROM admin_users WHERE organization_id=? AND department_id=? AND (role IS DISTINCT FROM 'EMPLOYEE' OR (approved IS TRUE AND account_active IS DISTINCT FROM FALSE)) ORDER BY full_name", orgId(user), id));
     }
 
     @GetMapping("/departments/{id}/tasks")
@@ -564,7 +563,7 @@ public class OrganizationPortalController {
         if (department == null) return ResponseEntity.notFound().build();
         if (!"ADMIN".equals(user.getRole()) && (user.getDepartment() == null || !Objects.equals(user.getDepartment().getId(), id)))
             return ResponseEntity.status(403).body(Map.of("message", "You cannot view another department"));
-        return ResponseEntity.ok(taskDtos(tasks.findAllByOrganizationIdAndDepartmentIdOrderByCreatedAtDesc(orgId(user), id)));
+        return ResponseEntity.ok(taskRows("t.organization_id=? AND t.department_id=?", List.of(orgId(user), id), 500));
     }
 
     @PostMapping("/tasks/assign-department")
@@ -739,22 +738,13 @@ public class OrganizationPortalController {
         if (!"EMPLOYEE".equals(user.getRole())) return ResponseEntity.status(403).body(Map.of("message", "Employee access required"));
         Long organizationId = orgId(user);
         if (organizationId == null) return ResponseEntity.ok(List.of());
-        return ResponseEntity.ok(accounts.findAllByOrganizationIdOrderByFullName(organizationId).stream()
-                .filter(member -> user.getDepartment() == null || (member.getDepartment() != null && Objects.equals(member.getDepartment().getId(), user.getDepartment().getId())))
-                .filter(member -> ("ADMIN".equals(member.getRole()) || "EMPLOYEE".equals(member.getRole()))
-                        && !Boolean.FALSE.equals(member.getAccountActive())
-                        && (!"EMPLOYEE".equals(member.getRole()) || member.isApproved()))
-                .map(member -> {
-                    Map<String, Object> dto = new LinkedHashMap<>();
-                    dto.put("id", member.getId());
-                    dto.put("name", member.getFullName());
-                    dto.put("designation", member.getDesignation() == null ? "" : member.getDesignation());
-                    dto.put("role", member.getRole());
-                    dto.put("employeeId", member.getEmployeeId());
-                    dto.put("profileImage", member.getProfileImage());
-                    dto.put("isCurrentUser", Objects.equals(member.getId(), user.getId()));
-                    return dto;
-                }).toList());
+        Long departmentId = user.getDepartment() == null ? null : user.getDepartment().getId();
+        String memberSql = "SELECT id, full_name AS name, COALESCE(designation, '') AS designation, role, employee_id AS \"employeeId\" FROM admin_users WHERE organization_id=? AND role IN ('ADMIN','EMPLOYEE') AND account_active IS DISTINCT FROM FALSE AND (role <> 'EMPLOYEE' OR approved IS TRUE)";
+        List<Map<String, Object>> members = departmentId == null
+                ? jdbc.queryForList(memberSql + " ORDER BY full_name", organizationId)
+                : jdbc.queryForList(memberSql + " AND department_id=? ORDER BY full_name", organizationId, departmentId);
+        members.forEach(member -> member.put("isCurrentUser", Objects.equals(((Number) member.get("id")).longValue(), user.getId())));
+        return ResponseEntity.ok(members);
     }
 
     @GetMapping("/designations")
@@ -936,14 +926,12 @@ public class OrganizationPortalController {
         Admin user = current();
         if ("EMPLOYEE".equals(user.getRole())) {
             if (orgId(user) == null) return ResponseEntity.ok(List.of());
-            Map<Long, WorkTask> visible = new LinkedHashMap<>();
-            tasks.findAllByEmployeeIdAndOrganizationIdOrderByCreatedAtDesc(user.getId(), orgId(user)).forEach(task -> visible.put(task.getId(), task));
-            if (hasPermission(user, "TASK_ASSIGN"))
-                tasks.findAllByCreatedByIdAndOrganizationIdOrderByCreatedAtDesc(user.getId(), orgId(user)).forEach(task -> visible.put(task.getId(), task));
-            return ResponseEntity.ok(taskDtos(new ArrayList<>(visible.values())));
+            boolean includeCreated = hasPermission(user, "TASK_ASSIGN");
+            String filter = includeCreated ? "t.organization_id=? AND (t.employee_id=? OR t.created_by_id=?)" : "t.organization_id=? AND t.employee_id=?";
+            return ResponseEntity.ok(taskRows(filter, includeCreated ? List.of(orgId(user), user.getId(), user.getId()) : List.of(orgId(user), user.getId()), 500));
         }
         if (orgId(user) == null) return ResponseEntity.ok(List.of());
-        return ResponseEntity.ok(taskDtos(tasks.findAllByOrganizationIdOrderByCreatedAtDesc(orgId(user))));
+        return ResponseEntity.ok(taskRows("t.organization_id=?", List.of(orgId(user)), 500));
     }
 
     @GetMapping("/tasks/status-board")
@@ -951,14 +939,13 @@ public class OrganizationPortalController {
     public ResponseEntity<?> organizationTaskStatusBoard() {
         Admin user = current();
         if (orgId(user) == null) return ResponseEntity.ok(List.of());
-        return ResponseEntity.ok(tasks.findAllByOrganizationIdOrderByCreatedAtDesc(orgId(user)).stream().limit(500).map(task -> {
+        List<Map<String, Object>> rows = taskRows("t.organization_id=?", List.of(orgId(user)), 500);
+        return ResponseEntity.ok(rows.stream().map(task -> {
             Map<String, Object> item = new LinkedHashMap<>();
-            item.put("id", task.getId()); item.put("title", task.getTitle());
-            item.put("status", "Assigned to Member".equalsIgnoreCase(task.getStatus()) ? "Assigned" : task.getStatus());
-            item.put("employeeName", task.getEmployee() == null ? "Unassigned" : task.getEmployee().getFullName());
-            item.put("departmentName", task.getDepartment() == null ? "" : task.getDepartment().getName());
-            item.put("priority", task.getPriority()); item.put("dueDate", task.getDueDate() == null ? "" : task.getDueDate().toString());
-            item.put("updatedAt", task.getUpdatedAt().toString());
+            item.put("id", task.get("id")); item.put("title", task.get("title")); item.put("status", task.get("status"));
+            item.put("employeeName", task.get("employeeId") == null ? "Unassigned" : task.get("employeeName"));
+            item.put("departmentName", task.get("departmentName")); item.put("priority", task.get("priority"));
+            item.put("dueDate", task.get("dueDate")); item.put("updatedAt", task.get("updatedAt"));
             return item;
         }).toList());
     }
@@ -1159,7 +1146,26 @@ public class OrganizationPortalController {
                 organizationId, actor.getFullName(), eventType, target, description);
     }
 
-    private static List<Map<String, Object>> taskDtos(List<WorkTask> list) { return list.stream().map(OrganizationPortalController::taskDto).toList(); }
+    private List<Map<String, Object>> taskRows(String filter, List<?> parameters, int limit) {
+        String sql = "SELECT t.id, t.title, COALESCE(t.description,'') AS description, COALESCE(t.issue_id,'') AS \"issueId\", "
+                + "CASE WHEN LOWER(t.status)='assigned to member' THEN 'Assigned' ELSE t.status END AS status, t.employee_id AS \"employeeId\", "
+                + "t.priority, COALESCE(t.due_date::text,'') AS \"dueDate\", COALESCE(e.full_name,'Unassigned to member') AS \"employeeName\", "
+                + "COALESCE(e.designation,'') AS designation, t.department_id AS \"departmentId\", COALESCE(d.name,'') AS \"departmentName\", "
+                + "t.direct_admin_assignment AS \"directAdminAssignment\", ah.full_name AS \"assignedByHead\", t.created_by_id AS \"createdById\", "
+                + "COALESCE(c.full_name,'') AS \"createdByName\", t.parent_task_id AS \"parentTaskId\", t.created_at AS \"createdAt\", t.updated_at AS \"updatedAt\" "
+                + "FROM work_tasks t LEFT JOIN admin_users e ON e.id=t.employee_id LEFT JOIN departments d ON d.id=t.department_id "
+                + "LEFT JOIN admin_users ah ON ah.id=t.assigned_by_head LEFT JOIN admin_users c ON c.id=t.created_by_id WHERE " + filter
+                + " ORDER BY t.created_at DESC LIMIT " + Math.max(1, Math.min(limit, 500));
+        List<Map<String, Object>> rows = jdbc.queryForList(sql, parameters.toArray());
+        for (Map<String, Object> row : rows) {
+            Object createdAt = row.get("createdAt"), updatedAt = row.get("updatedAt");
+            if (createdAt instanceof java.time.OffsetDateTime value) row.put("createdAt", value.toInstant().toString());
+            else if (createdAt instanceof java.sql.Timestamp value) row.put("createdAt", value.toInstant().toString());
+            if (updatedAt instanceof java.time.OffsetDateTime value) row.put("updatedAt", value.toInstant().toString());
+            else if (updatedAt instanceof java.sql.Timestamp value) row.put("updatedAt", value.toInstant().toString());
+        }
+        return rows;
+    }
     private String effectiveOrganizationEmailPattern(Organization organization, Admin organizationAdmin) {
         String configured = organization.getEmployeeEmailPattern();
         if (!isBlank(configured) && !"^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$".equals(configured)) return configured;
