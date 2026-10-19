@@ -27,7 +27,8 @@ public class AccessTokenService {
     private final ConcurrentMap<String, Long> revokedTokens = new ConcurrentHashMap<>();
     private final AtomicLong validations = new AtomicLong();
 
-    public AccessTokenService(@Value("${APP_JWT_SECRET:}") String configuredSecret) {
+    public AccessTokenService(@Value("${APP_JWT_SECRET:}") String configuredSecret,
+                              @Value("${APP_ENV:development}") String appEnvironment) {
         if (configuredSecret != null && !configuredSecret.isBlank()) {
             try {
                 byte[] keyBytes = Base64.getDecoder().decode(configuredSecret.trim());
@@ -36,10 +37,12 @@ public class AccessTokenService {
                 throw new IllegalStateException("APP_JWT_SECRET must be a base64 encoded key of at least 256 bits", ex);
             }
         } else {
+            if ("production".equalsIgnoreCase(appEnvironment))
+                throw new IllegalStateException("APP_JWT_SECRET must be configured in production");
             byte[] keyBytes = new byte[32];
             new SecureRandom().nextBytes(keyBytes);
             this.signingKey = Keys.hmacShaKeyFor(keyBytes);
-            logger.warn("APP_JWT_SECRET is not configured; access tokens will be invalidated when this service restarts");
+            logger.warn("APP_JWT_SECRET is not configured; using an ephemeral development-only key");
         }
     }
 

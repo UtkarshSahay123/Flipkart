@@ -63,6 +63,13 @@ The historical Uvicorn lines only prove the Python API returned 502; they do not
 
 The live checks confirm the services recover when Spring is available. They cannot verify a real account sign-in, and the cold-start path must be checked after these code changes are deployed. An always-on Spring plan is still required to eliminate Render cold starts entirely.
 
+## Employee task assignment 401 investigation (2026-10-19)
+
+- The employee UI only shows the assignment form for a department head. The Spring endpoint also checks that role and returns HTTP 403 if the caller is not a head. The reported HTTP 401 occurs earlier in Spring Security, so it indicates the Bearer token was not accepted rather than a task/member validation failure.
+- `AccessTokenService` previously generated a random process-local JWT key whenever `APP_JWT_SECRET` was unset, allowing sign-in to work but invalidating tokens after a restart and making them inconsistent across instances. This fits the observed pattern where an already-open dashboard can load data and later receive 401 on a mutation.
+- The Render Blueprint now declares `APP_JWT_SECRET` as a generated, persistent secret and marks the Spring service as production. Java now fails clearly at startup if the production secret is missing instead of serving transient tokens that break later requests.
+- Render documents that `generateValue: true` creates a persistent random base64 256-bit secret and does not replace an already-existing value. The Blueprint must be synced for this environment configuration to take effect: [Render environment variables](https://render.com/docs/configure-environment-variables).
+
 ### Follow-up from browser capture
 
 - The new sign-in page is deployed and polling `/api/auth/ready`, but the screenshot still shows failed readiness requests. A live check at that time found Python `/health` returning HTTP 200 while Spring `/actuator/health` timed out after 25 seconds.
