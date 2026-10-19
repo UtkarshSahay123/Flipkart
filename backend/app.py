@@ -419,6 +419,8 @@ async def proxy_admin_auth(auth_path: str, request: Request):
             with urlopen(upstream_request, timeout=65) as upstream:
                 return upstream.status, upstream.read(), upstream.headers.get("Content-Type", "text/plain")
         except HTTPError as error:
+            if error.code >= 500:
+                return error.code, b'{"message":"Authentication backend is temporarily unavailable."}', "application/json"
             return error.code, error.read(), error.headers.get("Content-Type", "text/plain")
         except URLError:
             return 502, b"Admin authentication service is not running on port 8083.", "text/plain"

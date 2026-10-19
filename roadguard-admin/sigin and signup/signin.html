@@ -229,7 +229,7 @@ function toggleEye(id,btn){
   const i=document.getElementById(id);const ic=btn.querySelector('.material-icons-round');
   i.type=i.type==='password'?'text':'password';ic.textContent=i.type==='password'?'visibility_off':'visibility';
 }
-const SIGNIN_RETRY_DELAYS=[3000,6000,10000,15000,20000];
+const SIGNIN_RETRY_DELAYS=[5000,10000,15000,20000,25000,30000];
 async function requestLoginWithRetry(email,password,onRetry){
   for(let attempt=0;attempt<=SIGNIN_RETRY_DELAYS.length;attempt++){
     try{
@@ -239,7 +239,7 @@ async function requestLoginWithRetry(email,password,onRetry){
       });
       if(![500,502,503,504].includes(response.status)||attempt===SIGNIN_RETRY_DELAYS.length)return response;
     }catch(error){
-      if(attempt===SIGNIN_RETRY_DELAYS.length)throw new Error('The sign-in service is temporarily unavailable. Please wait a minute and try again.');
+      if(attempt===SIGNIN_RETRY_DELAYS.length)throw new Error('The sign-in service is unavailable. Please try again in a few minutes.');
     }
     onRetry();
     await new Promise(resolve=>setTimeout(resolve,SIGNIN_RETRY_DELAYS[attempt]));
@@ -258,9 +258,9 @@ async function handleSignin(){
   button.classList.add('loading');
   label.textContent='Signing in...';
   try {
-    const response=await requestLoginWithRetry(email,password,()=>{label.textContent='Waking sign-in service...';});
+    const response=await requestLoginWithRetry(email,password,()=>{label.textContent='Waking backend server (up to 2 minutes)...';});
     if(!response.ok) {
-      if(response.status>=500)throw new Error('Backend server error. Please try again in a minute.');
+      if(response.status>=500)throw new Error('Backend server error. Please try again in a few minutes.');
       const body=await response.text();
       let message='';
       try{const data=JSON.parse(body);message=data.message||data.detail||data.error||'';}catch{}
