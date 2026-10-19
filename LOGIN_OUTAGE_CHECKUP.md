@@ -70,6 +70,13 @@ The live checks confirm the services recover when Spring is available. They cann
 - The Render Blueprint now declares `APP_JWT_SECRET` as a generated, persistent secret and marks the Spring service as production. Java now fails clearly at startup if the production secret is missing instead of serving transient tokens that break later requests.
 - Render documents that `generateValue: true` creates a persistent random base64 256-bit secret and does not replace an already-existing value. The Blueprint must be synced for this environment configuration to take effect: [Render environment variables](https://render.com/docs/configure-environment-variables).
 
+## Employee dashboard gateway error display (2026-10-19)
+
+- The supplied Uvicorn logs show `/api/portal/me` and the employee's department data requests returning HTTP 502 while `/api/stats` returns 200. A live check also found Python `/health` at HTTP 200 while Spring `/actuator/health` returned HTTP 503, confirming the portal's Spring dependency was unhealthy at the time.
+- The portal proxy now replaces upstream HTML 5xx pages and connection timeouts with a compact JSON message and logs the upstream status/path without exposing response HTML.
+- `portalApi` now sanitizes any HTML or other 5xx response, so gateway markup cannot be rendered as an error message.
+- If the initial employee profile cannot load, the dashboard now shows a clear unavailable message with Retry and Sign out controls rather than presenting an empty dashboard with misleading zero counts. Existing automatic refresh continues to retry in the background.
+
 ### Follow-up from browser capture
 
 - The new sign-in page is deployed and polling `/api/auth/ready`, but the screenshot still shows failed readiness requests. A live check at that time found Python `/health` returning HTTP 200 while Spring `/actuator/health` timed out after 25 seconds.

@@ -150,6 +150,16 @@ export async function portalApi(path, options = {}) {
       window.location.replace('/admin/signin.html');
     }
   }
-  if (!response.ok) throw new Error(data?.message || data?.detail || `Request failed (${response.status})`);
+  if (!response.ok) {
+    if (response.status >= 500) {
+      throw new Error('The backend server is temporarily unavailable. Please try again shortly.');
+    }
+    const contentType = response.headers.get('content-type') || '';
+    const isHtml = contentType.includes('text/html') || /^\s*<(?:!doctype\s+html|html|head|body)[\s>]/i.test(text);
+    if (isHtml) throw new Error('The server returned an unexpected response. Please try again.');
+    const message = typeof data?.message === 'string' ? data.message.slice(0, 300)
+      : typeof data?.detail === 'string' ? data.detail.slice(0, 300) : '';
+    throw new Error(message || `Request failed (${response.status})`);
+  }
   return data;
 }

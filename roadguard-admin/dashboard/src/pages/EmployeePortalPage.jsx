@@ -203,6 +203,27 @@ export function EmployeePortalPage() {
   const canResolveIssues = (profile?.permissions || []).includes('ISSUE_RESOLVE');
   const membersTab = profile?.departmentId ? 'Department members' : 'Organization members';
 
+  if (!profile) {
+    return (
+      <main className="min-h-screen bg-slate-50 p-4 sm:p-7 text-slate-900 grid place-items-center">
+        <section className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" aria-live="polite">
+          {error ? <>
+            <h1 className="text-xl font-bold">Employee dashboard unavailable</h1>
+            <p role="alert" className="mt-2 text-sm text-rose-700">{error}</p>
+            <p className="mt-2 text-sm text-slate-600">Your account is unchanged. Try again in a moment.</p>
+            <div className="mt-5 flex gap-2">
+              <button onClick={() => refresh()} disabled={refreshing} className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">{refreshing ? 'Retrying…' : 'Try again'}</button>
+              <button onClick={logout} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold">Sign out</button>
+            </div>
+          </> : <>
+            <h1 className="text-xl font-bold">Loading employee dashboard…</h1>
+            <p className="mt-2 text-sm text-slate-600">Connecting to your organization services.</p>
+          </>}
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 p-4 sm:p-7 text-slate-900">
       <div className="max-w-7xl mx-auto space-y-6">

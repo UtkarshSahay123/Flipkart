@@ -466,9 +466,19 @@ async def proxy_organization_portal(portal_path: str, request: Request):
             with urlopen(upstream_request, timeout=65) as upstream:
                 return upstream.status, upstream.read(), upstream.headers.get("Content-Type", "application/json")
         except HTTPError as error:
+            if error.code >= 500:
+                logger.warning(
+                    "Spring portal upstream returned HTTP %s for %s",
+                    error.code, portal_path,
+                )
+                return error.code, b'{"message":"Employee services are temporarily unavailable. Please try again shortly."}', "application/json"
             return error.code, error.read(), error.headers.get("Content-Type", "application/json")
-        except URLError:
-            return 502, b'{"message":"Organization portal service is not running on port 8083."}', "application/json"
+        except (URLError, TimeoutError, OSError) as error:
+            logger.warning(
+                "Spring portal connection failed for %s (%s)",
+                portal_path, str(getattr(error, "reason", error))[:160],
+            )
+            return 502, b'{"message":"Employee services are temporarily unavailable. Please try again shortly."}', "application/json"
 
     status, content, content_type = await asyncio.to_thread(send_request)
     return Response(content=content, status_code=status, headers={"Content-Type": content_type})
