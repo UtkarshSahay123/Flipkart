@@ -366,7 +366,7 @@ public class AuthController {
     @PostMapping("/google-oauth")
     public ResponseEntity<?> googleOAuth(@RequestBody GoogleOAuthRequest request) {
         String idToken = !isBlank(request.getCredential()) ? request.getCredential() : request.getIdToken();
-        String clientId = environment.getProperty("GOOGLE_CLIENT_ID");
+        String clientId = configuredGoogleClientId();
         if (isBlank(idToken)) return ResponseEntity.badRequest().body(Map.of("message", "Google ID token is required"));
         if (isBlank(clientId)) return ResponseEntity.status(503).body(Map.of("message", "Google sign-in is not configured"));
         try {
@@ -395,12 +395,16 @@ public class AuthController {
 
     @GetMapping("/google-config")
     public ResponseEntity<?> googleConfig() {
-        String clientId = environment.getProperty("GOOGLE_CLIENT_ID");
+        String clientId = configuredGoogleClientId();
         if (isBlank(clientId)) return ResponseEntity.status(503).body(Map.of("message", "Google sign-in is not configured"));
         return ResponseEntity.ok(Map.of("clientId", clientId));
     }
 
     private static String normalizeEmail(String email) { return email.trim().toLowerCase(java.util.Locale.ROOT); }
+    private String configuredGoogleClientId() {
+        String clientId = environment.getProperty("GOOGLE_CLIENT_ID");
+        return clientId == null ? null : clientId.trim();
+    }
     private boolean allowOtpSend(HttpServletRequest request, String email, String purpose) {
         return rateLimiter.allow("otp-ip:" + clientAddress(request), 8, 900)
                 && rateLimiter.allow("otp-email:" + purpose + ":" + normalizeEmail(email), 3, 900);
