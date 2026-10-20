@@ -393,6 +393,13 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/google-config")
+    public ResponseEntity<?> googleConfig() {
+        String clientId = environment.getProperty("GOOGLE_CLIENT_ID");
+        if (isBlank(clientId)) return ResponseEntity.status(503).body(Map.of("message", "Google sign-in is not configured"));
+        return ResponseEntity.ok(Map.of("clientId", clientId));
+    }
+
     private static String normalizeEmail(String email) { return email.trim().toLowerCase(java.util.Locale.ROOT); }
     private boolean allowOtpSend(HttpServletRequest request, String email, String purpose) {
         return rateLimiter.allow("otp-ip:" + clientAddress(request), 8, 900)

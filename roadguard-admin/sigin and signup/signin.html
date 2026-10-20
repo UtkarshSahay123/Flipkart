@@ -215,6 +215,9 @@ footer{text-align:center;padding:1rem;font-size:0.75rem;color:var(--text3);borde
         <span class="material-icons-round" style="font-size:17px">login</span>
         <span id="btntxt">Sign In</span>
       </button>
+      <div class="divider"><span>or continue with</span></div>
+      <div id="google-signin" aria-label="Sign in with Google" style="display:flex;justify-content:center;min-height:40px"></div>
+      <p id="google-error" role="alert" style="display:none;color:#b91c1c;font-size:.82rem;margin:.75rem 0"></p>
       <div class="link-row">No account? <a href="/admin/signup.html">Create one &rarr;</a></div>
     </div>
   </div>
@@ -225,6 +228,40 @@ footer{text-align:center;padding:1rem;font-size:0.75rem;color:var(--text3);borde
 <script>
 const ADMIN_DASHBOARD_URL='/admin/issues';
 try{const prior=JSON.parse(sessionStorage.getItem('roadguard.auth')||'null');if(prior&&!prior.accessToken)sessionStorage.removeItem('roadguard.auth');}catch{sessionStorage.removeItem('roadguard.auth');}
+function showGoogleError(message){const box=document.getElementById('google-error');box.textContent=message;box.style.display='block';}
+function saveSignedInAccount(account){
+  if(!account?.accessToken)throw new Error('Sign-in could not be completed. Please try again.');
+  const signedInAt=Date.now();
+  sessionStorage.setItem('roadguard.auth',JSON.stringify({accessToken:account.accessToken,username:account.username||account.email||document.getElementById('email').value.trim(),role:account.role,accountId:account.accountId,organizationId:account.organizationId,name:account.name}));
+  sessionStorage.setItem('roadguard.lastActivity',String(signedInAt));
+  sessionStorage.setItem('roadguard.lastTokenRefresh',String(signedInAt));
+  window.location.href=account.role==='EMPLOYEE'?'/employee':ADMIN_DASHBOARD_URL;
+}
+async function handleGoogleCredential(response){
+  const errorBox=document.getElementById('google-error');errorBox.style.display='none';
+  try{
+    const result=await fetch('/api/auth/google-oauth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential:response.credential})});
+    const data=await result.json().catch(()=>({}));
+    if(!result.ok)throw new Error(data.message||'Google sign-in failed. Please try again.');
+    saveSignedInAccount(data);
+  }catch(error){showGoogleError(error.message||'Google sign-in failed. Please try again.');}
+}
+async function setupGoogleSignIn(){
+  const container=document.getElementById('google-signin');
+  try{
+    const response=await fetch('/api/auth/google-config',{cache:'no-store'});
+    const config=await response.json().catch(()=>({}));
+    if(!response.ok||!config.clientId)throw new Error(config.message||'Google sign-in is not configured yet.');
+    await new Promise((resolve,reject)=>{
+      const script=document.createElement('script');script.src='https://accounts.google.com/gsi/client';script.async=true;script.defer=true;
+      script.onload=resolve;script.onerror=()=>reject(new Error('Google sign-in could not load. Check your connection and try again.'));
+      document.head.appendChild(script);
+    });
+    google.accounts.id.initialize({client_id:config.clientId,callback:handleGoogleCredential});
+    google.accounts.id.renderButton(container,{type:'standard',theme:'outline',size:'large',text:'continue_with',shape:'rectangular',width:320});
+  }catch(error){container.style.display='none';showGoogleError(error.message||'Google sign-in is temporarily unavailable.');}
+}
+setupGoogleSignIn();
 function toggleEye(id,btn){
   const i=document.getElementById(id);const ic=btn.querySelector('.material-icons-round');
   i.type=i.type==='password'?'text':'password';ic.textContent=i.type==='password'?'visibility_off':'visibility';
@@ -285,11 +322,7 @@ async function handleSignin(){
     }
     const account=await response.json();
     if(!account.accessToken)throw new Error('Sign-in could not be completed. Please try again.');
-    const signedInAt=Date.now();
-    sessionStorage.setItem('roadguard.auth',JSON.stringify({accessToken:account.accessToken,username:email,role:account.role,accountId:account.accountId,organizationId:account.organizationId,name:account.name}));
-    sessionStorage.setItem('roadguard.lastActivity',String(signedInAt));
-    sessionStorage.setItem('roadguard.lastTokenRefresh',String(signedInAt));
-    window.location.href=account.role==='EMPLOYEE'?'/employee':ADMIN_DASHBOARD_URL;
+    saveSignedInAccount({...account,username:email});
   } catch(error) {
     errorBox.textContent=error.message || 'Unable to sign in. Check that the admin backend is running.';
     errorBox.style.display='block';
