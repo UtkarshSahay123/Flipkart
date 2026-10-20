@@ -18,7 +18,10 @@ services:
       - key: APP_ENV
         value: production
       - key: ROADGUARD_PYTHON_API_BASE_URL
-        value: https://flipkart-06iz.onrender.com
+        fromService:
+          name: road-guard-backend
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
       - key: APP_CORS_ALLOWED_ORIGINS
         sync: false
       - key: APP_JWT_SECRET
@@ -44,7 +47,10 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: SPRING_API_BASE_URL
-        value: https://flipkart-springboot-webservice.onrender.com
+        fromService:
+          name: road-guard-org-api
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
       - key: CORS_ALLOWED_ORIGINS
         sync: false
       - key: TRUSTED_HOSTS
