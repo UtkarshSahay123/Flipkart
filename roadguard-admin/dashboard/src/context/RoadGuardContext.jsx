@@ -539,13 +539,19 @@ export const RoadGuardProvider = ({ children }) => {
         setOrganizationProfile(profileResponse);
       }
       setSystemNotifications(alerts);
-      // A task endpoint failure should not hide a successfully loaded profile
-      // (including its photo) or erase the last task list from the dashboard.
-      if (!profile || !Array.isArray(serverTasks)) return;
+      // Profile settings are independent of task loading; keep them current even
+      // if the task endpoint is temporarily unavailable.
+      if (!profile) return;
       if (profile.dashboardSettings) {
         try { setSettings(JSON.parse(profile.dashboardSettings)); }
-        catch (error) { console.error('Saved organization settings are invalid:', error.message); }
+        catch (error) {
+          console.error('Saved organization settings are invalid:', error.message);
+          setSettings(defaultSettingsForProfile(profile));
+        }
       } else if (profile.role === 'ADMIN') setSettings(defaultSettingsForProfile(profile));
+      // A task endpoint failure should not hide a successfully loaded profile
+      // or replace the last task list with an empty one.
+      if (!Array.isArray(serverTasks)) return;
       const mappedTasks = serverTasks.map(task => ({
         ...task,
         id: String(task.id),

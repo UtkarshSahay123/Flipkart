@@ -25,6 +25,8 @@ import {
 export const Sidebar = ({ isCollapsed, toggleCollapse, isMobileOpen, closeMobile }) => {
   const { settings, unreadNotificationsCount, organizationProfile } = useRoadGuard();
   const navigate = useNavigate();
+  const adminName = organizationProfile?.name || settings.profileAppearance?.adminName || 'Administrator';
+  const adminDesignation = organizationProfile?.authorityTitle || organizationProfile?.designation || settings.profileAppearance?.adminDesignation || 'Organization Admin';
 
   const navItems = [
     { label: 'Overview', path: '/admin/dashboard', icon: LayoutDashboard },
@@ -41,8 +43,6 @@ export const Sidebar = ({ isCollapsed, toggleCollapse, isMobileOpen, closeMobile
     { label: 'Audit Logs', path: '/admin/audit-logs', icon: FileText },
     { label: 'Organisation Settings', path: '/admin/settings', icon: Settings },
   ];
-
-  const adminProfile = settings.profileAppearance || {};
 
   return (
     <>
@@ -162,10 +162,10 @@ export const Sidebar = ({ isCollapsed, toggleCollapse, isMobileOpen, closeMobile
             {(!isCollapsed || isMobileOpen) && (
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-[#0A2342] truncate">
-                  {adminProfile.adminName || 'Manoj Reddy'}
+                  {adminName}
                 </p>
                 <p className="text-[11px] text-[#52627A] truncate">
-                  {adminProfile.adminDesignation || 'Chief Supervisor'}
+                  {adminDesignation}
                 </p>
               </div>
             )}

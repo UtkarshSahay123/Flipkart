@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRoadGuard } from '../../context/RoadGuardContext';
 import { portalApi } from '../../lib/portalApi';
 import {
@@ -15,6 +15,7 @@ import {
 
 export const OrganisationSettingsPage = () => {
   const { settings, saveSettings, resetDemoState, organizationProfile } = useRoadGuard();
+  const hydratedProfileRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState(settings);
@@ -25,8 +26,15 @@ export const OrganisationSettingsPage = () => {
     portalApi('/designations').then(setDesignationPermissions).catch(() => setDesignationPermissions([]));
   }, []);
   useEffect(() => {
+    if (!organizationProfile) return;
+    const profileKey = String(organizationProfile.id ?? organizationProfile.organizationId ?? 'authenticated-profile');
+    if (hydratedProfileRef.current === profileKey) return;
+    setFormData(settings);
+    hydratedProfileRef.current = profileKey;
+  }, [organizationProfile, settings]);
+  useEffect(() => {
     if (organizationProfile?.employeeEmailPattern) setEmailPattern(organizationProfile.employeeEmailPattern);
-  }, [organizationProfile?.organizationId]);
+  }, [organizationProfile?.organizationId, organizationProfile?.employeeEmailPattern]);
 
   const saveEmailPattern = async () => {
     try {
@@ -163,6 +171,11 @@ export const OrganisationSettingsPage = () => {
         {activeTab === 'profile' && (
           <div className="space-y-4">
             <h3 className="text-sm font-bold text-[#0A2342] border-b border-slate-100 pb-2">Municipal Entity Metadata</h3>
+            <div className="rounded-lg border border-blue-100 bg-blue-50/60 p-4">
+              <p className="font-bold text-[#0A2342]">Employee joining code</p>
+              <p className="mt-1 text-sm font-mono text-blue-800">{organizationProfile?.organizationJoinCode || 'Unavailable for this account'}</p>
+              {!organizationProfile?.organizationJoinCode && <p className="mt-1 text-[11px] text-slate-600">The signed-in account must be linked to an organization administrator profile to view its joining code.</p>}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block font-bold text-[#0A2342] mb-1">Organisation Name</label>

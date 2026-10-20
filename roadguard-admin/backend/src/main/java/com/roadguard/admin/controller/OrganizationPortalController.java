@@ -175,7 +175,7 @@ public class OrganizationPortalController {
         Organization org = user.getOrganization();
         profile.put("organizationId", org == null ? null : org.getId());
         profile.put("organizationName", org == null ? null : org.getName());
-        profile.put("organizationJoinCode", org == null || !"ADMIN".equals(user.getRole()) ? null : org.getJoinCode());
+        profile.put("organizationJoinCode", org == null || !"ADMIN".equalsIgnoreCase(user.getRole() == null ? "ADMIN" : user.getRole()) ? null : org.getJoinCode());
         profile.put("employeeEmailPattern", org == null ? null : org.getEmployeeEmailPattern());
         profile.put("dashboardSettings", org == null ? null : org.getDashboardSettings());
         profile.put("organizationChangeStatus", user.getOrganizationChangeStatus());
