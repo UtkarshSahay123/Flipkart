@@ -379,10 +379,14 @@ public class AuthController {
             if (!clientId.equals(claims.path("aud").asText()) || !"true".equalsIgnoreCase(claims.path("email_verified").asText()))
                 return ResponseEntity.status(401).body(Map.of("message", "Google account verification failed"));
             String email = normalizeEmail(claims.path("email").asText(""));
+            if (!isValidEmail(email))
+                return ResponseEntity.status(401).body(Map.of("message", "Google account verification failed"));
             Admin account = adminRepository.findByEmail(email).orElse(null);
             if (account == null) return ResponseEntity.status(404).body(Map.of("message", "Create a RoadGuard account with this email before signing in"));
             if ("EMPLOYEE".equals(account.getRole()) && !account.isApproved())
                 return ResponseEntity.status(403).body(Map.of("message", "Employee account is waiting for organization admin approval"));
+            if (!account.isEnabled())
+                return ResponseEntity.status(403).body(Map.of("message", "This account is disabled. Contact your organization administrator"));
             return ResponseEntity.ok(Map.of("message", "Google sign-in successful", "accessToken", accessTokens.create(account.getUsername()),
                     "expiresIn", accessTokens.ttlSeconds(), "role", account.getRole() == null ? "ADMIN" : account.getRole(),
                     "accountId", account.getId(), "organizationId", account.getOrganization() == null ? 0L : account.getOrganization().getId(),
