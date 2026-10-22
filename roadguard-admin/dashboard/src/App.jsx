@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { RoadGuardProvider } from './context/RoadGuardContext';
 import { LandingPage } from './pages/LandingPage';
 import { AdminLayout } from './layouts/AdminLayout';
@@ -56,6 +57,7 @@ export function App() {
         </BrowserRouter>
       </RoadGuardProvider>
       <Analytics />
+      <SpeedInsights />
     </>
   );
 }
