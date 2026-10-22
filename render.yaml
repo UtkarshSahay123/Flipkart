@@ -46,6 +46,8 @@ services:
         value: production
       - key: DATABASE_URL
         sync: false
+      - key: REDIS_URL
+        sync: false
       - key: SPRING_API_BASE_URL
         fromService:
           name: road-guard-org-api

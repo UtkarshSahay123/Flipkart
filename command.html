@@ -1575,6 +1575,42 @@
             return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
         }
 
+        function reportOwnershipKey(issueId) { return `roadguard.own-report.${issueId}`; }
+
+        function getReportOwnership(issueId) {
+            try {
+                const saved = JSON.parse(sessionStorage.getItem(reportOwnershipKey(issueId)) || '[]');
+                return Array.isArray(saved) ? saved : saved ? [saved] : [];
+            }
+            catch { return null; }
+        }
+
+        function rememberReportOwnership(report) {
+            if (!report?.id || !report.owner_report_id || !report.delete_token) return;
+            try {
+                const issueId = String(report.id);
+                const ownedReports = getReportOwnership(issueId) || [];
+                ownedReports.push({
+                    reportId: report.owner_report_id, token: report.delete_token
+                });
+                sessionStorage.setItem(reportOwnershipKey(issueId), JSON.stringify(ownedReports));
+            } catch (error) { console.warn('Could not store report removal access for this session.', error); }
+        }
+
+        function removeReportOwnership(issueId, reportId) {
+            const remaining = (getReportOwnership(issueId) || []).filter(item => item.reportId !== reportId);
+            if (remaining.length) sessionStorage.setItem(reportOwnershipKey(issueId), JSON.stringify(remaining));
+            else sessionStorage.removeItem(reportOwnershipKey(issueId));
+            return remaining;
+        }
+
+        function hasAdminDeleteAccess() {
+            try {
+                const auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
+                return Boolean(auth?.username && auth?.password);
+            } catch { return false; }
+        }
+
         function prependIncidentCard(inc) {
             const list = document.getElementById('active-incidents-list');
             const card = document.createElement('div');
@@ -1614,7 +1650,7 @@
                 <p class="text-body-md text-on-surface-variant mb-md leading-tight">${escapeHtml(inc.description || '')}</p>
                 <div class="flex gap-sm">
                     <button class="view-incident-map flex-1 py-xs bg-primary text-on-primary text-label-md rounded font-bold hover:opacity-90">View on Map</button>
-                    <button class="delete-incident px-md py-xs bg-error/10 text-error hover:bg-error/20 text-label-md rounded font-bold transition-all flex items-center justify-center gap-xs">
+                    <button class="delete-incident px-md py-xs bg-error/10 text-error hover:bg-error/20 text-label-md rounded font-bold transition-all flex items-center justify-center gap-xs" ${String(inc.id || '').startsWith('sim_') || getReportOwnership(String(inc.id || '')) || hasAdminDeleteAccess() ? '' : 'hidden'}>
                         <span class="material-symbols-outlined text-[16px]">delete</span> Delete
                     </button>
                 </div>
@@ -1676,41 +1712,52 @@
             }
 
             try {
+                const ownerAccess = getReportOwnership(id)?.[0];
                 const endpoint = id.startsWith('sim_') ? 'simulation' : 'report';
                 let auth = null;
                 try { auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null'); } catch {}
-                const headers = auth?.username && auth?.password
-                    ? { Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}` }
-                    : {};
-                const response = await fetch(`${API_BASE}/api/${endpoint}/delete/${id}`, {
+                const headers = ownerAccess
+                    ? { 'X-Report-Delete-Token': ownerAccess.token }
+                    : auth?.username && auth?.password
+                        ? { Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}` }
+                        : {};
+                const deleteId = ownerAccess ? ownerAccess.reportId : id;
+                const response = await fetch(`${API_BASE}/api/${endpoint}/delete/${encodeURIComponent(deleteId)}`, {
                     method: 'DELETE', headers
                 });
 
                 if (response.ok) {
-                    // Remove card from list
+                    const deletion = await response.json();
+                    const remainingOwnedReports = ownerAccess ? removeReportOwnership(id, ownerAccess.reportId) : [];
+                    const removeIssue = !ownerAccess || deletion.issue_deleted;
                     const card = buttonEl.closest('.p-md');
-                    if (card) card.remove();
+                    if (removeIssue && card) card.remove();
+                    else if (buttonEl) buttonEl.hidden = !remainingOwnedReports.length;
 
                     // Remove Leaflet marker
-                    if (activeMarkers[id]) {
+                    if (removeIssue && activeMarkers[id]) {
                         map.removeLayer(activeMarkers[id]);
                         delete activeMarkers[id];
                     }
 
                     // Remove Leaflet simulation layers
-                    if (activeSimulationLayers[id]) {
+                    if (removeIssue && activeSimulationLayers[id]) {
                         activeSimulationLayers[id].forEach(layer => map.removeLayer(layer));
                         delete activeSimulationLayers[id];
                     }
 
                     // Prevent re-sync
-                    displayedReports.delete(id);
+                    if (removeIssue) displayedReports.delete(id);
 
                     // Decrement incidents count
-                    const counter = document.getElementById('incidents-count');
-                    counter.innerText = Math.max(0, parseInt(counter.innerText) - 1);
+                    if (removeIssue) {
+                        const counter = document.getElementById('incidents-count');
+                        counter.innerText = Math.max(0, parseInt(counter.innerText) - 1);
+                    }
 
-                    showToast("Incident deleted successfully", "success");
+                    showToast(ownerAccess && !removeIssue
+                        ? "Your report was removed; other reports for this issue remain."
+                        : "Incident deleted successfully", "success");
                 } else {
                     showToast(response.status === 401 || response.status === 403
                         ? "Admin sign-in is required to delete incidents."
@@ -1718,9 +1765,7 @@
                 }
             } catch (err) {
                 console.error("Delete error: ", err);
-                showToast("Connection error. Removed from screen.", "error");
-                const card = buttonEl.closest('.p-md');
-                if (card) card.remove();
+                showToast("Could not delete this report. Please try again.", "error");
             }
         }
 
@@ -1796,6 +1841,7 @@
 
                 // 3. Process Result
                 const report = result.report;
+                rememberReportOwnership(report);
                 const identifier = report.id || (report.coords.join(',') + '_' + report.type);
 
                 if (result.is_duplicate) {
@@ -1825,6 +1871,14 @@
                             .openPopup();
                         activeMarkers[identifier] = dupMarker;
                         map.flyTo([coords.lat, coords.lng], 15);
+                    }
+
+                    // A duplicate adds a separate report to a shared issue. Give
+                    // this reporter a delete control for only their own upload.
+                    if (incidentCards[identifier]) {
+                        incidentCards[identifier].querySelector('.delete-incident')?.removeAttribute('hidden');
+                    } else {
+                        prependIncidentCard(report);
                     }
 
                     showToast(`Duplicate detected! Priority boosted to ${totalReports} reports.`, "success");
@@ -1951,6 +2005,7 @@
 
                     const result = await response.json();
                     const report = result.report;
+                    rememberReportOwnership(report);
                     const identifier = report.id || (report.coords.join(',') + '_' + report.type);
                     displayedReports.add(identifier);
 

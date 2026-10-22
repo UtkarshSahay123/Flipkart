@@ -2,6 +2,9 @@ import os
 import sys
 import logging
 import json
+import hashlib
+import hmac
+import secrets
 import random
 import asyncio
 import base64
@@ -24,6 +27,61 @@ from urllib.error import URLError, HTTPError
 from urllib.request import Request as URLRequest, urlopen
 
 logger = logging.getLogger(__name__)
+
+# Redis is an optional shared cache. PostgreSQL remains the source of truth;
+# cached issue and Command Center reads live for one week and are invalidated
+# whenever a relevant write succeeds.
+CACHE_TTL_SECONDS = 7 * 24 * 60 * 60
+_redis_cache = None
+
+
+def _get_redis_cache():
+    global _redis_cache
+    redis_url = os.environ.get("REDIS_URL")
+    if not redis_url:
+        return None
+    if _redis_cache is None:
+        try:
+            from redis.asyncio import Redis
+            _redis_cache = Redis.from_url(redis_url, decode_responses=True, socket_connect_timeout=1, socket_timeout=1)
+        except Exception as exc:
+            logger.warning("Redis cache is unavailable; serving directly from PostgreSQL: %s", exc)
+            return None
+    return _redis_cache
+
+
+async def _cache_get(key):
+    client = _get_redis_cache()
+    if client is None:
+        return None
+    try:
+        value = await client.get(key)
+        return json.loads(value) if value else None
+    except Exception as exc:
+        logger.warning("Redis cache read failed: %s", exc)
+        return None
+
+
+async def _cache_set(key, value):
+    client = _get_redis_cache()
+    if client is None:
+        return
+    try:
+        await client.set(key, json.dumps(value, default=str), ex=CACHE_TTL_SECONDS)
+    except Exception as exc:
+        logger.warning("Redis cache write failed: %s", exc)
+
+
+async def _invalidate_issue_read_cache():
+    client = _get_redis_cache()
+    if client is None:
+        return
+    try:
+        keys = [key async for key in client.scan_iter(match="roadguard:v1:issues:*")]
+        keys.append("roadguard:v1:stats")
+        await client.delete(*keys)
+    except Exception as exc:
+        logger.warning("Redis cache invalidation failed: %s", exc)
 
 # ── Add project root to path so ml_models can be imported ──
 ROOT = Path(__file__).resolve().parent.parent
@@ -646,9 +704,11 @@ def _init_issue_db():
         conn.execute("""CREATE TABLE IF NOT EXISTS issue_photos (
             id BIGSERIAL PRIMARY KEY, issue_id TEXT NOT NULL REFERENCES issues(id) ON DELETE CASCADE,
             filename TEXT, mime_type TEXT NOT NULL, uploaded_at TEXT NOT NULL, image BYTEA NOT NULL)""")
+        conn.execute("ALTER TABLE issue_photos ADD COLUMN IF NOT EXISTS report_id TEXT")
         conn.execute("""CREATE TABLE IF NOT EXISTS issue_reports (
             id TEXT PRIMARY KEY, issue_id TEXT NOT NULL REFERENCES issues(id) ON DELETE CASCADE,
             latitude DOUBLE PRECISION NOT NULL, longitude DOUBLE PRECISION NOT NULL, reported_at TEXT NOT NULL)""")
+        conn.execute("ALTER TABLE issue_reports ADD COLUMN IF NOT EXISTS owner_token_hash TEXT")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_issue_photos_issue_id ON issue_photos(issue_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_issue_reports_issue_id ON issue_reports(issue_id)")
         conn.execute("""CREATE TABLE IF NOT EXISTS system_event_log (
@@ -685,9 +745,9 @@ def _persist_issue(issue, uploaded_filename=None, report_record=None):
             (issue["id"], float(coords[0]), float(coords[1]), int(issue.get("report_count", 1)),
              int(issue.get("priority_score", 1)), json.dumps(metadata)))
         if report_record:
-            report_id, report_latitude, report_longitude = report_record
-            conn.execute("INSERT INTO issue_reports(id, issue_id, latitude, longitude, reported_at) VALUES(%s, %s, %s, %s, %s) ON CONFLICT(id) DO NOTHING",
-                         (report_id, issue["id"], float(report_latitude), float(report_longitude), datetime.now(timezone.utc).isoformat()))
+            report_id, report_latitude, report_longitude, *token_hash = report_record
+            conn.execute("INSERT INTO issue_reports(id, issue_id, latitude, longitude, reported_at, owner_token_hash) VALUES(%s, %s, %s, %s, %s, %s) ON CONFLICT(id) DO NOTHING",
+                         (report_id, issue["id"], float(report_latitude), float(report_longitude), datetime.now(timezone.utc).isoformat(), token_hash[0] if token_hash else None))
         known = conn.execute("SELECT COUNT(*) FROM issue_photos WHERE issue_id=%s", (issue["id"],)).fetchone()[0]
         for uri in data_uris[known:]:
             if not isinstance(uri, str) or not uri.startswith("data:") or "," not in uri:
@@ -695,9 +755,9 @@ def _persist_issue(issue, uploaded_filename=None, report_record=None):
             header, encoded = uri.split(",", 1)
             mime_type = header[5:].split(";", 1)[0] or "application/octet-stream"
             photo_index = known
-            conn.execute("INSERT INTO issue_photos(issue_id, filename, mime_type, uploaded_at, image) VALUES(%s, %s, %s, %s, %s)",
+            conn.execute("INSERT INTO issue_photos(issue_id, filename, mime_type, uploaded_at, image, report_id) VALUES(%s, %s, %s, %s, %s, %s)",
                          (issue["id"], uploaded_filename if photo_index == len(data_uris) - 1 else None,
-                          mime_type, datetime.now(timezone.utc).isoformat(), base64.b64decode(encoded)))
+                          mime_type, datetime.now(timezone.utc).isoformat(), base64.b64decode(encoded), report_record[0] if report_record else None))
     _notify_issue_update(issue)
 
 
@@ -883,6 +943,10 @@ class BugReportRequest(BaseModel):
 @app.get("/api/stats", summary="Get real-time model states")
 async def get_stats():
     """Returns live stats from all running AI models."""
+    cache_key = "roadguard:v1:stats"
+    cached = await _cache_get(cache_key)
+    if cached is not None:
+        return cached
     issue_by_id = {str(issue.get("id")): issue for issue in model_states.get("issues", [])}
     for report in model_states.get("citizen_reports", []):
         issue = issue_by_id.get(str(report.get("id")))
@@ -906,6 +970,7 @@ async def get_stats():
             simulation["last_updated"] = linked_issue.get("last_updated")
             if linked_issue.get("resolutionDate"):
                 simulation["resolutionDate"] = linked_issue["resolutionDate"]
+    await _cache_set(cache_key, model_states)
     return model_states
 
 
@@ -1473,6 +1538,8 @@ async def predict_simulation(req: SimulationRequest):
             _record_system_event("Command Center", "ROAD_BLOCKAGE_REPORTED", issue_id,
                                  f"Road blockage reported at {sim_alert['location']}.")
 
+    await _invalidate_issue_read_cache()
+
     return result
 
 
@@ -1666,6 +1733,8 @@ async def submit_report(
     existing_issue = find_duplicate_issue(latitude, longitude, incident_type)
     is_duplicate = existing_issue is not None
     report_record_id = f"report_{uuid.uuid4().hex}"
+    owner_delete_token = secrets.token_urlsafe(32)
+    owner_token_hash = hashlib.sha256(owner_delete_token.encode("utf-8")).hexdigest()
 
     if is_duplicate:
         # Increment priority score and stack photo
@@ -1688,7 +1757,8 @@ async def submit_report(
 
         # Re-sort issues by priority_score descending
         model_states["issues"].sort(key=lambda x: x.get("priority_score", 1), reverse=True)
-        _persist_issue(existing_issue, filename, (report_record_id, latitude, longitude))
+        _persist_issue(existing_issue, filename, (report_record_id, latitude, longitude, owner_token_hash))
+        await _invalidate_issue_read_cache()
         _record_system_event("Citizen", "ISSUE_DUPLICATE_REPORT", existing_issue["id"],
                              f"Additional {incident_type} report within 50 m; report count is now {existing_issue['report_count']}.")
 
@@ -1705,6 +1775,8 @@ async def submit_report(
             "report_count": existing_issue["report_count"],
             "priority_score": existing_issue["priority_score"],
             "is_duplicate": True,
+            "owner_report_id": report_record_id,
+            "delete_token": owner_delete_token,
         }
 
         # Keep citizen_reports list in sync (update existing entry)
@@ -1770,7 +1842,8 @@ async def submit_report(
     # Insert into issue registry and keep sorted by priority_score
     model_states["issues"].insert(0, new_issue)
     model_states["issues"].sort(key=lambda x: x.get("priority_score", 1), reverse=True)
-    _persist_issue(new_issue, filename, (report_record_id, latitude, longitude))
+    _persist_issue(new_issue, filename, (report_record_id, latitude, longitude, owner_token_hash))
+    await _invalidate_issue_read_cache()
 
     # Keep legacy citizen_reports list in sync
     legacy_report = {
@@ -1795,7 +1868,7 @@ async def submit_report(
 
     return {
         "status": "success",
-        "report": legacy_report,
+        "report": {**legacy_report, "owner_report_id": report_record_id, "delete_token": owner_delete_token},
         "pothole_count": pothole_count,
         "vehicle_count": vehicle_count,
         "alerts": alerts,
@@ -1816,6 +1889,10 @@ async def get_issues(
     Returns the deduplicated issue registry sorted by priority score (highest first).
     Supports filtering by status and priority.
     """
+    cache_key = f"roadguard:v1:issues:{status or '*'}:{priority or '*'}:{sort_by}"
+    cached = await _cache_get(cache_key)
+    if cached is not None:
+        return cached
     issues = _issues_with_latest_task_assignments(model_states.get("issues", []))
 
     if status:
@@ -1841,10 +1918,12 @@ async def get_issues(
         summary["thumbnail"] = photos[0] if photos else None
         issues_summary.append(summary)
 
-    return {
+    result = {
         "total": len(issues_summary),
         "issues": issues_summary
     }
+    await _cache_set(cache_key, result)
+    return result
 
 
 def _issues_with_latest_task_assignments(issues):
@@ -1918,6 +1997,7 @@ async def create_issue_api(request: IssueCreateRequest):
         elif duplicate["report_count"] == 2:
             duplicate["priority"] = "Medium"
         _persist_issue(duplicate, report_record=(report_id, latitude, longitude))
+        await _invalidate_issue_read_cache()
         _record_system_event("API", "ISSUE_DUPLICATE_REPORT", duplicate["id"], f"Additional {issue_type} report added; total reports: {duplicate['report_count']}.")
         return JSONResponse(status_code=200, content={"status": "duplicate_detected", "duplicate": True, "issue": {k: v for k, v in duplicate.items() if k != "photos"}})
 
@@ -1931,6 +2011,7 @@ async def create_issue_api(request: IssueCreateRequest):
              "last_updated": now, "admin_notes": [], "task_history": []}
     model_states.setdefault("issues", []).insert(0, issue)
     _persist_issue(issue, report_record=(report_id, latitude, longitude))
+    await _invalidate_issue_read_cache()
     _record_system_event("API", "ISSUE_REPORTED", issue_id, f"Reported {issue_type} at {issue['location']}.")
     return JSONResponse(status_code=201, content={"status": "created", "duplicate": False, "issue": {k: v for k, v in issue.items() if k != "photos"}})
 
@@ -2016,6 +2097,7 @@ async def report_issue_api(issue_id: str, request: IssueReportRequest):
         issue["priority"] = "Medium"
     report_id = f"report_{uuid.uuid4().hex}"
     _persist_issue(issue, report_record=(report_id, lat, lng))
+    await _invalidate_issue_read_cache()
     for index, saved in enumerate(model_states.get("issues", [])):
         if str(saved.get("id")) == str(issue_id):
             issue["photos"] = saved.get("photos", [])
@@ -2070,6 +2152,7 @@ async def patch_issue(issue_id: str, updates: dict, request: Request):
                 if str(report.get("id")) == str(issue_id):
                     report["status"] = issue.get("status", "Unassigned")
                     report["last_updated"] = issue["last_updated"]
+            await _invalidate_issue_read_cache()
             if issue.get("status") != previous_status:
                 _record_system_event(updates.get("actor") or updates.get("updatedBy") or "System",
                                      "ISSUE_STATUS_CHANGED", issue_id,
@@ -2084,14 +2167,72 @@ async def patch_issue(issue_id: str, updates: dict, request: Request):
 
 @app.delete("/api/report/delete/{report_id}", summary="Delete citizen report")
 async def delete_report(report_id: str, request: Request):
-    """Deletes a citizen report by ID (from both citizen_reports and issues registries)."""
-    await _require_admin_request(request)
+    """Let a reporter remove their own submission, or let an admin remove an issue."""
     global model_states
+    owner_token = request.headers.get("X-Report-Delete-Token")
+    if owner_token:
+        with _issue_db() as conn:
+            saved_report = conn.execute(
+                "SELECT issue_id, owner_token_hash FROM issue_reports WHERE id=%s", (report_id,)
+            ).fetchone()
+            supplied_hash = hashlib.sha256(owner_token.encode("utf-8")).hexdigest()
+            if saved_report and saved_report[1] and hmac.compare_digest(saved_report[1], supplied_hash):
+                issue_id = str(saved_report[0])
+                issue_row = conn.execute("SELECT metadata_json FROM issues WHERE id=%s", (issue_id,)).fetchone()
+                if not issue_row:
+                    raise HTTPException(status_code=404, detail="Issue not found")
+                issue = json.loads(issue_row[0])
+                owned_photos = conn.execute(
+                    "SELECT mime_type, image FROM issue_photos WHERE report_id=%s", (report_id,)
+                ).fetchall()
+                conn.execute("DELETE FROM issue_photos WHERE report_id=%s", (report_id,))
+                conn.execute("DELETE FROM issue_reports WHERE id=%s", (report_id,))
+                remaining_count = max(0, int(issue.get("report_count", 1)) - 1)
+                if remaining_count:
+                    issue["report_count"] = remaining_count
+                    issue["priority_score"] = remaining_count
+                    issue["last_updated"] = datetime.now(timezone.utc).isoformat()
+                    conn.execute(
+                        "UPDATE issues SET report_count=%s, priority_score=%s, metadata_json=%s WHERE id=%s",
+                        (remaining_count, remaining_count, json.dumps(issue), issue_id),
+                    )
+                else:
+                    conn.execute("DELETE FROM issues WHERE id=%s", (issue_id,))
+
+                for mime_type, image_bytes in owned_photos:
+                    uri = f"data:{mime_type};base64,{base64.b64encode(image_bytes).decode('ascii')}"
+                    if uri in issue.get("photos", []):
+                        issue["photos"].remove(uri)
+
+        if saved_report and saved_report[1] and hmac.compare_digest(saved_report[1], supplied_hash):
+            if remaining_count:
+                for saved_issue in model_states.get("issues", []):
+                    if str(saved_issue.get("id")) == issue_id:
+                        saved_issue.update(issue)
+                        for mime_type, image_bytes in owned_photos:
+                            uri = f"data:{mime_type};base64,{base64.b64encode(image_bytes).decode('ascii')}"
+                            if uri in saved_issue.get("photos", []):
+                                saved_issue["photos"].remove(uri)
+                        break
+                for saved_report_item in model_states.get("citizen_reports", []):
+                    if str(saved_report_item.get("id")) == issue_id:
+                        saved_report_item["report_count"] = remaining_count
+                        saved_report_item["priority_score"] = remaining_count
+                        break
+            else:
+                model_states["issues"] = [item for item in model_states.get("issues", []) if str(item.get("id")) != issue_id]
+                model_states["citizen_reports"] = [item for item in model_states.get("citizen_reports", []) if str(item.get("id")) != issue_id]
+            await _invalidate_issue_read_cache()
+            return {"status": "success", "deleted_id": report_id, "issue_id": issue_id,
+                    "issue_deleted": remaining_count == 0, "remaining_reports": remaining_count}
+
+    await _require_admin_request(request)
     reports = model_states.get("citizen_reports", [])
     model_states["citizen_reports"] = [r for r in reports if r.get("id") != report_id]
     model_states["issues"] = [i for i in model_states.get("issues", []) if i.get("id") != report_id]
     with _issue_db() as conn:
         conn.execute("DELETE FROM issues WHERE id = %s", (report_id,))
+    await _invalidate_issue_read_cache()
     return {"status": "success", "deleted_id": report_id}
 
 
@@ -2112,6 +2253,7 @@ async def delete_simulation(sim_id: str, request: Request):
         for issue_id in linked_issue_ids:
             conn.execute("DELETE FROM issues WHERE id=%s", (issue_id,))
         conn.execute("DELETE FROM traffic_simulations WHERE id = %s", (sim_id,))
+    await _invalidate_issue_read_cache()
     return {"status": "success", "deleted_id": sim_id}
 
 
