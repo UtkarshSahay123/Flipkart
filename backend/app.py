@@ -921,34 +921,27 @@ def _ensure_simulation_issue(simulation):
     return issue_id
 
 
-def _fetch_issue_status_snapshot():
-    with _issue_db() as conn:
-        return conn.execute("""
-            SELECT id,
-                   COALESCE(metadata_json::jsonb->>'status', 'Unassigned'),
-                   metadata_json::jsonb->>'last_updated',
-                   COALESCE(metadata_json::jsonb->>'resolutionDate', metadata_json::jsonb->>'resolved_at')
-            FROM issues
-        """).fetchall()
-
-
 async def _refresh_issue_statuses_periodically():
-    """Refresh workflow status changes made by the separate organization service."""
+    """Refresh workflow state, including task status from the organization service."""
     while True:
         try:
-            rows = await asyncio.to_thread(_fetch_issue_status_snapshot)
+            source_issues = [dict(issue) for issue in model_states.get("issues", [])]
+            refreshed_issues = await asyncio.to_thread(_issues_with_latest_task_assignments, source_issues)
             issue_by_id = {str(issue.get("id")): issue for issue in model_states.get("issues", [])}
-            status_by_id = {}
-            for issue_id, status, last_updated, resolution_date in rows:
-                issue = issue_by_id.get(str(issue_id))
+            status_by_id = {str(issue.get("id")): issue for issue in refreshed_issues}
+            for issue_id, refreshed in status_by_id.items():
+                issue = issue_by_id.get(issue_id)
                 if issue is None:
                     continue
-                issue["status"] = status or "Unassigned"
-                if last_updated:
-                    issue["last_updated"] = last_updated
-                if resolution_date:
-                    issue["resolutionDate"] = resolution_date
-                status_by_id[str(issue_id)] = issue
+                issue["status"] = refreshed.get("status", "Unassigned")
+                if refreshed.get("last_updated"):
+                    issue["last_updated"] = refreshed["last_updated"]
+                if refreshed.get("resolutionDate"):
+                    issue["resolutionDate"] = refreshed["resolutionDate"]
+                if refreshed.get("assignedEmployeeId") is not None:
+                    issue["assignedEmployeeId"] = refreshed["assignedEmployeeId"]
+                if refreshed.get("assignedEmployeeName"):
+                    issue["assignedEmployeeName"] = refreshed["assignedEmployeeName"]
 
             for report in model_states.get("citizen_reports", []):
                 issue = status_by_id.get(str(report.get("id")))
