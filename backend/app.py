@@ -747,6 +747,10 @@ def _load_persisted_issues():
     with _issue_db() as conn:
         rows = conn.execute("SELECT metadata_json FROM issues ORDER BY report_count DESC, id").fetchall()
         photo_rows = conn.execute("SELECT issue_id, mime_type, image FROM issue_photos ORDER BY id").fetchall()
+        report_times = conn.execute("""
+            SELECT issue_id, MIN(reported_at) FROM issue_reports GROUP BY issue_id
+        """).fetchall()
+    first_report_by_issue = {str(issue_id): reported_at for issue_id, reported_at in report_times}
     photos = {}
     for issue_id, mime_type, image in photo_rows:
         photos.setdefault(issue_id, []).append(f"data:{mime_type};base64,{base64.b64encode(image).decode('ascii')}")
@@ -754,6 +758,12 @@ def _load_persisted_issues():
     model_states["citizen_reports"] = []
     for (raw,) in rows:
         issue = json.loads(raw)
+        # Older issue metadata may lack reported_at even though every submitted
+        # report has its original timestamp in issue_reports.
+        if not issue.get("reported_at"):
+            first_report = first_report_by_issue.get(str(issue.get("id")))
+            if first_report:
+                issue["reported_at"] = first_report
         issue["photos"] = photos.get(issue["id"], [])
         model_states["issues"].append(issue)
         model_states["citizen_reports"].append({k: issue.get(k) for k in
@@ -1869,11 +1879,14 @@ def _issues_with_latest_task_assignments(issues):
                 issue["assignedDepartmentId"] = department_id
                 issue["assignedDepartmentName"] = department_name
             normalized_status = str(task_status or "").strip().casefold()
+            # A task that is still open must not reopen an issue explicitly
+            # resolved from the issue workflow.
+            issue_status = str(issue.get("status") or "").strip().casefold()
             if normalized_status == "resolved":
                 issue["status"] = "Resolved"
-            elif normalized_status in {"in progress", "in-progress"}:
+            elif issue_status not in {"resolved", "closed", "complete", "completed"} and normalized_status in {"in progress", "in-progress"}:
                 issue["status"] = "In Progress"
-            else:
+            elif issue_status not in {"resolved", "closed", "complete", "completed"}:
                 issue["status"] = "Assigned"
             if updated_at is not None:
                 issue["last_updated"] = updated_at.isoformat() if hasattr(updated_at, "isoformat") else str(updated_at)

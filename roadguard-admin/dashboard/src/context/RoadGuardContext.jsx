@@ -467,8 +467,8 @@ export const RoadGuardProvider = ({ children }) => {
         severity: issue.severity || 'MEDIUM',
         assignedEmployeeId: issue.assignedEmployeeId || null,
         assignedEmployeeName: issue.assignedEmployeeName || null,
-        reportedDate: issue.reported_at ? new Date(issue.reported_at).toLocaleDateString() : new Date().toLocaleDateString(),
-        reportedAt: issue.reported_at || null,
+        reportedDate: issue.reported_at ? new Date(issue.reported_at).toLocaleDateString() : 'Date unavailable',
+        reportedAt: issue.reported_at || issue.created_at || null,
         resolutionDate: issue.resolutionDate || issue.resolution_date || null,
         lastUpdated: issue.last_updated || null,
         // photos: thumbnail only for list view (full photos fetched on demand)

@@ -125,7 +125,7 @@ export const IssueManagementPage = () => {
   const orderedCommandCenterSimulations = useMemo(() => commandCenterSimulations
     .map((simulation, index) => {
       const linked = issues.find(issue => String(issue.id) === String(simulation.issue_id));
-      const status = simulation.status || linked?.status || '';
+      const status = linked?.status || simulation.status || '';
       return { simulation, index, resolved: String(status).toLowerCase() === 'resolved' };
     })
     .sort((a, b) => Number(a.resolved) - Number(b.resolved) || a.index - b.index)
