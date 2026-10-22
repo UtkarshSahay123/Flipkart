@@ -921,9 +921,60 @@ def _ensure_simulation_issue(simulation):
     return issue_id
 
 
+def _fetch_issue_status_snapshot():
+    with _issue_db() as conn:
+        return conn.execute("""
+            SELECT id,
+                   COALESCE(metadata_json::jsonb->>'status', 'Unassigned'),
+                   metadata_json::jsonb->>'last_updated',
+                   COALESCE(metadata_json::jsonb->>'resolutionDate', metadata_json::jsonb->>'resolved_at')
+            FROM issues
+        """).fetchall()
+
+
+async def _refresh_issue_statuses_periodically():
+    """Refresh workflow status changes made by the separate organization service."""
+    while True:
+        try:
+            rows = await asyncio.to_thread(_fetch_issue_status_snapshot)
+            issue_by_id = {str(issue.get("id")): issue for issue in model_states.get("issues", [])}
+            status_by_id = {}
+            for issue_id, status, last_updated, resolution_date in rows:
+                issue = issue_by_id.get(str(issue_id))
+                if issue is None:
+                    continue
+                issue["status"] = status or "Unassigned"
+                if last_updated:
+                    issue["last_updated"] = last_updated
+                if resolution_date:
+                    issue["resolutionDate"] = resolution_date
+                status_by_id[str(issue_id)] = issue
+
+            for report in model_states.get("citizen_reports", []):
+                issue = status_by_id.get(str(report.get("id")))
+                if issue:
+                    report["status"] = issue.get("status", "Unassigned")
+                    report["last_updated"] = issue.get("last_updated")
+                    report["report_count"] = issue.get("report_count", report.get("report_count", 1))
+                    report["priority"] = issue.get("priority", report.get("priority", "Low"))
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.warning("Could not refresh issue statuses from the database: %s", exc)
+        await asyncio.sleep(10)
+
+
 @app.on_event("startup")
 async def load_issue_registry():
     _load_persisted_issues()
+    app.state.issue_status_refresh_task = asyncio.create_task(_refresh_issue_statuses_periodically())
+
+
+@app.on_event("shutdown")
+async def stop_issue_status_refresh():
+    task = getattr(app.state, "issue_status_refresh_task", None)
+    if task:
+        task.cancel()
 
 # ─────────────────────────────────────────────
 # Request / Response models
