@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 CACHE_TTL_SECONDS = 2 * 24 * 60 * 60
 MAX_CACHE_VALUE_BYTES = 256 * 1024
 MAP_MARKERS_CACHE_KEY = "roadguard:v2:public-map-markers"
+GOOGLE_AUTH_CONFIG_CACHE_KEY = "roadguard:v2:public-google-auth-config"
 _redis_cache = None
 _legacy_cache_cleaned = False
 
@@ -479,6 +480,12 @@ async def proxy_admin_auth(auth_path: str, request: Request):
     # Wait for the Spring service to finish waking before the browser submits
     # credentials. Its health endpoint is safe to expose through this same-origin
     # proxy and avoids repeatedly sending login requests to a cold instance.
+    cache_google_config = auth_path == "google-config" and request.method == "GET"
+    if cache_google_config:
+        cached_config = await _cache_get(GOOGLE_AUTH_CONFIG_CACHE_KEY)
+        if isinstance(cached_config, dict) and cached_config.get("clientId"):
+            return JSONResponse(cached_config, headers={"Cache-Control": "public, max-age=3600"})
+
     target = (
         f"{_spring_service_base()}/actuator/health"
         if auth_path == "ready" and request.method == "GET"
@@ -521,7 +528,19 @@ async def proxy_admin_auth(auth_path: str, request: Request):
             return status, b'{"message":"Authentication backend is temporarily unavailable."}', "application/json"
 
     status, content, content_type = await asyncio.to_thread(send_request)
-    return Response(content=content, status_code=status, headers={"Content-Type": content_type})
+    response_headers = {"Content-Type": content_type}
+    if cache_google_config:
+        cacheable_config = False
+        if status == 200:
+            try:
+                config = json.loads(content)
+                if isinstance(config, dict) and config.get("clientId"):
+                    await _cache_set(GOOGLE_AUTH_CONFIG_CACHE_KEY, config)
+                    cacheable_config = True
+            except (TypeError, ValueError):
+                pass
+        response_headers["Cache-Control"] = "public, max-age=3600" if cacheable_config else "no-store"
+    return Response(content=content, status_code=status, headers=response_headers)
 
 @app.api_route("/api/portal/{portal_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], summary="Proxy organization portal API")
 async def proxy_organization_portal(portal_path: str, request: Request):

@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="preconnect" href="https://accounts.google.com" crossorigin/>
+<link rel="dns-prefetch" href="https://accounts.google.com"/>
 <link rel="stylesheet" href="/responsive.css"/>
 <title>Road Guard | Sign In</title>
 <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
@@ -251,14 +253,18 @@ async function handleGoogleCredential(response){
 async function setupGoogleSignIn(){
   const container=document.getElementById('google-signin');
   try{
-    const response=await fetch('/api/auth/google-config',{cache:'no-store'});
-    const config=await response.json().catch(()=>({}));
-    if(!response.ok||!config.clientId)throw new Error(config.message||'Google sign-in is not configured yet.');
-    await new Promise((resolve,reject)=>{
+    const googleScriptReady=new Promise((resolve,reject)=>{
+      if(window.google?.accounts?.id){resolve();return;}
       const script=document.createElement('script');script.src='https://accounts.google.com/gsi/client';script.async=true;script.defer=true;
       script.onload=resolve;script.onerror=()=>reject(new Error('Google sign-in could not load. Check your connection and try again.'));
       document.head.appendChild(script);
     });
+    const [response]=await Promise.all([
+      fetch('/api/auth/google-config'),
+      googleScriptReady
+    ]);
+    const config=await response.json().catch(()=>({}));
+    if(!response.ok||!config.clientId)throw new Error(config.message||'Google sign-in is not configured yet.');
     google.accounts.id.initialize({client_id:config.clientId,callback:handleGoogleCredential});
     google.accounts.id.renderButton(container,{type:'standard',theme:'outline',size:'large',text:'continue_with',shape:'rectangular',width:320});
   }catch(error){container.style.display='none';showGoogleError(error.message||'Google sign-in is temporarily unavailable.');}
