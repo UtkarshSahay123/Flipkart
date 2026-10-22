@@ -446,7 +446,9 @@ def _spring_service_base() -> str:
 async def _require_admin_request(request: Request):
     authorization = request.headers.get("authorization", "")
     if not (authorization.lower().startswith("basic ") or authorization.lower().startswith("bearer ")):
-        raise HTTPException(status_code=401, detail="Admin sign-in is required.", headers={"WWW-Authenticate": "Basic"})
+        # This is a JSON API authenticated by the frontend; avoid triggering
+        # the browser's native Basic Auth credential dialog.
+        raise HTTPException(status_code=401, detail="Admin sign-in is required.")
     upstream_request = URLRequest(
         f"{_spring_service_base()}/api/portal/me",
         headers={"Authorization": authorization, "Accept": "application/json"},
@@ -2203,6 +2205,8 @@ async def delete_report(report_id: str, request: Request):
                 "SELECT issue_id, owner_token_hash FROM issue_reports WHERE id=%s", (report_id,)
             ).fetchone()
             supplied_hash = hashlib.sha256(owner_token.encode("utf-8")).hexdigest()
+            if not (saved_report and saved_report[1] and hmac.compare_digest(saved_report[1], supplied_hash)):
+                raise HTTPException(status_code=403, detail="Report deletion token is invalid or expired.")
             if saved_report and saved_report[1] and hmac.compare_digest(saved_report[1], supplied_hash):
                 issue_id = str(saved_report[0])
                 issue_row = conn.execute("SELECT metadata_json FROM issues WHERE id=%s", (issue_id,)).fetchone()

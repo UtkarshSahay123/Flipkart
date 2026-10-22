@@ -1613,6 +1613,10 @@
             } catch { return false; }
         }
 
+        function canDeleteIncident(issueId) {
+            return hasAdminDeleteAccess() || (getReportOwnership(issueId)?.length || 0) > 0;
+        }
+
         function prependIncidentCard(inc) {
             const list = document.getElementById('active-incidents-list');
             const card = document.createElement('div');
@@ -1652,7 +1656,7 @@
                 <p class="text-body-md text-on-surface-variant mb-md leading-tight">${escapeHtml(inc.description || '')}</p>
                 <div class="flex gap-sm">
                     <button class="view-incident-map flex-1 py-xs bg-primary text-on-primary text-label-md rounded font-bold hover:opacity-90">View on Map</button>
-                    <button class="delete-incident px-md py-xs bg-error/10 text-error hover:bg-error/20 text-label-md rounded font-bold transition-all flex items-center justify-center gap-xs" ${String(inc.id || '').startsWith('sim_') || getReportOwnership(String(inc.id || '')) || hasAdminDeleteAccess() ? '' : 'hidden'}>
+                    <button class="delete-incident px-md py-xs bg-error/10 text-error hover:bg-error/20 text-label-md rounded font-bold transition-all flex items-center justify-center gap-xs" ${canDeleteIncident(String(inc.id || '')) ? '' : 'hidden'}>
                         <span class="material-symbols-outlined text-[16px]">delete</span> Delete
                     </button>
                 </div>
@@ -1718,6 +1722,10 @@
                 const endpoint = id.startsWith('sim_') ? 'simulation' : 'report';
                 let auth = null;
                 try { auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null'); } catch {}
+                if (!ownerAccess && !(auth?.username && auth?.password)) {
+                    showToast('You can delete only reports uploaded in this browser session.', 'error');
+                    return;
+                }
                 const headers = ownerAccess
                     ? { 'X-Report-Delete-Token': ownerAccess.token }
                     : auth?.username && auth?.password
@@ -1762,7 +1770,9 @@
                         : "Incident deleted successfully", "success");
                 } else {
                     showToast(response.status === 401 || response.status === 403
-                        ? "Admin sign-in is required to delete incidents."
+                        ? ownerAccess
+                            ? "Could not verify report ownership. This browser session may have expired."
+                            : "Admin sign-in is required to delete incidents."
                         : "Failed to delete incident", "error");
                 }
             } catch (err) {
