@@ -28,11 +28,14 @@ from urllib.request import Request as URLRequest, urlopen
 
 logger = logging.getLogger(__name__)
 
-# Redis is an optional shared cache. PostgreSQL remains the source of truth;
-# cached issue and Command Center reads live for one week and are invalidated
-# whenever a relevant write succeeds.
-CACHE_TTL_SECONDS = 7 * 24 * 60 * 60
+# Redis is an optional shared cache. PostgreSQL remains the source of truth.
+# Only small lookup snapshots are cached. Citizen report text, photos,
+# coordinates, and account/auth data are never written to Redis.
+CACHE_TTL_SECONDS = 2 * 24 * 60 * 60
+MAX_CACHE_VALUE_BYTES = 256 * 1024
+MAP_MARKERS_CACHE_KEY = "roadguard:v2:public-map-markers"
 _redis_cache = None
+_legacy_cache_cleaned = False
 
 
 def _get_redis_cache():
@@ -51,10 +54,16 @@ def _get_redis_cache():
 
 
 async def _cache_get(key):
+    global _legacy_cache_cleaned
     client = _get_redis_cache()
     if client is None:
         return None
     try:
+        if not _legacy_cache_cleaned:
+            legacy_keys = [key async for key in client.scan_iter(match="roadguard:v1:*")]
+            if legacy_keys:
+                await client.delete(*legacy_keys)
+            _legacy_cache_cleaned = True
         value = await client.get(key)
         return json.loads(value) if value else None
     except Exception as exc:
@@ -67,7 +76,11 @@ async def _cache_set(key, value):
     if client is None:
         return
     try:
-        await client.set(key, json.dumps(value, default=str), ex=CACHE_TTL_SECONDS)
+        serialized = json.dumps(value, default=str, separators=(",", ":"))
+        if len(serialized.encode("utf-8")) > MAX_CACHE_VALUE_BYTES:
+            logger.info("Skipping Redis cache value over %s bytes: %s", MAX_CACHE_VALUE_BYTES, key)
+            return
+        await client.set(key, serialized, ex=CACHE_TTL_SECONDS)
     except Exception as exc:
         logger.warning("Redis cache write failed: %s", exc)
 
@@ -78,7 +91,7 @@ async def _invalidate_issue_read_cache():
         return
     try:
         keys = [key async for key in client.scan_iter(match="roadguard:v1:issues:*")]
-        keys.append("roadguard:v1:stats")
+        keys.extend(("roadguard:v1:stats", MAP_MARKERS_CACHE_KEY))
         await client.delete(*keys)
     except Exception as exc:
         logger.warning("Redis cache invalidation failed: %s", exc)
@@ -943,10 +956,6 @@ class BugReportRequest(BaseModel):
 @app.get("/api/stats", summary="Get real-time model states")
 async def get_stats():
     """Returns live stats from all running AI models."""
-    cache_key = "roadguard:v1:stats"
-    cached = await _cache_get(cache_key)
-    if cached is not None:
-        return cached
     issue_by_id = {str(issue.get("id")): issue for issue in model_states.get("issues", [])}
     for report in model_states.get("citizen_reports", []):
         issue = issue_by_id.get(str(report.get("id")))
@@ -970,7 +979,6 @@ async def get_stats():
             simulation["last_updated"] = linked_issue.get("last_updated")
             if linked_issue.get("resolutionDate"):
                 simulation["resolutionDate"] = linked_issue["resolutionDate"]
-    await _cache_set(cache_key, model_states)
     return model_states
 
 
@@ -1889,10 +1897,6 @@ async def get_issues(
     Returns the deduplicated issue registry sorted by priority score (highest first).
     Supports filtering by status and priority.
     """
-    cache_key = f"roadguard:v1:issues:{status or '*'}:{priority or '*'}:{sort_by}"
-    cached = await _cache_get(cache_key)
-    if cached is not None:
-        return cached
     issues = _issues_with_latest_task_assignments(model_states.get("issues", []))
 
     if status:
@@ -1922,7 +1926,6 @@ async def get_issues(
         "total": len(issues_summary),
         "issues": issues_summary
     }
-    await _cache_set(cache_key, result)
     return result
 
 
@@ -2019,21 +2022,45 @@ async def create_issue_api(request: IssueCreateRequest):
 @app.get("/api/map/markers", summary="Get active issue markers for the map")
 @app.get("/map/markers", summary="Get active issue markers for the map")
 async def get_map_markers():
+    cached = await _cache_get(MAP_MARKERS_CACHE_KEY)
+    if cached is not None:
+        current_issues = {str(issue.get("id")): issue for issue in model_states.get("issues", [])}
+        if all(str(issue_id) in current_issues for issue_id in cached):
+            markers = []
+            for issue_id in cached:
+                issue = current_issues[str(issue_id)]
+                if str(issue.get("status", "Unassigned")).casefold() in {"resolved", "closed", "complete", "completed"}:
+                    continue
+                coords = issue.get("coords") or [issue.get("latitude"), issue.get("longitude")]
+                if not coords or len(coords) < 2:
+                    continue
+                markers.append({"id": issue_id, "type": issue.get("type", "Road issue"),
+                                "status": issue.get("status", "Unassigned"),
+                                "priority": issue.get("priority", issue.get("severity", "")),
+                                "location": issue.get("location", ""), "description": issue.get("description", ""),
+                                "coords": coords, "reportCount": issue.get("report_count", 1)})
+            return {"total": len(markers), "markers": markers}
     try:
         with _issue_db() as conn:
             rows = conn.execute("SELECT id, latitude, longitude, metadata_json FROM issues ORDER BY report_count DESC, id").fetchall()
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Issue markers are temporarily unavailable.") from exc
     markers = []
+    marker_ids = []
     for issue_id, latitude, longitude, raw in rows:
         issue = json.loads(raw)
         if str(issue.get("status", "Unassigned")).casefold() in {"resolved", "closed", "complete", "completed"}:
             continue
+        # Redis stores only IDs. The full marker response remains available to
+        # clients but is assembled from process memory on subsequent requests.
+        marker_ids.append(issue_id)
         markers.append({"id": issue_id, "type": issue.get("type", "Road issue"), "status": issue.get("status", "Unassigned"),
                         "priority": issue.get("priority", issue.get("severity", "")), "location": issue.get("location", ""),
                         "description": issue.get("description", ""), "coords": [latitude, longitude],
                         "reportCount": issue.get("report_count", 1)})
-    return {"total": len(markers), "markers": markers}
+    result = {"total": len(markers), "markers": markers}
+    await _cache_set(MAP_MARKERS_CACHE_KEY, marker_ids)
+    return result
 
 
 @app.get("/api/system/events", summary="Get durable Road Guard activity events")
