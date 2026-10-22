@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { RoadGuardProvider } from './context/RoadGuardContext';
 import { LandingPage } from './pages/LandingPage';
 import { AdminLayout } from './layouts/AdminLayout';
@@ -22,7 +23,8 @@ import { EmployeePortalPage } from './pages/EmployeePortalPage';
 
 export function App() {
   return (
-    <RoadGuardProvider>
+    <>
+      <RoadGuardProvider>
         <BrowserRouter>
           <Routes>
           {/* Main Landing / Command Overview Preview */}
@@ -52,7 +54,9 @@ export function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
-    </RoadGuardProvider>
+      </RoadGuardProvider>
+      <Analytics />
+    </>
   );
 }
 
