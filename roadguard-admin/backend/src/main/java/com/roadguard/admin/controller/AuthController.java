@@ -369,30 +369,35 @@ public class AuthController {
         String clientId = configuredGoogleClientId();
         if (isBlank(idToken)) return ResponseEntity.badRequest().body(Map.of("message", "Google ID token is required"));
         if (isBlank(clientId)) return ResponseEntity.status(503).body(Map.of("message", "Google sign-in is not configured"));
+        String failureStage = "Google token verification";
         try {
             String query = "https://oauth2.googleapis.com/tokeninfo?id_token=" + URLEncoder.encode(idToken, StandardCharsets.UTF_8);
             HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
             HttpRequest tokenRequest = HttpRequest.newBuilder(URI.create(query)).timeout(Duration.ofSeconds(8)).GET().build();
             HttpResponse<String> tokenResponse = client.send(tokenRequest, HttpResponse.BodyHandlers.ofString());
             if (tokenResponse.statusCode() != 200) return ResponseEntity.status(401).body(Map.of("message", "Google token is invalid or expired"));
+            failureStage = "Google identity claims validation";
             JsonNode claims = objectMapper.readTree(tokenResponse.body());
             if (!clientId.equals(claims.path("aud").asText()) || !"true".equalsIgnoreCase(claims.path("email_verified").asText()))
                 return ResponseEntity.status(401).body(Map.of("message", "Google account verification failed"));
             String email = normalizeEmail(claims.path("email").asText(""));
             if (!isValidEmail(email))
                 return ResponseEntity.status(401).body(Map.of("message", "Google account verification failed"));
+            failureStage = "RoadGuard account lookup";
             Admin account = adminRepository.findByEmail(email).orElse(null);
             if (account == null) return ResponseEntity.status(404).body(Map.of("message", "Create a RoadGuard account with this email before signing in"));
             if ("EMPLOYEE".equals(account.getRole()) && !account.isApproved())
                 return ResponseEntity.status(403).body(Map.of("message", "Employee account is waiting for organization admin approval"));
             if (!account.isEnabled())
                 return ResponseEntity.status(403).body(Map.of("message", "This account is disabled. Contact your organization administrator"));
+            failureStage = "RoadGuard session creation";
             return ResponseEntity.ok(Map.of("message", "Google sign-in successful", "accessToken", accessTokens.create(account.getUsername()),
                     "expiresIn", accessTokens.ttlSeconds(), "role", account.getRole() == null ? "ADMIN" : account.getRole(),
                     "accountId", account.getId(), "organizationId", account.getOrganization() == null ? 0L : account.getOrganization().getId(),
                     "name", account.getFullName()));
         } catch (Exception ex) {
-            logger.warn("Google token verification failed: {}", ex.getMessage());
+            // Do not log the ID token or exception message: the request URL contains the token.
+            logger.error("Google sign-in failed during {} ({})", failureStage, ex.getClass().getSimpleName());
             return ResponseEntity.status(502).body(Map.of("message", "Google sign-in could not be verified right now"));
         }
     }
