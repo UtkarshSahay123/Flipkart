@@ -1613,7 +1613,7 @@
         function hasAdminDeleteAccess() {
             try {
                 const auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
-                return Boolean(auth?.username && auth?.password);
+                return Boolean(auth?.accessToken && String(auth?.role || '').toUpperCase() === 'ADMIN');
             } catch { return false; }
         }
 
@@ -1726,14 +1726,15 @@
                 const endpoint = id.startsWith('sim_') ? 'simulation' : 'report';
                 let auth = null;
                 try { auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null'); } catch {}
-                if (!ownerAccess && !(auth?.username && auth?.password)) {
+                const hasAdminSession = Boolean(auth?.accessToken && String(auth?.role || '').toUpperCase() === 'ADMIN');
+                if (!ownerAccess && !hasAdminSession) {
                     showToast('You can delete only reports uploaded in this browser session.', 'error');
                     return;
                 }
                 const headers = ownerAccess
                     ? { 'X-Report-Delete-Token': ownerAccess.token }
-                    : auth?.username && auth?.password
-                        ? { Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}` }
+                    : hasAdminSession
+                        ? { Authorization: `Bearer ${auth.accessToken}` }
                         : {};
                 const deleteId = ownerAccess ? ownerAccess.reportId : id;
                 const response = await fetch(`${API_BASE}/api/${endpoint}/delete/${encodeURIComponent(deleteId)}`, {
