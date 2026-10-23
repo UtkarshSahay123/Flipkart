@@ -120,8 +120,6 @@ export async function portalApi(path, options = {}) {
   if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   const requestOptions = { ...options, headers };
   let response = await fetch(`/api/portal${path}`, requestOptions);
-  let responseAuthToken = requestAuth?.accessToken;
-  let authInvalid = false;
   if (response.status === 401 && requestAuth?.accessToken) {
     const refreshed = await refreshSessionToken(requestAuth.accessToken);
     if (refreshed.auth?.accessToken && refreshed.auth.accessToken !== requestAuth.accessToken) {
@@ -129,10 +127,7 @@ export async function portalApi(path, options = {}) {
       retryHeaders.set('Authorization', `Bearer ${refreshed.auth.accessToken}`);
       if (options.body && !retryHeaders.has('Content-Type')) retryHeaders.set('Content-Type', 'application/json');
       response = await fetch(`/api/portal${path}`, { ...options, headers: retryHeaders });
-      responseAuthToken = refreshed.auth.accessToken;
-      authInvalid = response.status === 401;
     } else if (refreshed.invalid) {
-      authInvalid = true;
       const latestAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
       if (latestAuth?.accessToken === requestAuth.accessToken) {
         sessionStorage.removeItem('roadguard.auth');
@@ -143,13 +138,6 @@ export async function portalApi(path, options = {}) {
   const text = await response.text();
   let data;
   try { data = text ? JSON.parse(text) : null; } catch { data = { message: text }; }
-  if (response.status === 401 && authInvalid) {
-    const latestAuth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null');
-    if (latestAuth?.accessToken === responseAuthToken) {
-      sessionStorage.removeItem('roadguard.auth');
-      window.location.replace('/admin/signin.html');
-    }
-  }
   if (!response.ok) {
     if (response.status >= 500) {
       throw new Error('The backend server is temporarily unavailable. Please try again shortly.');
