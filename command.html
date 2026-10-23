@@ -1342,6 +1342,7 @@
             const duration_hours = parseFloat(document.getElementById('sim-duration').value) || 3.0;
             const road_closure = document.querySelector('input[name="sim-road-closure"]:checked') ? document.querySelector('input[name="sim-road-closure"]:checked').value : 'no';
             const location_description = document.getElementById('sim-location-description').value;
+            const ownerDeleteToken = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, '0')).join('');
 
             // Resolve coordinates
             let startCoords = null;
@@ -1385,13 +1386,15 @@
                         date,
                         duration_hours,
                         road_closure,
-                        location_description
+                        location_description,
+                        owner_delete_token: ownerDeleteToken
                     })
                 });
 
                 if (!response.ok) throw new Error("Simulation endpoint failed");
 
                 const result = await response.json();
+                rememberSimulationOwnership(result.id, ownerDeleteToken);
 
                 // Close input modal
                 simulationModal.classList.add('hidden');
@@ -1492,6 +1495,7 @@
                 const offlineId = `sim_${Math.random().toString(36).substr(2, 9)}`;
                 const fallbackCoords = startCoords || [25.61591, 85.09529];
                 const radius_km = 1.5;
+                rememberSimulationOwnership(offlineId, ownerDeleteToken, true);
 
                 const bannerEl = document.getElementById('res-risk-banner');
                 if (bannerEl) bannerEl.className = `p-md rounded-xl mb-md flex items-center justify-between border shadow-sm transition-all duration-300 bg-[#b02300] text-white border-error/30`;
@@ -1601,6 +1605,16 @@
                 });
                 sessionStorage.setItem(reportOwnershipKey(issueId), JSON.stringify(ownedReports));
             } catch (error) { console.warn('Could not store report removal access for this session.', error); }
+        }
+
+        function rememberSimulationOwnership(simulationId, token, localOnly = false) {
+            if (!simulationId || !token) return;
+            try {
+                const issueId = String(simulationId);
+                const ownedReports = getReportOwnership(issueId) || [];
+                ownedReports.push({ reportId: issueId, token, localOnly, simulation: true });
+                sessionStorage.setItem(reportOwnershipKey(issueId), JSON.stringify(ownedReports));
+            } catch (error) { console.warn('Could not store simulation removal access for this session.', error); }
         }
 
         function removeReportOwnership(issueId, reportId) {
@@ -1724,6 +1738,20 @@
             try {
                 const ownerAccess = getReportOwnership(id)?.[0];
                 const endpoint = id.startsWith('sim_') ? 'simulation' : 'report';
+                if (ownerAccess?.localOnly) {
+                    const card = buttonEl.closest('.p-md');
+                    if (card) card.remove();
+                    if (activeSimulationLayers[id]) {
+                        activeSimulationLayers[id].forEach(layer => map.removeLayer(layer));
+                        delete activeSimulationLayers[id];
+                    }
+                    sessionStorage.removeItem(reportOwnershipKey(id));
+                    displayedReports.delete(id);
+                    const counter = document.getElementById('incidents-count');
+                    counter.innerText = Math.max(0, parseInt(counter.innerText) - 1);
+                    showToast('Your offline simulation was removed.', 'success');
+                    return;
+                }
                 let auth = null;
                 try { auth = JSON.parse(sessionStorage.getItem('roadguard.auth') || 'null'); } catch {}
                 const hasAdminSession = Boolean(auth?.accessToken && String(auth?.role || '').toUpperCase() === 'ADMIN');
@@ -1732,7 +1760,7 @@
                     return;
                 }
                 const headers = ownerAccess
-                    ? { 'X-Report-Delete-Token': ownerAccess.token }
+                    ? { [endpoint === 'simulation' ? 'X-Simulation-Delete-Token' : 'X-Report-Delete-Token']: ownerAccess.token }
                     : hasAdminSession
                         ? { Authorization: `Bearer ${auth.accessToken}` }
                         : {};

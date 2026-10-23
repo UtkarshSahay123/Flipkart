@@ -171,6 +171,7 @@ class SimulationRequest(BaseModel):
     duration_hours: float = 1.0
     road_closure: str = "no"
     location_description: str = ""
+    owner_delete_token: Optional[str] = None
 
 
 # ─────────────────────────────────────────────
@@ -753,6 +754,7 @@ def _init_issue_db():
         conn.execute("CREATE INDEX IF NOT EXISTS idx_issues_priority ON issues(priority_score DESC)")
         conn.execute("""CREATE TABLE IF NOT EXISTS traffic_simulations (
             id TEXT PRIMARY KEY, metadata_json TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())""")
+        conn.execute("ALTER TABLE traffic_simulations ADD COLUMN IF NOT EXISTS owner_token_hash TEXT")
         conn.execute("""CREATE TABLE IF NOT EXISTS notifications (
             id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES admin_users(id) ON DELETE CASCADE,
             title TEXT, message TEXT NOT NULL, notification_type TEXT, target_link TEXT,
@@ -1478,6 +1480,8 @@ async def predict_simulation(req: SimulationRequest):
     Predicts traffic congestion, delays, and recommends resources for an event.
     Generates a diversion route avoiding the event location (using Bangalore coordinates).
     """
+    if req.owner_delete_token and not 32 <= len(req.owner_delete_token) <= 256:
+        raise HTTPException(status_code=422, detail="Invalid simulation owner token.")
     # Predefined nodes for coordinate mapping
     LOCATION_COORDS = {
         "MG Road Junction": [12.9740, 77.6101],
@@ -1601,9 +1605,12 @@ async def predict_simulation(req: SimulationRequest):
     if "simulations" not in model_states:
         model_states["simulations"] = []
     model_states["simulations"].insert(0, sim_alert)
+    owner_token_hash = None
+    if req.owner_delete_token:
+        owner_token_hash = hashlib.sha256(req.owner_delete_token.encode("utf-8")).hexdigest()
     with _issue_db() as conn:
-        conn.execute("INSERT INTO traffic_simulations(id, metadata_json) VALUES(%s, %s)",
-                     (sim_id, json.dumps(sim_alert)))
+        conn.execute("INSERT INTO traffic_simulations(id, metadata_json, owner_token_hash) VALUES(%s, %s, %s)",
+                     (sim_id, json.dumps(sim_alert), owner_token_hash))
     issue_id = _ensure_simulation_issue(sim_alert)
     if issue_id:
         result["issue_id"] = issue_id
@@ -2332,8 +2339,14 @@ async def delete_report(report_id: str, request: Request):
 
 @app.delete("/api/simulation/delete/{sim_id}", summary="Delete simulation")
 async def delete_simulation(sim_id: str, request: Request):
-    """Deletes a simulation by ID."""
-    await _require_admin_request(request)
+    """Delete a simulation by its creator or an organization admin."""
+    owner_token = request.headers.get("X-Simulation-Delete-Token")
+    owner_hash = hashlib.sha256(owner_token.encode("utf-8")).hexdigest() if owner_token else None
+    with _issue_db() as conn:
+        row = conn.execute("SELECT owner_token_hash FROM traffic_simulations WHERE id=%s", (sim_id,)).fetchone()
+    is_owner = bool(row and row[0] and owner_hash and hmac.compare_digest(row[0], owner_hash))
+    if not is_owner:
+        await _require_admin_request(request)
     global model_states
     sims = model_states.get("simulations", [])
     model_states["simulations"] = [s for s in sims if s.get("id") != sim_id]
@@ -2348,7 +2361,7 @@ async def delete_simulation(sim_id: str, request: Request):
             conn.execute("DELETE FROM issues WHERE id=%s", (issue_id,))
         conn.execute("DELETE FROM traffic_simulations WHERE id = %s", (sim_id,))
     await _invalidate_issue_read_cache()
-    return {"status": "success", "deleted_id": sim_id}
+    return {"status": "success", "deleted_id": sim_id, "issue_deleted": True}
 
 
 @app.get("/health", summary="Health check")
