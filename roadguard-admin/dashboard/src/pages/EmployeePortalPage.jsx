@@ -107,12 +107,6 @@ export function EmployeePortalPage() {
     setBusy(task.id); setError('');
     try {
       await portalApi(`/tasks/${task.id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
-      if (status === 'Resolved' && task.issueId && (profile?.permissions || []).includes('ISSUE_RESOLVE')) {
-        await portalApi(`/issues/${encodeURIComponent(task.issueId)}/resolve`, { method: 'POST', body: JSON.stringify({
-          resolutionNotes: `Resolved by ${profile?.name || 'assigned employee'}`,
-          resolutionDate: new Date().toISOString(), actor: profile?.name || 'Employee'
-        }) });
-      }
       await refresh(true);
     } catch (e) { setError(e.message); }
     finally { setBusy(null); }

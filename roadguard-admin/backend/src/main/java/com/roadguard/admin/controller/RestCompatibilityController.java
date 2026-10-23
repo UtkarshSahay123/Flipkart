@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -17,6 +18,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Map;
 
 /** Spring Boot REST façade for the issue/map/Chitti service maintained by FastAPI. */
 @RestController
@@ -25,11 +27,14 @@ public class RestCompatibilityController {
     private final HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(4)).build();
     private final String issueService;
     private final RbacService rbac;
+    private final JdbcTemplate jdbc;
 
     public RestCompatibilityController(
             RbacService rbac,
+            JdbcTemplate jdbc,
             @Value("${ROADGUARD_PYTHON_API_BASE_URL:http://127.0.0.1:8001}") String issueService) {
         this.rbac = rbac;
+        this.jdbc = jdbc;
         this.issueService = issueService.replaceAll("/+$", "");
     }
 
@@ -48,12 +53,27 @@ public class RestCompatibilityController {
     }
 
     @PostMapping("/portal/issues/{issueId}/resolve")
-    public ResponseEntity<byte[]> resolvePortalIssue(@PathVariable String issueId,
-            @RequestBody(required = false) byte[] body,
-            @RequestHeader(value = HttpHeaders.CONTENT_TYPE, required = false) String contentType) {
+    public ResponseEntity<?> resolvePortalIssue(@PathVariable String issueId,
+            @RequestBody(required = false) Map<String, Object> body) {
         ResponseEntity<byte[]> denied = requirePermission("ISSUE_RESOLVE");
         if (denied != null) return denied;
-        return forward(HttpMethod.POST, "/api/issues/" + encodePath(issueId) + "/resolve", null, body, contentType);
+        String notes = body == null || body.get("resolutionNotes") == null ? "" : String.valueOf(body.get("resolutionNotes"));
+        String resolutionDate = body == null || body.get("resolutionDate") == null ? "" : String.valueOf(body.get("resolutionDate"));
+        String actor = body == null || body.get("actor") == null ? "Employee" : String.valueOf(body.get("actor"));
+        int updated = jdbc.update("""
+                UPDATE issues SET metadata_json = (
+                    COALESCE(NULLIF(metadata_json, ''), '{}')::jsonb
+                    || jsonb_build_object(
+                        'status', 'Resolved',
+                        'resolved_at', NOW()::text,
+                        'resolutionDate', COALESCE(NULLIF(?::text, ''), NOW()::text),
+                        'resolutionNotes', ?::text,
+                        'resolution_actor', ?::text,
+                        'last_updated', NOW()::text)
+                )::text WHERE id = ?
+                """, resolutionDate, notes, actor, issueId);
+        if (updated == 0) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(Map.of("status", "resolved", "issueId", issueId));
     }
 
     @PostMapping("/issues")
