@@ -981,14 +981,15 @@
         // Add zoom control at bottom left
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-        // Use documented public tile services. Google’s undocumented Leaflet
-        // tile URL intermittently returns 503 and has no reliability guarantee.
-        var fallbackTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 20,
-            subdomains: 'abcd',
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        // Use OSM's canonical tile host, with Esri World Street Map as a
+        // keyless fallback. CARTO's public raster endpoint now displays an
+        // API-key-required watermark for some deployments.
+        var fallbackTiles = L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            attribution: 'Tiles &copy; Esri &mdash; Sources: Esri, HERE, Garmin, OpenStreetMap contributors, and the GIS User Community'
         });
-        var roadTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        var roadTiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         });
