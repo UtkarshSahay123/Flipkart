@@ -393,7 +393,7 @@ public class AuthController {
             failureStage = "RoadGuard session creation";
             return ResponseEntity.ok(Map.of("message", "Google sign-in successful", "accessToken", accessTokens.create(account.getUsername()),
                     "expiresIn", accessTokens.ttlSeconds(), "role", account.getRole() == null ? "ADMIN" : account.getRole(),
-                    "accountId", account.getId(), "organizationId", account.getOrganization() == null ? 0L : account.getOrganization().getId(),
+                    "username", account.getUsername(), "accountId", account.getId(), "organizationId", account.getOrganization() == null ? 0L : account.getOrganization().getId(),
                     "name", account.getFullName()));
         } catch (Exception ex) {
             // Do not log the ID token or exception message: the request URL contains the token.
