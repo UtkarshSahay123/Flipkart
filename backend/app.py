@@ -1022,7 +1022,7 @@ class BugReportRequest(BaseModel):
 
 @app.get("/api/stats", summary="Get real-time model states")
 async def get_stats():
-    """Returns live stats from all running AI models."""
+    """Return live stats without repeatedly sending stored issue photo bytes."""
     issue_by_id = {str(issue.get("id")): issue for issue in model_states.get("issues", [])}
     for report in model_states.get("citizen_reports", []):
         issue = issue_by_id.get(str(report.get("id")))
@@ -1046,7 +1046,13 @@ async def get_stats():
             simulation["last_updated"] = linked_issue.get("last_updated")
             if linked_issue.get("resolutionDate"):
                 simulation["resolutionDate"] = linked_issue["resolutionDate"]
-    return model_states
+    response = {key: value for key, value in model_states.items() if key != "issues"}
+    response["issues"] = []
+    for issue in model_states.get("issues", []):
+        summary = {key: value for key, value in issue.items() if key != "photos"}
+        summary["photo_count"] = len(issue.get("photos", []))
+        response["issues"].append(summary)
+    return response
 
 
 def _route_distance_m(a, b):
@@ -1989,9 +1995,6 @@ async def get_issues(
     for issue in issues:
         summary = {k: v for k, v in issue.items() if k != "photos"}
         summary["photo_count"] = len(issue.get("photos", []))
-        # Include thumbnail (first photo) for card view
-        photos = issue.get("photos", [])
-        summary["thumbnail"] = photos[0] if photos else None
         issues_summary.append(summary)
 
     result = {
