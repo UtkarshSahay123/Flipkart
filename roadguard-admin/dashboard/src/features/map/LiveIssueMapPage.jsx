@@ -45,18 +45,19 @@ export const LiveIssueMapPage = () => {
 
   // Match the Command Center's initial map center (Patna fallback).
   const defaultCenter = [25.61591, 85.09529];
-  const hasRequestedCenter = searchParams.has('lat') && searchParams.has('lng');
-  const [mapCenter, setMapCenter] = useState(() => {
-    const latParam = searchParams.get('lat');
-    const lngParam = searchParams.get('lng');
-    if (latParam === null || lngParam === null || latParam.trim() === '' || lngParam.trim() === '') return defaultCenter;
+  const latParam = searchParams.get('lat');
+  const lngParam = searchParams.get('lng');
+  const requestedCenter = useMemo(() => {
+    if (latParam === null || lngParam === null || latParam.trim() === '' || lngParam.trim() === '') return null;
     const lat = Number(latParam);
     const lng = Number(lngParam);
     return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
       ? [lat, lng]
-      : defaultCenter;
-  });
-  const [mapZoom, setMapZoom] = useState(13);
+      : null;
+  }, [latParam, lngParam]);
+  const hasRequestedCenter = Boolean(requestedCenter);
+  const [mapCenter, setMapCenter] = useState(() => requestedCenter || defaultCenter);
+  const [mapZoom, setMapZoom] = useState(() => requestedCenter ? 16 : 13);
 
   // Filters
   const [categoryFilter, setCategoryFilter] = useState('All');
@@ -65,6 +66,12 @@ export const LiveIssueMapPage = () => {
   const [userLocation, setUserLocation] = useState(null);
   const [locatingMe, setLocatingMe] = useState(false);
   const [locateError, setLocateError] = useState('');
+
+  useEffect(() => {
+    if (!requestedCenter) return;
+    setMapCenter(requestedCenter);
+    setMapZoom(16);
+  }, [requestedCenter]);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
