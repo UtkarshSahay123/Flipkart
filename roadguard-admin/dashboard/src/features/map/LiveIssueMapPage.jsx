@@ -223,7 +223,7 @@ export const LiveIssueMapPage = () => {
           </Marker>)}
         </MapContainer>
 
-        <div className="absolute right-4 top-4 z-30 flex flex-col items-end gap-2">
+        <div className="absolute bottom-[calc(45%+1rem)] right-4 z-30 flex flex-col items-end gap-2 md:bottom-4 md:right-[205px]">
           <button
             type="button"
             onClick={locateMe}
