@@ -1052,13 +1052,28 @@
             return String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
         }
 
+        function formatReportedAge(value) {
+            if (!value) return null;
+            const dateValue = typeof value === 'string' && !/[zZ]|[+-]\d{2}:?\d{2}$/.test(value) ? `${value}Z` : value;
+            const reportedAt = new Date(dateValue);
+            if (Number.isNaN(reportedAt.getTime())) return null;
+            const elapsedMinutes = Math.max(0, Math.floor((Date.now() - reportedAt.getTime()) / 60000));
+            const age = elapsedMinutes < 1 ? 'just now'
+                : elapsedMinutes < 60 ? `${elapsedMinutes}m ago`
+                : elapsedMinutes < 1440 ? `${Math.floor(elapsedMinutes / 60)}h ago`
+                : `${Math.floor(elapsedMinutes / 1440)}d ago`;
+            return `${reportedAt.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })} (${age})`;
+        }
+
         function issuePopup(report) {
             const photo = typeof report.thumbnail === 'string' && /^data:image\/(png|jpeg|webp);base64,/.test(report.thumbnail)
                 ? `<img src="${report.thumbnail}" alt="Reported issue photo" style="max-width:220px;max-height:130px;border-radius:8px;margin-top:8px;object-fit:cover">`
                 : '';
             const priority = report.priority || 'Normal';
+            const reportedAge = formatReportedAge(report.reported_at || report.reportedAt);
             const photoMessage = Number(report.photo_count || 0) > 0 ? 'Loading issue photo?' : Number(report.photo_count) < 0 ? 'Photo could not be loaded' : 'No photo uploaded';
-            return `<b>${escapeMapText(report.type || 'Reported issue')}</b><br>${escapeMapText(report.description)}<br><strong>Status: ${escapeMapText(report.status || 'Reported')}</strong><br><strong>Reports: ${Number(report.report_count || 1)}</strong> ? <strong>Priority: ${escapeMapText(priority)}</strong><br><span>${escapeMapText(report.location)}</span>${photo || `<span style="display:block;margin-top:6px;color:#64748b">${photoMessage}</span>`}`;
+            const reportedLine = reportedAge ? `<br><strong>First reported:</strong> ${escapeMapText(reportedAge)}` : '';
+            return `<b>${escapeMapText(report.type || 'Reported issue')}</b><br>${escapeMapText(report.description)}<br><strong>Status: ${escapeMapText(report.status || 'Reported')}</strong><br><strong>Reports: ${Number(report.report_count || 1)}</strong> ? <strong>Priority: ${escapeMapText(priority)}</strong><br><span>${escapeMapText(report.location)}</span>${reportedLine}${photo || `<span style="display:block;margin-top:6px;color:#64748b">${photoMessage}</span>`}`;
         }
 
         async function loadIssuePhotos(issueId) {
@@ -1664,11 +1679,14 @@
             const initialCoords = hasCoords ? ` (${lat.toFixed(4)}, ${lng.toFixed(4)})` : '';
             const location = String(inc.location || 'Location unavailable');
             const initialLocation = location.includes('(') ? location : `${location}${initialCoords}`;
+            const reportedAt = inc.reported_at || inc.reportedAt;
+            const reportedAge = formatReportedAge(reportedAt);
+            const timeLabel = reportedAge ? `First reported: ${reportedAge}` : (inc.time_ago || 'Just now');
 
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-sm">
                     <span class="px-sm py-xs ${badgeClass} text-[10px] font-bold rounded uppercase">${escapeHtml(inc.severity || 'MEDIUM')}</span>
-                    <span class="text-label-md text-on-surface-variant">${escapeHtml(inc.time_ago || 'Just now')}</span>
+                    <span class="issue-reported-age text-label-md text-on-surface-variant">${escapeHtml(timeLabel)}</span>
                 </div>
                 <p class="issue-live-status text-[10px] font-bold uppercase tracking-wide mb-xs ${inc.status === 'Resolved' ? 'text-emerald-700' : 'text-blue-700'}">Status: ${escapeHtml(inc.status || 'Reported')}</p>
                 <h4 class="text-body-md font-bold mb-xs">${escapeHtml(inc.type || 'Road incident')}: <span id="${locId}">${escapeHtml(initialLocation)}</span></h4>
@@ -1721,6 +1739,10 @@
                 statusEl.textContent = `Status: ${status}`;
                 statusEl.className = `issue-live-status text-[10px] font-bold uppercase tracking-wide mb-xs ${status === 'Resolved' ? 'text-emerald-700' : 'text-blue-700'}`;
             }
+            const reportedAt = report.reported_at || report.reportedAt;
+            const ageEl = incidentCards[id]?.querySelector('.issue-reported-age');
+            const reportedAge = formatReportedAge(reportedAt);
+            if (ageEl && reportedAge) ageEl.textContent = `First reported: ${reportedAge}`;
         }
 
         // Deletes an incident from frontend map, list, and backend memory

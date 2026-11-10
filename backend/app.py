@@ -863,7 +863,7 @@ def _load_persisted_issues():
         issue["photos"] = photos.get(issue["id"], [])
         model_states["issues"].append(issue)
         model_states["citizen_reports"].append({k: issue.get(k) for k in
-            ("id", "type", "severity", "location", "coords", "description", "confidence", "pothole_count", "vehicle_count", "report_count", "priority_score")})
+            ("id", "type", "severity", "location", "coords", "description", "confidence", "pothole_count", "vehicle_count", "report_count", "priority_score", "reported_at")})
     with _issue_db() as conn:
         simulation_rows = conn.execute("SELECT metadata_json FROM traffic_simulations ORDER BY created_at DESC").fetchall()
     model_states["simulations"] = [json.loads(row[0]) for row in simulation_rows]
@@ -1033,6 +1033,7 @@ async def get_stats():
             report["priority_score"] = issue.get("priority_score", 1)
             report["priority"] = issue.get("priority", "Low")
             report["photo_count"] = len(issue.get("photos", []))
+            report["reported_at"] = issue.get("reported_at") or report.get("reported_at")
     # The Command Center and public home page consume simulations separately
     # from issues, so mirror the linked issue's current workflow state here.
     for simulation in model_states.get("simulations", []):
@@ -1860,6 +1861,7 @@ async def submit_report(
             "vehicle_count": vehicle_count,
             "report_count": existing_issue["report_count"],
             "priority_score": existing_issue["priority_score"],
+            "reported_at": existing_issue.get("reported_at"),
             "is_duplicate": True,
             "owner_report_id": report_record_id,
             "delete_token": owner_delete_token,
@@ -1888,6 +1890,7 @@ async def submit_report(
     import datetime
     new_issue_id = f"rep_{random.randint(100000, 999999)}"
     photos_list = [photo_data_uri] if photo_data_uri else []
+    reported_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
     priority_label = "Low"
     if severity.upper() in ("CRITICAL", "HIGH"):
@@ -1912,7 +1915,7 @@ async def submit_report(
         "vehicle_count": vehicle_count,
         "photos": photos_list,
         "status": "Unassigned",
-        "reported_at": datetime.datetime.utcnow().isoformat(),
+        "reported_at": reported_at,
         "last_updated": datetime.datetime.utcnow().isoformat(),
         "admin_notes": [],
         "task_history": [
@@ -1944,6 +1947,7 @@ async def submit_report(
         "vehicle_count": vehicle_count,
         "report_count": 1,
         "priority_score": 1,
+        "reported_at": reported_at,
         "is_duplicate": False,
     }
     if "citizen_reports" not in model_states:
