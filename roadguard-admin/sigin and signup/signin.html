@@ -269,7 +269,7 @@ async function setupGoogleSignIn(){
     ]);
     const config=await response.json().catch(()=>({}));
     if(!response.ok||!config.clientId)throw new Error(config.message||'Google sign-in is not configured yet.');
-    google.accounts.id.initialize({client_id:config.clientId,callback:handleGoogleCredential});
+    google.accounts.id.initialize({client_id:config.clientId,callback:handleGoogleCredential,use_fedcm_for_button:true});
     google.accounts.id.renderButton(container,{type:'standard',theme:'outline',size:'large',text:'continue_with',shape:'rectangular',width:320});
   }catch(error){container.style.display='none';showGoogleError(error.message||'Google sign-in is temporarily unavailable.');}
 }
