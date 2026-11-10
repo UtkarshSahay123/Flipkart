@@ -315,6 +315,11 @@
             <!-- Map Section -->
             <section class="relative flex-1 min-h-[400px] lg:min-h-0 bg-surface-dim">
                 <div id="map" class="absolute inset-0 z-0"></div>
+                <button id="locate-me-button" type="button" aria-label="Locate me on the map"
+                    class="absolute top-xl right-xl z-20 inline-flex items-center gap-sm px-md py-sm bg-surface/95 backdrop-blur-md border border-outline-variant rounded-lg shadow-md text-label-md font-bold text-primary hover:bg-primary-container/20 disabled:opacity-70 disabled:cursor-wait">
+                    <span class="material-symbols-outlined text-[18px]">my_location</span>
+                    <span id="locate-me-label">Locate me</span>
+                </button>
                 <!-- Sector Overview Widget -->
                 <div
                     class="absolute top-xl left-xl z-10 w-72 p-md bg-surface border border-outline-variant rounded shadow-sm">
@@ -930,6 +935,21 @@
 
         // Initialize Leaflet Map centered on Patna (default fallback)
         var map = L.map('map', { zoomControl: false }).setView(userCoords, 13);
+        var userMarker = null;
+
+        function setUserMapLocation(lat, lng, zoom = 15) {
+            userCoords = [lat, lng];
+            map.flyTo(userCoords, zoom);
+            if (userMarker) {
+                userMarker.setLatLng(userCoords);
+            } else {
+                userMarker = L.marker(userCoords).addTo(map)
+                    .bindPopup("<b>Traffic Command Hub (You)</b><br>GPS Location verified.");
+            }
+            activeMarkers['user'] = userMarker;
+            const startEl = document.getElementById('route-start');
+            if (startEl) startEl.value = `GPS Lock (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+        }
 
         // Fetch user location as soon as site loads
         if (navigator.geolocation) {
@@ -937,20 +957,8 @@
                 (position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
-                    userCoords = [lat, lng];
-
-                    // Update Route Finder input
-                    const startEl = document.getElementById('route-start');
-                    if (startEl) startEl.value = `GPS Lock (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-
-                    // Fly to user location
-                    map.flyTo([lat, lng], 15);
-
-                    // Add a marker for user's traffic node
-                    var userMarker = L.marker([lat, lng]).addTo(map)
-                        .bindPopup("<b>Traffic Command Hub (You)</b><br>GPS Location verified.")
-                        .openPopup();
-                    activeMarkers['user'] = userMarker;
+                    setUserMapLocation(lat, lng, 15);
+                    userMarker.openPopup();
 
                     showToast("GPS Location Fetched successfully!", "success");
                 },
@@ -977,6 +985,34 @@
             const startEl = document.getElementById('route-start');
             if (startEl) startEl.value = `Patna Center (${userCoords[0].toFixed(4)}, ${userCoords[1].toFixed(4)})`;
         }
+
+        const locateMeButton = document.getElementById('locate-me-button');
+        locateMeButton.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                showToast('Location is not supported by this browser.', 'error');
+                return;
+            }
+            const locateLabel = document.getElementById('locate-me-label');
+            locateMeButton.disabled = true;
+            locateLabel.textContent = 'Locating…';
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    setUserMapLocation(position.coords.latitude, position.coords.longitude, 16);
+                    showToast('Map centered on your current location.', 'success');
+                    locateMeButton.disabled = false;
+                    locateLabel.textContent = 'Locate me';
+                },
+                error => {
+                    const message = error.code === 1
+                        ? 'Allow location access for this site, then try again.'
+                        : 'Could not get your current location. Please try again.';
+                    showToast(message, 'error');
+                    locateMeButton.disabled = false;
+                    locateLabel.textContent = 'Locate me';
+                },
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+            );
+        });
 
         // Add zoom control at bottom left
         L.control.zoom({ position: 'bottomleft' }).addTo(map);

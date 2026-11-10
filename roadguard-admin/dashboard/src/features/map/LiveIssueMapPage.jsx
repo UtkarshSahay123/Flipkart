@@ -11,7 +11,8 @@ import {
   MapPin,
   Eye,
   Layers,
-  AlertTriangle
+  AlertTriangle,
+  LocateFixed
 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
@@ -62,6 +63,8 @@ export const LiveIssueMapPage = () => {
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [showHistoricalResolved, setShowHistoricalResolved] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
+  const [locatingMe, setLocatingMe] = useState(false);
+  const [locateError, setLocateError] = useState('');
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -78,6 +81,32 @@ export const LiveIssueMapPage = () => {
       { enableHighAccuracy: true, maximumAge: 300000, timeout: 10000 }
     );
   }, [hasRequestedCenter]);
+
+  const locateMe = () => {
+    if (!navigator.geolocation) {
+      setLocateError('Location is not supported by this browser.');
+      return;
+    }
+    setLocatingMe(true);
+    setLocateError('');
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        const location = [position.coords.latitude, position.coords.longitude];
+        setUserLocation(location);
+        setMapCenter(location);
+        setMapZoom(16);
+        setLocatingMe(false);
+      },
+      error => {
+        setLocatingMe(false);
+        setLocateError(error.code === 1
+          ? 'Allow location access in your browser, then try again.'
+          : 'Could not get your current location. Please try again.');
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+    );
+  };
+
   // Selected Issue Drawer
   const [drawerIssue, setDrawerIssue] = useState(null);
 
@@ -169,7 +198,7 @@ export const LiveIssueMapPage = () => {
 
       {/* Map Container & Floating Panels */}
       <div className="relative h-[650px] bg-white rounded-xl border border-[#D9E1EF] shadow-md overflow-hidden">
-        <MapContainer center={mapCenter} zoom={13} zoomControl={false} scrollWheelZoom className="w-full h-full">
+        <MapContainer center={mapCenter} zoom={13} zoomControl={false} scrollWheelZoom className="relative z-0 w-full h-full">
           <MapViewController center={mapCenter} zoom={mapZoom} />
           <ZoomControl position="bottomleft" />
           <TileLayer
@@ -193,6 +222,20 @@ export const LiveIssueMapPage = () => {
             </Popup>
           </Marker>)}
         </MapContainer>
+
+        <div className="absolute right-4 top-4 z-30 flex flex-col items-end gap-2">
+          <button
+            type="button"
+            onClick={locateMe}
+            disabled={locatingMe}
+            aria-label="Locate me on the map"
+            className="inline-flex items-center gap-2 rounded-lg border border-[#D9E1EF] bg-white px-3 py-2 text-xs font-bold text-[#0A2342] shadow-md transition hover:bg-blue-50 disabled:cursor-wait disabled:opacity-70"
+          >
+            <LocateFixed className={`h-4 w-4 text-[#0755C9] ${locatingMe ? 'animate-pulse' : ''}`} />
+            {locatingMe ? 'Locating…' : 'Locate me'}
+          </button>
+          {locateError && <p role="status" className="max-w-64 rounded-lg bg-white px-3 py-2 text-right text-[11px] font-semibold text-red-700 shadow-md">{locateError}</p>}
+        </div>
 
         <div className="absolute bottom-4 left-4 z-20 max-h-[45%] w-80 max-w-[calc(100%-2rem)] overflow-y-auto rounded-xl border border-[#D9E1EF] bg-white/95 p-3 shadow-lg backdrop-blur-md">
           <h3 className="mb-2 text-xs font-bold text-[#0A2342]">Reported locations</h3>
