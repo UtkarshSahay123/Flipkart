@@ -470,7 +470,7 @@
                             </button>
                             <button id="btn-capture-video"
                                 class="flex items-center justify-center gap-xs py-sm border border-outline-variant rounded-lg font-bold text-label-md hover:bg-surface-container-low transition-all">
-                                <span class="material-symbols-outlined text-sm">videocam</span> Record Video
+                                <span class="material-symbols-outlined text-sm">videocam</span> Live Report Camera
                             </button>
                         </div>
 
@@ -478,6 +478,7 @@
                         <div id="camera-preview-container"
                             class="hidden relative rounded-xl overflow-hidden bg-black aspect-video border border-outline-variant">
                             <video id="camera-stream" autoplay playsinline class="w-full h-full object-cover"></video>
+                            <div id="camera-session-status" class="hidden absolute top-2 left-2 right-2 z-10 rounded-lg bg-black/70 px-3 py-2 text-center text-[11px] font-semibold text-white"></div>
                             <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-sm z-10">
                                 <button id="btn-snap"
                                     class="px-md py-xs bg-error text-on-error rounded-full font-bold text-label-md hover:opacity-90 shadow-lg">Capture</button>
@@ -2040,17 +2041,51 @@
         const cameraCanvas = document.getElementById('camera-canvas');
 
         let streamRef = null;
+        let cameraCaptureMode = 'photo';
+        let cameraCaptureBusy = false;
+        let cameraStarting = false;
 
-        async function startWebcam() {
+        async function startWebcam(mode = 'photo') {
+            if (cameraStarting) return;
+            if (!navigator.mediaDevices?.getUserMedia) {
+                showToast("Camera access requires a supported browser and secure connection (HTTPS).", "error");
+                return;
+            }
+            if (streamRef) stopWebcam();
+            cameraStarting = true;
+            btnCapturePhoto.disabled = true;
+            btnCaptureVideo.disabled = true;
+            cameraCaptureMode = mode;
+            btnSnap.disabled = true;
+            btnSnap.textContent = mode === 'live' ? 'Capture & Report' : 'Capture';
+            const sessionStatus = document.getElementById('camera-session-status');
+            sessionStatus.textContent = mode === 'live'
+                ? 'Live report camera is on. Point at an issue and select Capture & Report; the camera stays open for the next issue.'
+                : 'Camera photo capture is ready.';
+            sessionStatus.classList.toggle('hidden', mode !== 'live');
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                cameraStream.srcObject = stream;
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: 'environment' } },
+                    audio: false
+                });
                 streamRef = stream;
+                cameraStream.srcObject = stream;
                 cameraPreviewContainer.classList.remove('hidden');
                 uploadBox.classList.add('hidden');
+                cameraStarting = false;
+                btnCapturePhoto.disabled = true;
+                btnCaptureVideo.disabled = true;
+
+                const enableCaptureWhenReady = () => {
+                    if (streamRef === stream && cameraStream.videoWidth > 0) btnSnap.disabled = false;
+                };
+                cameraStream.addEventListener('loadeddata', enableCaptureWhenReady, { once: true });
+                await cameraStream.play();
+                enableCaptureWhenReady();
             } catch (err) {
                 console.error("Camera access error: ", err);
-                showToast("Webcam access denied or unavailable.", "error");
+                stopWebcam();
+                showToast("Camera access was denied or the camera is unavailable. Check browser permissions and try again.", "error");
             }
         }
 
@@ -2059,71 +2094,71 @@
                 streamRef.getTracks().forEach(track => track.stop());
                 streamRef = null;
             }
+            cameraStarting = false;
+            cameraStream.srcObject = null;
             cameraPreviewContainer.classList.add('hidden');
             uploadBox.classList.remove('hidden');
+            btnCapturePhoto.disabled = false;
+            btnCaptureVideo.disabled = false;
+            btnSnap.disabled = false;
+            btnSnap.textContent = 'Capture';
+            cameraCaptureMode = 'photo';
         }
 
-        btnCapturePhoto.addEventListener('click', startWebcam);
-        btnCaptureVideo.addEventListener('click', startWebcam); // Uses webcam capture flow
+        btnCapturePhoto.addEventListener('click', () => startWebcam('photo'));
+        btnCaptureVideo.addEventListener('click', () => startWebcam('live'));
         btnCancelCamera.addEventListener('click', stopWebcam);
 
         btnSnap.addEventListener('click', async () => {
-            if (!streamRef) return;
-
-            // Draw snapshot onto canvas
+            if (!streamRef || cameraCaptureBusy) return;
             const width = cameraStream.videoWidth;
             const height = cameraStream.videoHeight;
+            if (!width || !height) {
+                showToast("Camera is still starting. Please wait a moment and try again.", "error");
+                return;
+            }
+
+            const keepCameraOpen = cameraCaptureMode === 'live';
+            cameraCaptureBusy = true;
+            btnSnap.disabled = true;
+            btnSnap.textContent = 'Reporting…';
             cameraCanvas.width = width;
             cameraCanvas.height = height;
-            const ctx = cameraCanvas.getContext('2d');
-            ctx.drawImage(cameraStream, 0, 0, width, height);
+            cameraCanvas.getContext('2d').drawImage(cameraStream, 0, 0, width, height);
+            if (!keepCameraOpen) stopWebcam();
+            processingBox.classList.remove('hidden');
+            processingText.innerText = "Fetching current GPS coordinates...";
 
-            stopWebcam();
-
-            // Convert to blob and send to backend
             cameraCanvas.toBlob(async (blob) => {
-                processingBox.classList.remove('hidden');
-                processingText.innerText = "Fetching current GPS coordinates...";
-
-                const coords = await getGPSCoordinates();
-                if (!coords) {
-                    processingBox.classList.add('hidden');
-                    showToast("Location is required. Allow GPS access and try again.", "error");
-                    return;
-                }
-                processingText.innerText = "Analyzing camera snapshot with AI...";
-
-                const file = new File([blob], "snap_report.jpg", { type: "image/jpeg" });
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('latitude', coords.lat);
-                formData.append('longitude', coords.lng);
-
                 try {
-                    const response = await fetch(`${API_BASE}/api/report/submit`, {
-                        method: 'POST',
-                        body: formData
-                    });
+                    if (!blob) throw new Error('Could not capture a camera frame.');
+                    const coords = await getGPSCoordinates();
+                    if (!coords) throw new Error("Location is required. Allow GPS access and try again.");
 
-                    if (!response.ok) throw new Error("Backend upload failed");
+                    processingText.innerText = "Analyzing camera capture and reporting it to the dashboard...";
+                    const file = new File([blob], `camera_report_${Date.now()}.jpg`, { type: "image/jpeg" });
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('latitude', coords.lat);
+                    formData.append('longitude', coords.lng);
 
-                    const result = await response.json();
-                    const report = result.report;
-                    rememberReportOwnership(report);
-                    const identifier = report.id || (report.coords.join(',') + '_' + report.type);
-                    displayedReports.add(identifier);
+                    const response = await fetch(`${API_BASE}/api/report/submit`, { method: 'POST', body: formData });
+                    const result = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(result.detail || result.message || "Backend upload failed.");
 
-                    // Place Marker
-                    var snapMarker = L.marker([coords.lat, coords.lng], {
-                        icon: getIncidentIcon(report.type, report.severity, report.report_count || report.total_reports || 1, report.priority)
-                    }).addTo(map)
-                        .bindPopup(`<b>${report.type}</b><br>${report.description}`)
-                        .openPopup();
-                    activeMarkers[identifier] = snapMarker;
-                    map.flyTo([coords.lat, coords.lng], 15);
+                    rememberReportOwnership(result.report);
+                    await updateDashboardStats();
 
-                    // Add card
-                    prependIncidentCard(report);
+                    if (result.is_duplicate) {
+                        const totalReports = result.total_reports || result.report?.report_count || 2;
+                        document.getElementById('dup-report-count').innerText = `${totalReports} Reports`;
+                        document.getElementById('duplicate-msg').innerText =
+                            `${totalReports - 1} other report(s) already match this issue nearby. Your capture was added to its report history.`;
+                        document.getElementById('dup-photo-count').innerText = `${totalReports} photo${totalReports === 1 ? '' : 's'} attached`;
+                        document.getElementById('duplicate-banner').classList.remove('hidden');
+                    } else {
+                        showToast(`${result.report?.type || 'Road issue'} captured and reported.`, "success");
+                    }
 
                     if (result.pothole_count > 0) {
                         const potholeStat = document.getElementById('ai-pothole-stat');
@@ -2133,16 +2168,25 @@
                         }
                     }
 
-                    showToast("Snapshot mapped and reported successfully!", "success");
-                    tabIncidents.click();
-
+                    if (keepCameraOpen && streamRef) {
+                        const sessionStatus = document.getElementById('camera-session-status');
+                        sessionStatus.textContent = `Last capture reported at ${new Date().toLocaleTimeString()}. Point at the next issue and capture it, or close the camera.`;
+                        if (result.is_duplicate) showToast(`Capture added to the existing issue (${result.total_reports || result.report?.report_count || 2} reports). Camera is still on.`, "success");
+                    } else {
+                        tabIncidents.click();
+                    }
                 } catch (err) {
                     console.error("Camera upload error: ", err);
-                    showToast("Failed to process snapshot.", "error");
+                    showToast(err.message || "Failed to process camera capture.", "error");
                 } finally {
                     processingBox.classList.add('hidden');
+                    cameraCaptureBusy = false;
+                    if (keepCameraOpen && streamRef) {
+                        btnSnap.disabled = false;
+                        btnSnap.textContent = 'Capture & Report';
+                    }
                 }
-            }, 'image/jpeg');
+            }, 'image/jpeg', 0.9);
         });
 
         // Real-time Dashboard Update from FastAPI
